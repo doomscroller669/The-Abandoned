@@ -320,7 +320,7 @@ const lam=o=>psx(new THREE.MeshLambertMaterial(o));
 const basic=o=>psx(new THREE.MeshBasicMaterial(o));
 
 let LOW_H=240,lowW=320;
-const rt=new THREE.WebGLRenderTarget(320,240,{minFilter:THREE.NearestFilter,magFilter:THREE.NearestFilter,format:THREE.RGBAFormat});
+const rt=new THREE.WebGLRenderTarget(320,240,{minFilter:THREE.NearestFilter,magFilter:THREE.NearestFilter,format:THREE.RGBAFormat,depthBuffer:true,stencilBuffer:true});
 const postU={tDiffuse:{value:rt.texture},uRes:{value:new THREE.Vector2(320,240)},uTime:{value:0},uTint:{value:new THREE.Color(1,1,1)},uTintAmt:{value:0},uFlash:{value:0},uDanger:{value:0},uWarp:{value:0}};
 const postMat=new THREE.ShaderMaterial({uniforms:postU,depthTest:false,depthWrite:false,
 vertexShader:'varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position.xy,0.0,1.0); }',
@@ -689,6 +689,13 @@ function bakeShade(root,floorY){root.updateMatrixWorld(true);const v=new THREE.V
 const boxm=(w,h,d,m)=>new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);
 const cylm=(rt,rb,h,s,m)=>new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,s),m);
 function at(o,x,y,z){o.position.set(x,y,z);return o;}
+/* a see-through opening in a solid wall: the mask marks the opening in the stencil, the tunnel (inside faces)
+   draws only there and ignores the wall's depth, and the killer draws after it so he shows inside the tunnel */
+function ventTunnel(S,x,y,z,nx,nz,w,h,dep){if(!ventTunnel.mm){const mm=new THREE.MeshBasicMaterial({colorWrite:false,depthWrite:false});decal(mm,-4,-40);
+    mm.stencilWrite=true;mm.stencilRef=1;mm.stencilFunc=THREE.AlwaysStencilFunc;mm.stencilZPass=THREE.ReplaceStencilOp;ventTunnel.mm=mm;
+    const im=lam({map:T.rust,color:0x4a4440,side:THREE.BackSide});im.depthFunc=THREE.AlwaysDepth;im.stencilWrite=true;im.stencilRef=1;im.stencilFunc=THREE.EqualStencilFunc;ventTunnel.im=im;}
+  const ry=Math.atan2(nx,nz);const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),ventTunnel.mm);m.position.set(x+nx*.025,y,z+nz*.025);m.rotation.y=ry;m.renderOrder=1;S.add(m);
+  const b=new THREE.Mesh(scaleUV(new THREE.BoxGeometry(w,h,dep,2,2,6),2,3),ventTunnel.im);b.position.set(x-nx*dep/2,y,z-nz*dep/2);b.rotation.y=ry;b.renderOrder=2;S.add(b);}
 function decal(m,f=-2,u=-8){m.polygonOffset=true;m.polygonOffsetFactor=f;m.polygonOffsetUnits=u;return m;}
 function ball(r,m,ws=8,hs=6){return new THREE.Mesh(new THREE.SphereGeometry(r,ws,hs),m);}
 function limb(len,r1,r2,m,seg=7){const g=new THREE.Group();const c=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,len,seg,2),m);c.position.y=-len/2;g.add(c);g.add(ball(r1*1.04,m,seg,5));return g;}
@@ -1101,18 +1108,39 @@ function buildCat(){
   part(.075,.085,.1,0,.19,.075);part(.07,.075,.14,0,.185,-.005);part(.078,.08,.09,0,.18,-.095);part(.05,.06,.06,0,.225,.13);
   const legs=[];
   [[.04,.11],[-.04,.11]].forEach(([x,z])=>{const l=limb(.16,.02,.015,fur,7);l.position.set(x,.17,z);g.add(l);const pw=ball(.019,cream,7,5);pw.scale.set(1,.6,1.3);pw.position.set(0,-.16,.008);l.add(pw);l.userData.r0=0;legs.push(l);});
-  [[.048,-.1],[-.048,-.1]].forEach(([x,z])=>{const th=limb(.09,.036,.022,fur,7);th.position.set(x,.17,z);th.rotation.x=-0.6;th.userData.r0=-0.6;g.add(th);const sh=limb(.1,.017,.013,fur,6);sh.position.y=-.09;sh.rotation.x=1.0;th.add(sh);const pw=ball(.018,cream,7,5);pw.scale.set(1,.6,1.4);pw.position.set(0,-.1,.01);sh.add(pw);legs.push(th);});
+  [[.048,-.1],[-.048,-.1]].forEach(([x,z])=>{const th=limb(.09,.036,.022,fur,7);th.position.set(x,.17,z);th.rotation.x=-0.6;th.userData.r0=-0.6;g.add(th);const sh=limb(.1,.017,.013,fur,6);sh.position.y=-.09;sh.rotation.x=1.0;th.add(sh);th.userData.sh=sh;const pw=ball(.018,cream,7,5);pw.scale.set(1,.6,1.4);pw.position.set(0,-.1,.01);sh.add(pw);legs.push(th);});
   const head=new THREE.Group();head.position.set(0,.26,.17);g.add(head);
   head.add(new THREE.Mesh(catHeadGeo(.058),furH));head.add(at(ball(.008,pink,6,4),0,-.004,.07));
-  [-1,1].forEach(sd=>{const e=new THREE.Mesh(new THREE.ConeGeometry(.026,.05,3),fur);e.position.set(sd*.035,.05,-.008);e.rotation.set(-0.15,sd*0.5,-sd*.3);head.add(e);
-    const ei=new THREE.Mesh(new THREE.ConeGeometry(.016,.032,3),pink);ei.position.set(sd*.034,.047,.004);ei.rotation.copy(e.rotation);head.add(ei);});
+  const ears=[];[-1,1].forEach(sd=>{const e=new THREE.Mesh(new THREE.ConeGeometry(.026,.05,3),fur);e.position.set(sd*.035,.05,-.008);e.rotation.set(-0.15,sd*0.5,-sd*.3);head.add(e);
+    const ei=new THREE.Mesh(new THREE.ConeGeometry(.016,.032,3),pink);ei.position.set(sd*.034,.047,.004);ei.rotation.copy(e.rotation);head.add(ei);ears.push({e,ei,rx:e.rotation.x});});
   const wp=[];[-1,1].forEach(sd=>{for(let i=0;i<3;i++)wp.push(sd*.022,-.016-i*.004,.058,sd*.1,-.01-i*.012,.042+i*.006);});
   const wg=new THREE.BufferGeometry();wg.setAttribute('position',new THREE.Float32BufferAttribute(wp,3));head.add(new THREE.LineSegments(wg,new THREE.LineBasicMaterial({color:0xe8e0d0,transparent:true,opacity:0.7})));
-  const tail=new THREE.Group();tail.position.set(0,.2,-.17);g.add(tail);let p=new THREE.Group();p.rotation.x=2.3;tail.add(p);
-  for(let i=0;i<6;i++){const sg=limb(.045,.016-i*.0018,.0145-i*.0018,fur,6);p.add(sg);const nx=new THREE.Group();nx.position.y=-.045;nx.rotation.x=0.18;sg.add(nx);p=nx;}
+  const tail=new THREE.Group();tail.position.set(0,.2,-.17);g.add(tail);let p=new THREE.Group();p.rotation.x=2.3;tail.add(p);const tsegs=[];
+  for(let i=0;i<6;i++){const sg=limb(.045,.016-i*.0018,.0145-i*.0018,fur,6);p.add(sg);const nx=new THREE.Group();nx.position.y=-.045;nx.rotation.x=0.18;sg.add(nx);p=nx;tsegs.push(nx);}
   g.add(blob(.3,.42,0.55));bakeShade(g,0);
-  return {g,head,tail,legs};
+  return {g,head,tail,legs,tsegs,ears,v:0,ph:0};
 }
+/* walk: lateral sequence (hind, fore, other hind, other fore); bound: fronts together, hinds together */
+const CAT_OFF=[0.25,0.75,0,0.5];
+function catGait(c,ph,k,bound){c.legs.forEach((l,i)=>{const o=bound?(i<2?0:0.55):CAT_OFF[i],a=ph+o*TAU,sw=Math.sin(a),lift=Math.max(0,-Math.cos(a));
+    if(i<2){l.rotation.x=(l.userData.r0||0)+sw*(bound?0.8:0.5)*k;l.position.y=.17+lift*0.016*k;}
+    else{l.rotation.x=(l.userData.r0||0)+sw*(bound?0.75:0.42)*k;if(l.userData.sh)l.userData.sh.rotation.x=1.0+lift*0.6*k;}});
+  c.g.rotation.z=Math.sin(ph)*0.035*k*(bound?0.4:1);c.head.position.y=.26+Math.sin(ph*2)*0.007*k;}
+/* mid-air: forelegs reach, hind legs trail, body pitched (negative = nose up) */
+function catLeap(c,s,pitch){c.legs.forEach((l,i)=>{l.rotation.x=(l.userData.r0||0)+(i<2?-0.95:1.0)*s;if(l.userData.sh)l.userData.sh.rotation.x=1.0-0.5*s;});c.g.rotation.x=(pitch||0)*s;}
+/* idle life: head glances and tracking, ear flicks, tail moods, breathing */
+function catLife(c,dt,t,o){const g=c.g,h=c.head;
+  c.lt=(c.lt||0)-dt;if(c.lt<=0){c.lt=1.0+R()*2.6;c.ly=(R()-0.5)*0.8;c.lp=(R()-0.5)*0.3;c.tilt=R()<0.3?(R()-0.5)*0.6:0;}
+  let ty=c.ly||0,tp=(c.lp||0)*0.5;
+  if(o.look){const dx=o.look[0]-g.position.x,dz=o.look[2]-g.position.z,dd=Math.hypot(dx,dz)||1;ty=clamp(angDiff(g.rotation.y,Math.atan2(dx,dz)),-1.0,1.0)+(c.ly||0)*0.2;
+    tp=clamp(-Math.atan2(o.look[1]-(g.position.y+0.26),dd),-0.6,0.5)+(c.lp||0)*0.15;}
+  h.rotation.y=damp(h.rotation.y,ty,7,dt);h.rotation.x=damp(h.rotation.x,(o.pitch||0)+tp,8,dt);h.rotation.z=damp(h.rotation.z,c.tilt||0,5,dt);
+  c.et=(c.et==null?2:c.et)-dt;if(c.et<=0){c.et=1.8+R()*4.5;c.ew=0.22;c.es=R()<0.5?0:1;}if(c.ew>0)c.ew-=dt;
+  if(c.ears)c.ears.forEach((E,i)=>{const tw=(c.ew>0&&i===c.es)?Math.sin((0.22-c.ew)/0.22*Math.PI)*0.7:0;E.e.rotation.x=E.rx+tw;E.ei.rotation.x=E.rx+tw;});
+  const md=o.tail||'calm',up=md==='up'?2.85:md==='low'?1.8:2.3,w=md==='up'?3.0:md==='low'?2.0:1.8,amp=md==='low'?0.04:md==='up'?0.1:0.2;
+  const tb=c.tail.children[0];tb.rotation.x=damp(tb.rotation.x,up,3,dt);c.tail.rotation.y=Math.sin(t*0.8)*0.22+(md==='swish'?Math.sin(t*5)*0.5:0);
+  if(c.tsegs)c.tsegs.forEach((sg,i)=>{const f=i/(c.tsegs.length-1);sg.rotation.z=Math.sin(t*w-i*0.8)*amp*(0.4+f*1.2)+(md==='low'?Math.sin(t*12)*0.35*f*f:0);sg.rotation.x=0.18+(md==='up'?0.55*f*f:0)+Math.sin(t*1.3-i*0.5)*0.04;});
+  g.scale.y=1+Math.sin(t*2.4)*0.012*(c.v>0.1?0.3:1);}
 function buildHand(){
   const g=new THREE.Group();const m=lam({map:T.skin,color:0xd2cabb});
   const arm=new THREE.Group();g.add(arm);
@@ -1233,8 +1261,10 @@ function buildTent(mack,lamp){
   const pos=[],uv=[];tris.forEach(t=>t.forEach(p=>{pos.push(p[0],p[1],p[2]);uv.push((p[0]+p[2])*0.55+0.8,p[1]/H);}));
   const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.computeVertexNormals();
   g.add(new THREE.Mesh(geo,tarpM));
-  const fg=new THREE.BufferGeometry();fg.setAttribute('position',new THREE.Float32BufferAttribute([0,0,0,0.38,0,0.03,0.02,1.0,0],3));fg.setAttribute('uv',new THREE.Float32BufferAttribute([0,0,1,0,0.5,1],2));fg.computeVertexNormals();
-  const flap=new THREE.Mesh(fg,tarpM);flap.position.set(-0.34,0,S2+0.01);flap.rotation.y=-2.3;g.add(flap);
+  /* door flap rolled up and tied along the left edge of the doorway */
+  {const a=new THREE.Vector3(DL[0],DL[1]+.04,DL[2]+.05),b=new THREE.Vector3(DT[0]-.03,DT[1]-.05,DT[2]+.06),dir=b.clone().sub(a),len=dir.length();
+    const roll=new THREE.Mesh(new THREE.CylinderGeometry(.045,.055,len,7),tarpM);roll.position.copy(a).add(b).multiplyScalar(.5);roll.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),dir.normalize());g.add(roll);
+    const tie=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,.03,7),lam({color:0x8a7a5a}));tie.position.copy(roll.position);tie.quaternion.copy(roll.quaternion);g.add(tie);}
   const rope=cylm(.006,.006,.9,3,lam({color:0x8a7a5a}));rope.position.set(-.6,.6,S2+.15);rope.rotation.z=0.9;g.add(rope);
   g.add(at(new THREE.Mesh(new THREE.BoxGeometry(1.1,.07,1.2),lam({map:T.blanket})),0,.035,-.08));
   const pil=ball(.18,lam({map:T.pillow}),8,6);pil.scale.set(1.2,.35,.7);pil.position.set(0,.1,-.5);g.add(pil);
@@ -1398,9 +1428,9 @@ function buildSewer(){
     const gl=new THREE.Sprite(new THREE.SpriteMaterial({map:T.glint,blending:THREE.AdditiveBlending,transparent:true,depthWrite:false,color:0xffd9a0}));gl.position.set(x,.14,z);gl.scale.set(.08,.08,1);gl.visible=false;S.add(gl);
     SW.litter.push({id:i,mesh,glint:gl});SW.inter.push({kind:'litter',id:i,x,z,r:1.6,label:()=>'Take',can:()=>!F.litterTaken.has(i),act(){pickLitter(i);}});});
   /* the high vent over the entry room: too high to reach */
-  {const vm=decal(basic({color:0x030303}),-3,-12);const vh=new THREE.Mesh(new THREE.PlaneGeometry(.95,.7),vm);vh.position.set(14,2.55,40.012);S.add(vh);
-    const fr=lam({map:T.rust});[[0,.36,.99,.05],[0,-.36,.99,.05],[-.47,0,.05,.75],[.47,0,.05,.75]].forEach(([x,y,w,h])=>S.add(at(boxm(w,h,.05,fr),14+x,2.55+y,40.03)));
-    const gh=new THREE.Group();gh.position.set(14,2.9,40.05);gh.rotation.x=-1.15;gh.rotation.z=0.25;S.add(gh);gh.add(at(boxm(.9,.65,.02,lam({map:T.grateM})),0,-.33,0));
+  {const vm=decal(basic({color:0x030303}),-3,-12);const vh=new THREE.Mesh(new THREE.PlaneGeometry(1.3,.95),vm);vh.position.set(14,2.55,40.012);S.add(vh);ventTunnel(S,14,2.55,40,0,1,1.3,.95,3.4);
+    const fr=lam({map:T.rust});[[0,.5,1.38,.06],[0,-.5,1.38,.06],[-.67,0,.06,1.06],[.67,0,.06,1.06]].forEach(([x,y,w,h])=>S.add(at(boxm(w,h,.05,fr),14+x,2.55+y,40.03)));
+    const gh=new THREE.Group();gh.position.set(14,3.03,40.05);gh.rotation.x=-1.15;gh.rotation.z=0.25;S.add(gh);gh.add(at(boxm(1.24,.88,.02,lam({map:T.grateM})),0,-.44,0));
     const sm=new THREE.Mesh(new THREE.PlaneGeometry(.9,1.6),decal(new THREE.MeshBasicMaterial({map:T.blood,transparent:true,depthWrite:false,color:0x3a3028,opacity:0.7}),-3,-12));sm.position.set(14.1,1.5,40.014);S.add(sm);}
   addLight(S,0xb8c890,0.8,8,15.2,2.95,40.7,'fluor');S.add(at(boxm(.12,.16,.12,basic({color:0xd8e0b0})),15.2,3.05,40.15));
   /* camp pipes along the north wall: climbable at the west end, a steam joint in the middle, duct mouth at the east end */
@@ -1449,8 +1479,8 @@ function buildSewer(){
     addLight(S,0xff2a1a,0.9,10,74,4.0,30,'pulse');CH.add(at(boxm(.3,.16,.12,basic({color:0xff3a24})),74,4.2,39.9));SW.cineL=addLight(S,0xc8b070,0.9,9,104,3.2,33,'none');CH.add(at(boxm(.3,.16,.12,basic({color:0xffc060})),104,3.3,30.08));
     /* the two high vents he can come out of, over the camp */
     const vm=decal(basic({color:0x030303}),-3,-12),gm=lam({map:T.grateM}),stm=decal(new THREE.MeshBasicMaterial({map:T.blood,transparent:true,depthWrite:false,color:0x3a2a20,opacity:0.7}),-3,-12);
-    [VENT_W,VENT_E].forEach(v=>{const [x,y,z]=v.pos,[nx,nz]=v.n,ry=Math.atan2(nx,nz);const h=new THREE.Mesh(new THREE.PlaneGeometry(1.0,.75),vm);h.position.set(x+nx*.012,y,z+nz*.012);h.rotation.y=ry;CH.add(h);
-      const g=new THREE.Group();g.position.set(x+nx*.02,y+.4,z+nz*.02);g.rotation.y=ry;CH.add(g);const pnl=boxm(.95,.7,.02,gm);pnl.position.set(.1,-.35,.3);pnl.rotation.set(-1.0,0,0.3);g.add(pnl);
+    [VENT_W,VENT_E].forEach(v=>{const [x,y,z]=v.pos,[nx,nz]=v.n,ry=Math.atan2(nx,nz);const h=new THREE.Mesh(new THREE.PlaneGeometry(1.35,1.0),vm);h.position.set(x+nx*.012,y,z+nz*.012);h.rotation.y=ry;CH.add(h);ventTunnel(S,x,y,z,nx,nz,1.35,1.0,3.4);const fr=lam({map:T.rust});[[0,.52,1.44,.06],[0,-.52,1.44,.06],[-.7,0,.06,1.1],[.7,0,.06,1.1]].forEach(([a,b,w,hh])=>{const f=boxm(w,hh,.06,fr);f.position.set(x+nx*.03-nz*a,y+b,z+nz*.03+nx*a);f.rotation.y=ry;CH.add(f);});
+      const g=new THREE.Group();g.position.set(x+nx*.02,y+.5,z+nz*.02);g.rotation.y=ry;CH.add(g);const pnl=boxm(1.28,.92,.02,gm);pnl.position.set(.12,-.45,.36);pnl.rotation.set(-1.0,0,0.3);g.add(pnl);
       const st=new THREE.Mesh(new THREE.PlaneGeometry(.8,2.2),stm);st.rotation.y=ry;st.position.set(x+nx*.014,y-1.4,z+nz*.014);CH.add(st);});mergeChildren(CH);}
   SW.carry=buildCat();SW.carry.g.traverse(o=>{if(o.isMesh&&o.material.map===T.blob)o.visible=false;});
   SW.scene=S;initRats(S);bakeShade(S,0);
@@ -1616,12 +1646,13 @@ function kMove(tx,tz,speed,dt){
 function playerLow(){return P.crouch||P.inWater;}
 function canSee(){
   if(P.hidden||P.sub)return false;const dx=P.x-K.x,dz=P.z-K.z,d=Math.hypot(dx,dz);
-  const aware=K.state==='chase'||K.state==='throw';let range=aware?24:(P.light?18:12);if(!aware){if(P.crouch)range*=0.6;if(P.inWater)range*=0.75;}
-  if(!aware&&P.onPlat&&P.highKind==='pipe'){if(Math.atan2(P.floor+P.eye-(K.y+1.0),d)>0.5)return false;range=Math.min(range,P.light?12:7);}
+  const aware=K.state==='chase'||K.state==='throw';let range=aware?24:(P.light?16:11);if(!aware){if(P.crouch)range*=0.6;if(P.inWater)range*=0.75;}
+  const onPipe=P.onPlat&&P.highKind==='pipe';
+  if(!aware&&onPipe){if(Math.atan2(P.floor+P.eye-(K.y+1.0),d)>0.36)return false;range=Math.min(range,P.light?11:6);}
   if(d>range)return false;
   if(d>2.1){const fx=Math.sin(K.yaw),fz=Math.cos(K.yaw);const dot=(dx*fx+dz*fz)/d;
     let ok=dot>(aware?-0.3:0.45);
-    if(!ok&&P.light&&d<14){const pfx=-Math.sin(P.yaw),pfz=-Math.cos(P.yaw);if((-dx*pfx-dz*pfz)/d>0.86)ok=true;}
+    if(!ok&&P.light&&d<14&&!(onPipe&&!aware)){const pfx=-Math.sin(P.yaw),pfz=-Math.cos(P.yaw);if((-dx*pfx-dz*pfz)/d>0.86)ok=true;}
     if(!ok)return false;}
   return P.onPlat?losClearHigh(K.x,K.z,P.x,P.z):losClear(K.x,K.z,P.x,P.z,playerLow());
 }
@@ -1652,7 +1683,9 @@ function updateKiller(dt){
   const visible=(mode==='play')&&canSee();const dP=Math.hypot(P.x-K.x,P.z-K.z);
   const aware=K.state==='chase'||K.state==='seek'||K.state==='throw';
   if(!aware){
-    if(visible){const range=P.light?18:12;let rate=(1.0+3.0*Math.max(0,1-dP/range))*(P.light?1.4:1)*(1+K.agit*0.6);if(dP<3)rate*=3;if(P.onPlat)rate*=1.3;K.sus+=dt*rate;}else K.sus=Math.max(0,K.sus-dt*0.3);
+    if(visible){const range=P.light?16:11;let rate=(1.0+3.0*Math.max(0,1-dP/range))*(P.light?1.4:1)*(1+K.agit*0.6);if(dP<3)rate*=3;if(P.onPlat)rate*=P.highKind==='pipe'?0.35:1.3;K.sus+=dt*rate;}else K.sus=Math.max(0,K.sus-dt*0.3);
+    /* glimpsed something up on the pipes: he stops and stares before he's sure */
+    if(visible&&P.highKind==='pipe'&&K.sus>0.2&&K.sus<1&&K.state==='patrol')K.wait=Math.max(K.wait,0.5);
     if(visible&&dP<2.4)K.sus=1;
     if(K.sus>=1)startChase();
     else if(K.sus>0.3&&visible&&!P.onPlat&&(K.state==='patrol'||K.state==='search'||K.state==='ambush')){K.state='investigate';K.inv=[P.x,P.z];K.wait=0;}}
@@ -1719,7 +1752,7 @@ function solveIK(S,T,L1,L2,pole,outQ){const V=KV;const d=V.d.subVectors(T,S);let
   const X=V.X.crossVectors(Y,Z).normalize();KM.makeBasis(X,Y,Z);outQ.setFromRotationMatrix(KM);
   return Math.acos(clamp(a.dot(f),-1,1));}
 function animKiller(dt,killing){
-  const m=K.m,root=m.root,B=m.body,V=KV,Q=KQ;const chasing=K.state==='chase'||K.state==='seek'||K.state==='throw';
+  const m=K.m,root=m.root,B=m.body,V=KV,Q=KQ;if(!m.ro){m.ro=true;root.traverse(o=>{o.renderOrder=3;});}const chasing=K.state==='chase'||K.state==='seek'||K.state==='throw';
   const pxr=K.rx,pzr=K.rz,pyw=K.ryaw,pry=K.ry;root.rotation.order='YXZ';
   K.rx=damp(K.rx,K.x,14,dt);K.rz=damp(K.rz,K.z,14,dt);K.ry=damp(K.ry,K.y,10,dt);
   K.ryaw+=angDiff(K.ryaw,K.yaw)*(1-Math.exp(-(killing?10:5)*dt));
@@ -1730,14 +1763,14 @@ function animKiller(dt,killing){
   K.throwAnim=Math.max(0,(K.throwAnim||0)-dt);const thrP=K.throwAnim>0?1-K.throwAnim/0.75:0,thr=K.throwAnim>0?Math.sin(thrP*Math.PI):0;
   K.rear=damp(K.rear,killing?1:(K.stunT>0?0.5:thr*0.7),killing?7:8,dt);
   const ch=K.ch,r=K.rear;
-  const se=Math.hypot(K.vlx,K.vlz)+Math.abs(K.om)*0.55;const k=clamp(se/0.4,0,1)*(1-0.8*r);
+  const vq=K.vent||0;const se=Math.hypot(K.vlx,K.vlz)+Math.abs(K.om)*0.55+(K.gaitBoost||0);const k=clamp(se/0.4,0,1)*(1-0.8*r);
   const freq=0.9+se*0.42,duty=lerp(0.68,0.54,ch),Tst=duty/freq;
   K.gp+=dt*freq*clamp(se/0.18,0,1);const gp=K.gp*TAU;
   /* body pitches about the hips so the hind feet stay planted when he rears up */
   const fd=K.feed||0,pitch=lerp(lerp(0.02,0.12,ch),-0.95,r)+0.3*fd,pz=-0.6,py=-0.04,cp=Math.cos(pitch),spp=Math.sin(pitch);
-  B.rotation.set(pitch,0,Math.sin(gp)*0.045*k);
-  B.position.set(0,lerp(1.0,0.93,ch)-0.16*fd-Math.abs(Math.cos(gp))*0.035*k+Math.sin(time*2.1)*0.008+(py-(py*cp-pz*spp))+r*0.08,pz-(py*spp+pz*cp));
-  m.chest.rotation.set(0,Math.sin(gp)*0.09*k,Math.sin(time*29)*0.04*(K.sobbing>0?1:0));m.chest.scale.setScalar(1+Math.sin(time*2.1)*0.015);
+  B.rotation.set(pitch+Math.sin(time*5.3)*0.05*vq,0,Math.sin(gp)*0.045*k+Math.sin(time*6.1)*0.09*vq);if(!m.torsoM){let best=null,n=0;B.children.forEach(o=>{if(o.isMesh){const c=o.geometry.attributes.position.count;if(c>n){n=c;best=o;}}});m.torsoM=best;}if(m.torsoM)m.torsoM.scale.set(1-0.2*vq,1-0.3*vq,1);m.chest.position.y=.12-0.07*vq;
+  B.position.set(0,lerp(lerp(1.0,0.93,ch),0.42,vq)-0.16*fd-Math.abs(Math.cos(gp))*0.035*k+Math.sin(time*2.1)*0.008+(py-(py*cp-pz*spp))+r*0.08,pz-(py*spp+pz*cp));
+  m.chest.rotation.set(0,Math.sin(gp)*0.09*k+Math.sin(time*6.1+1.2)*0.14*vq,Math.sin(time*29)*0.04*(K.sobbing>0?1:0));m.chest.scale.setScalar(1+Math.sin(time*2.1)*0.015);
   m.neck.rotation.x=lerp(0.18,0.05,ch)-r*0.45+0.5*fd;
   K.twitchT-=dt;if(K.twitchT<=0){const st=K.stunT>0;K.twitchT=st?0.1+R()*0.15:0.5+R()*2.2;K.twitch=(R()-0.5)*(st?2.2:1.1);}if(K.stunT>0)m.chest.rotation.z+=Math.sin(time*41)*0.07;
   m.head.rotation.z=damp(m.head.rotation.z,K.twitch,11,dt);
@@ -1746,7 +1779,7 @@ function animKiller(dt,killing){
   if(Math.abs(K.climb||0)>0.3){hy=0;hp=-0.15;}m.head.rotation.y=damp(m.head.rotation.y,hy-m.chest.rotation.y,5,dt);m.head.rotation.x=damp(m.head.rotation.x,hp,4,dt);
   const open=K.stunT>0?0.3+0.05*Math.sin(time*30):fd>0.3?0.08+0.2*Math.abs(Math.sin(time*7)):(K.sobbing>0||chasing||killing)?0.14+0.14*Math.abs(Math.sin(time*(killing?13:5.5))):0.05;m.jaw.rotation.x=damp(m.jaw.rotation.x,open,10,dt);
   root.updateMatrixWorld(true);root.getWorldQuaternion(Q.root);
-  const wet=cellAt(Math.floor(K.rx/CELL),Math.floor(K.rz/CELL))==='~';const gl=Math.abs(K.climb||0)>0.3?0:(wet?CH:0)-K.ry;
+  const wet=cellAt(Math.floor(K.rx/CELL),Math.floor(K.rz/CELL))==='~';const gl=(Math.abs(K.climb||0)>0.3||vq>0.05)?0:(wet?CH:0)-K.ry;
   const offs=[0,0.5,lerp(0.75,0.5,ch),lerp(0.25,0,ch)];const kt=K.killPhase!=null?K.killPhase:(K.killT||0);
   m.limbs.forEach((L,i)=>{
     /* a planted foot must travel opposite the body's motion at that point (linear + turning) */
@@ -1757,7 +1790,7 @@ function animKiller(dt,killing){
     ox*=k;oz*=k;lift*=k;
     if(stance&&!L.touch&&k>0.3&&K.pan&&AC&&L.arm)sSlap(K.pan,now()+0.01,wet,(L.arm?0.42:0.25)+0.3*ch);
     L.touch=stance;
-    let tx=L.hx+ox,ty=gl+L.h+lift,tz=L.hz+oz,reach=0;
+    let tx=L.hx*(1+0.55*vq)+ox,ty=gl+L.h+lift,tz=L.hz+oz,reach=0;
     if(L.arm&&r>0.02){let px,py2,pz2;
       if(killing){if(L.sd<0){const a=clamp(kt/0.55,0,1),b=clamp((kt-0.55)/0.3,0,1);px=lerp(-0.42,-0.3,a);py2=lerp(lerp(1.3,2.35,a),0.55,b*b);pz2=lerp(lerp(0.8,0.35,a),1.35,b);}
         else{const a=clamp(kt/0.6,0,1);px=0.28;py2=lerp(1.4,0.6,a*a);pz2=lerp(1.0,1.3,a);}}
@@ -1767,7 +1800,7 @@ function animKiller(dt,killing){
     const par=L.s.parent;
     V.t.set(tx,ty,tz);root.localToWorld(V.t);par.worldToLocal(V.t);
     par.getWorldQuaternion(Q.a);Q.b.copy(Q.a).invert();
-    V.pv.set(L.sd*(L.arm?0.45:0.35),L.arm?0.1:0,L.arm?-1:1).normalize().applyQuaternion(Q.root).applyQuaternion(Q.b);
+    V.pv.set(L.sd*(L.arm?0.45:0.35)*(1+2.5*vq),L.arm?0.1:0,L.arm?-1:1).normalize().applyQuaternion(Q.root).applyQuaternion(Q.b);
     L.e.rotation.set(solveIK(L.s.position,V.t,L.l1,L.l2,V.pv,L.s.quaternion),0,0);
     /* wrist/ankle: flat on the floor, droops while lifted, turns palm-forward when reaching; the poker hand swings up then stabs */
     Q.c.copy(Q.root);
@@ -2039,10 +2072,10 @@ function buildApt(){
   plane([0,0,0],[6,0,0],[0,0,5],12,10,6,5,[0,1,0],woodF);
   plane([6,0,0],[3,0,0],[0,0,5],6,10,3,5,[0,1,0],linoM);
   plane([0,H,0],[9,0,0],[0,0,5],9,5,3,2,[0,-1,0],ceilM);
-  plane([0,0,0],[9,0,0],[0,H,0],18,6,6,H/1.5,[0,0,1],wallM);
-  plane([0,0,5],[9,0,0],[0,H,0],18,6,6,H/1.5,[0,0,-1],wallM);
-  plane([0,0,0],[0,0,5],[0,H,0],10,6,5/1.5,H/1.5,[1,0,0],wallM);
-  plane([9,0,0],[0,0,5],[0,H,0],10,6,5/1.5,H/1.5,[-1,0,0],wallM);
+  plane([0,0,0],[9,0,0],[0,H,0],18,6,6,H/1.5,[0,0,1],wallM).renderOrder=-2;
+  plane([0,0,5],[9,0,0],[0,H,0],18,6,6,H/1.5,[0,0,-1],wallM).renderOrder=-2;
+  plane([0,0,0],[0,0,5],[0,H,0],10,6,5/1.5,H/1.5,[1,0,0],wallM).renderOrder=-2;
+  plane([9,0,0],[0,0,5],[0,H,0],10,6,5/1.5,H/1.5,[-1,0,0],wallM).renderOrder=-2;
   const wood=lam({map:T.wood}),plast=lam({map:T.plastic}),fab=lam({map:T.fabric}),dark=lam({color:0x2a2018}),steel=lam({map:T.metal}),trimW=lam({color:0x3a2818});
   // wainscot, chair rail, crown molding, baseboards
   const wain=decal(lam({map:T.wainscot}));
@@ -2077,7 +2110,7 @@ function buildApt(){
   addAptLight(S,0xffc68a,1.35,9,.6,1.5,4.3,'lamp');
   const bed=new THREE.Mesh(new THREE.TorusGeometry(.3,.08,6,12),lam({color:0x5a3a5a}));bed.rotation.x=Math.PI/2;bed.position.set(5.3,.08,4.3);S.add(bed);S.add(at(cylm(.28,.28,.05,12,lam({color:0x7a5a7a})),5.3,.03,4.3));
   // living room window, curtains, radiator
-  const wout=new THREE.Mesh(new THREE.PlaneGeometry(1.0,1.1),decal(basic({map:T.rainwin})));wout.rotation.y=Math.PI/2;wout.position.set(.006,1.55,3.05);S.add(wout);
+  const wout=new THREE.Mesh(new THREE.PlaneGeometry(1.0,1.1),decal(basic({map:T.rainwin})));wout.rotation.y=Math.PI/2;wout.position.set(.006,1.55,3.05);wout.renderOrder=-1;wout.material.depthFunc=THREE.AlwaysDepth;S.add(wout);
   const frm=lam({color:0xd8d2bc});S.add(at(boxm(.06,.06,1.12,frm),.03,2.12,3.05));S.add(at(boxm(.14,.05,1.2,frm),.07,.98,3.05));S.add(at(boxm(.06,1.14,.06,frm),.03,1.55,2.5));S.add(at(boxm(.06,1.14,.06,frm),.03,1.55,3.6));S.add(at(boxm(.05,.04,1.0,frm),.035,1.55,3.05));
   const curM=decal(lam({map:T.curtain,side:THREE.DoubleSide}),-1,-4);
   [2.3,3.8].forEach(z=>{const c=new THREE.Mesh(new THREE.PlaneGeometry(.5,1.5,3,2),curM);c.rotation.y=Math.PI/2;c.position.set(.06,1.5,z);S.add(c);});{const rod=at(cylm(.012,.012,1.9,4,steel),.07,2.27,3.05);rod.rotation.x=Math.PI/2;S.add(rod);}
@@ -2109,7 +2142,7 @@ function buildApt(){
   AP.bowl={x:6.45,z:1.12,g:bowl,food};AP.bowlSpot=[6.45,1.43];
   S.add(at(cylm(.07,.08,.14,9,lam({color:0x8a2420})),8.5,.99,.35));S.add(at(ball(.05,lam({color:0x8a2420}),7,4),8.5,1.08,.35));
   S.add(at(boxm(1.12,.05,.14,frm),7.5,1.11,.06));S.add(at(boxm(1.04,.06,.06,frm),7.5,2.03,.03));S.add(at(boxm(.06,.96,.06,frm),6.98,1.57,.03));S.add(at(boxm(.06,.96,.06,frm),8.02,1.57,.03));
-  const out=new THREE.Mesh(new THREE.PlaneGeometry(.98,.9),decal(basic({map:T.rainwin})));out.position.set(7.5,1.57,.006);S.add(out);
+  const out=new THREE.Mesh(new THREE.PlaneGeometry(.98,.9),decal(basic({map:T.rainwin})));out.position.set(7.5,1.57,.006);out.renderOrder=-1;out.material.depthFunc=THREE.AlwaysDepth;S.add(out);
   [6.75,8.25].forEach(x=>{const c=new THREE.Mesh(new THREE.PlaneGeometry(.42,1.2,3,2),curM);c.position.set(x,1.6,.05);S.add(c);});
   const glassM=decal(new THREE.MeshBasicMaterial({color:0x9ab0c8,transparent:true,opacity:0.22,depthWrite:false}));
   S.add(at(new THREE.Mesh(new THREE.PlaneGeometry(.96,.44),glassM),7.5,1.79,.012));
@@ -2226,11 +2259,19 @@ function updatePip(dt){
     case 'sulk':AP.pipT-=dt;tx=5.3;tz=4.0;spd=0.8;if(AP.pipT<=0)AP.pipState='watch';break;
     case 'follow':{const d=Math.hypot(P.x-g.position.x,P.z-g.position.z);face=[P.x,P.z];if(d>1.3){tx=P.x;tz=P.z;spd=1.1;}break;}
   }
-  let moving=false;
-  if(tx!=null&&spd>0){const dx=tx-g.position.x,dz=tz-g.position.z,d=Math.hypot(dx,dz);if(d>0.05){const st=Math.min(d,spd*dt);g.position.x+=dx/d*st;g.position.z+=dz/d*st;g.rotation.y+=angDiff(g.rotation.y,Math.atan2(dx,dz))*Math.min(1,dt*10);moving=true;}}
-  else if(face){const ty=Math.atan2(face[0]-g.position.x,face[1]-g.position.z);g.rotation.y+=angDiff(g.rotation.y,ty)*Math.min(1,dt*4);}
-  c.legs.forEach((l,i)=>{l.rotation.x=(l.userData.r0||0)+(moving?Math.sin(AP.t*14+i*1.6)*0.5:0);});
-  c.tail.rotation.y=Math.sin(AP.t*(AP.pipState==='stalk'?7:AP.pipState==='excited'?5:2.4))*0.6;c.head.rotation.x=damp(c.head.rotation.x,AP.pipState==='stalk'?0.25:headX,10,dt);
+  const yb=g.rotation.y;let want=0,going=false;
+  if(tx!=null&&spd>0){const dx=tx-g.position.x,dz=tz-g.position.z,d=Math.hypot(dx,dz);if(d>0.05){going=true;const hd=Math.atan2(dx,dz),err=angDiff(g.rotation.y,hd),tr=dt*(4+spd*2.5);
+      g.rotation.y+=clamp(err,-tr,tr);want=Math.min(spd,0.14+d*2.2)*clamp(Math.cos(err)*1.3,0.12,1);
+      const st=Math.min(d,c.v*dt);g.position.x+=dx/d*st;g.position.z+=dz/d*st;}}
+  if(!going&&face){const ty=Math.atan2(face[0]-g.position.x,face[1]-g.position.z),e=angDiff(g.rotation.y,ty);if(Math.abs(e)>0.5||c.turning){c.turning=Math.abs(e)>0.08;g.rotation.y+=clamp(e,-dt*2.6,dt*2.6);}}
+  c.v=damp(c.v||0,want,want>(c.v||0)?5:8,dt);
+  const turn=Math.abs(angDiff(yb,g.rotation.y))/Math.max(dt,1e-4);
+  c.ph=(c.ph||0)+dt*TAU*(c.v/0.24+Math.min(turn,3)*0.22);
+  const gk=clamp(c.v/0.4,0,1)+(c.v<0.15?clamp(turn/2.2,0,0.6):0);
+  catGait(c,c.ph,clamp(gk,0,1),c.v>1.35);
+  const ps=AP.pipState,eye=[P.x,P.floor+P.eye,P.z],spy=[sp.x,sp.y,sp.z];
+  catLife(c,dt,AP.t,{pitch:ps==='stalk'?0.25:headX,look:(ps==='watch'||ps==='stalk'||ps==='pounce')?spy:(ps==='table'||ps==='hungry'||ps==='follow')?eye:ps==='sulk'?null:null,
+    tail:ps==='excited'||ps==='hungry'?'up':ps==='stalk'?'low':ps==='sulk'?'swish':'calm'});
   if(AP.noticed&&!AP.released){AP.mewT-=dt;if(AP.mewT<=0&&AC){AP.mewT=7+R()*6;pipMew(R()<0.5?'mew':'meow');}}
 }
 function takeGlass(){AP.hasGlass=true;held.add(AP.glass);AP.glass.position.set(.21,-.25,-.46);AP.glass.rotation.set(0.15,0,0);sClink(busFx);if(!AP.trapped&&AP.noticed)setObjective(OBJ.trap);}
@@ -2291,11 +2332,11 @@ async function releaseSpider(){
   const g=AP.pip.g;AP.pipState='escape';const p0=[g.position.x,g.position.z];
   if(AC)oneShotAt(g.position.x,.2,g.position.z,pn=>sMeow(pn,'mew'));
   await tween(Math.max(0.4,Math.hypot(7.5-p0[0],1.05-p0[1])/2.6),k=>{g.position.set(lerp(p0[0],7.5,k),0,lerp(p0[1],1.05,k));g.rotation.y=Math.atan2(7.5-p0[0],1.05-p0[1]);
-    AP.pip.legs.forEach((l,i)=>{l.rotation.x=Math.sin(AP.t*20+i*1.6)*0.6;});P.lookT=[g.position.x,.4,g.position.z];});
+    catGait(AP.pip,AP.t*34,1,true);P.lookT=[g.position.x,.4,g.position.z];});catGait(AP.pip,0,0,false);
   P.lookT=[7.5,1.2,0.2];g.rotation.y=Math.PI;
-  await tween(0.35,k=>{g.position.set(7.5,Math.sin(k*Math.PI)*0.35+k*0.93,lerp(1.05,.42,k));});
+  await tween(0.35,k=>{g.position.set(7.5,Math.sin(k*Math.PI)*0.35+k*0.93,lerp(1.05,.42,k));catLeap(AP.pip,Math.sin(k*Math.PI),-0.45);});catLeap(AP.pip,0,0);
   await sleep(0.25);
-  await tween(0.3,k=>{g.position.set(7.5,.93+Math.sin(k*Math.PI)*0.25+k*0.2,lerp(.42,.08,k));});
+  await tween(0.3,k=>{g.position.set(7.5,.93+Math.sin(k*Math.PI)*0.25+k*0.2,lerp(.42,.08,k));catLeap(AP.pip,Math.sin(k*Math.PI),-0.35);});catLeap(AP.pip,0,0);
   await sleep(0.15);
   await tween(0.35,k=>{g.position.set(7.5,1.13-k*0.25,lerp(.08,-0.45,k));});
   g.visible=false;
@@ -2316,7 +2357,7 @@ function startApartment(){
 }
 async function wakeUp(){
   const fd=$('fade');fd.style.transitionDuration='0s';fd.style.opacity='1';
-  const pg=AP.pip.g,legs=(k)=>AP.pip.legs.forEach((l,i)=>{l.rotation.x=(l.userData.r0||0)+Math.sin(AP.t*14+i*1.6)*0.5*k;}),ease=k=>k*k*(3-2*k);
+  const pg=AP.pip.g,legs=(k)=>catGait(AP.pip,AP.t*27,k,false),ease=k=>k*k*(3-2*k);
   await sleep(1.3);pipMew('meow');await sleep(1.0);
   await fadeTo(0.55,0.35);await fadeTo(1,0.18);await sleep(0.6);pipMew('mew');
   await fadeTo(0.25,0.55);await fadeTo(0.8,0.22);await fadeTo(0,0.8);
@@ -2325,10 +2366,11 @@ async function wakeUp(){
   {const x0=P.x,z0=P.z;await tween(1.3,k=>{const e=ease(k);P.x=lerp(x0,2.3,e);P.z=lerp(z0,3.55,e);P.eye=lerp(0.66,1.1,e);});}
   P.lookT=[2.45,.8,.48];await sleep(0.9);speak('Marissa','Fell asleep with the TV on again.',2.8);await sleep(2.0);
   AP.pipState='cine';P.lookT=[2.2,.5,2.25];await sleep(0.4);
-  {const p0=pg.position.clone();await tween(0.42,k=>{pg.position.set(lerp(p0.x,3.35,k),lerp(p0.y,0,k)+Math.sin(k*Math.PI)*0.2,lerp(p0.z,2.0,k));pg.rotation.y=Math.atan2(3.35-p0.x,2.0-p0.z);P.lookT=[pg.position.x,.3,pg.position.z];});}
+  {const p0=pg.position.clone(),y0=pg.rotation.y,y1=Math.atan2(3.35-p0.x,2.0-p0.z);await tween(0.35,k=>{pg.rotation.y=y0+angDiff(y0,y1)*ease(k);catLeap(AP.pip,ease(k)*0.35,-0.5);});
+    await tween(0.46,k=>{pg.position.set(lerp(p0.x,3.35,k),lerp(p0.y,0,k)+Math.sin(k*Math.PI)*0.2,lerp(p0.z,2.0,k));catLeap(AP.pip,Math.sin(Math.min(1,k*1.15)*Math.PI),k<0.5?-0.25:0.45);P.lookT=[pg.position.x,.3,pg.position.z];});catLeap(AP.pip,0,0);}
   if(AC)oneShotAt(pg.position.x,.05,pg.position.z,(p,t)=>sNoise(p,t,0.06,'lowpass',500,0.8,0.25),1.2,1);
   {const p0=pg.position.clone();pg.rotation.y=Math.atan2(4.7-p0.x,1.6-p0.z);await tween(1.5,k=>{pg.position.set(lerp(p0.x,4.7,k),0,lerp(p0.z,1.6,k));legs(1);P.lookT=[pg.position.x,.3,pg.position.z];});legs(0);}
-  {const y0=pg.rotation.y,y1=Math.atan2(P.x-4.7,P.z-1.6);await tween(0.4,k=>{pg.rotation.y=y0+angDiff(y0,y1)*k;});}
+  {const y0=pg.rotation.y,y1=Math.atan2(P.x-4.7,P.z-1.6);await tween(0.5,k=>{pg.rotation.y=y0+angDiff(y0,y1)*ease(k);legs(Math.sin(k*Math.PI)*0.5);});legs(0);}
   pipMew('meow');await sleep(0.9);
   speak('Marissa','Okay, okay. I hear you. Dinner.',2.8);await sleep(0.8);
   {const z1=P.z;await tween(0.9,k=>{const e=ease(k);P.z=lerp(z1,2.95,e);P.eye=lerp(1.1,1.62,e);});}
@@ -2492,7 +2534,7 @@ async function streetCutscene(){
   setMode('cine');hidePrompt();$('tip').hidden=true;const c=ST.cat.g;P.lookT=[c.position.x,.15,c.position.z];
   oneShotAt(c.position.x,.2,c.position.z,p=>sMeow(p,'meow'));
   await sleep(1.0);
-  const t0=time;await new Promise(res=>{const step=()=>{const k=Math.min(1,(time-t0)/1.2);c.position.z=lerp(5.05,5.45,k);c.rotation.y=0;ST.cat.legs.forEach((l,i)=>l.rotation.x=(l.userData.r0||0)+Math.sin(time*14+i*1.6)*0.5*(1-k));if(k<1)after(0,step);else res();};step();});
+  const t0=time;await new Promise(res=>{const step=()=>{const k=Math.min(1,(time-t0)/1.2);c.position.z=lerp(5.05,5.45,k);c.rotation.y=0;catGait(ST.cat,time*16,1-k,false);if(k<1)after(0,step);else res();};step();});
   P.lookT=[4.05,.1,5.9];
   oneShotAt(4.05,.1,6.0,p=>{cryBurst(p,0.6);},2.5);
   await sleep(1.9);
@@ -2528,17 +2570,18 @@ async function ventIntro(){
     if(time>nextCry){nextCry=time+0.9+R()*0.7;K.m.head.getWorldPosition(v3);if(AC)oneShotAt(v3.x,v3.y,v3.z,p=>sMeow(p,R()<0.65?'yowl':'mew'),2.6,2);}};
   spawnKiller(13,21,0);K.frozen=true;K.state='intro';K.climb=0;K.lookAt=[14,2.5,39.5];
   const put=(x,z,y,yaw)=>{K.x=x;K.z=z;K.y=y;K.yaw=yaw;};put(27,43.2,CH+0.3,-Math.PI/2);K.rx=K.x;K.rz=K.z;K.ry=K.y;K.ryaw=K.yaw;
-  K.m.head.add(pc.g);pc.g.position.set(0,-.3,.2);pc.g.rotation.set(1.25,0,0);pc.g.visible=true;
+  K.m.head.add(pc.g);pc.g.traverse(o=>{o.renderOrder=3;});pc.g.position.set(0,-.3,.2);pc.g.rotation.set(1.25,0,0);pc.g.visible=true;
   P.x=5;P.z=45.3;P.yaw=-Math.PI/2+0.3;P.pitch=0;P.eye=1.62;P.floor=0;
   await sleep(0.9);cry();
   await tween(0.9,k=>{const e=ease(k);P.x=lerp(5,6.9,e);P.z=lerp(45.3,44.6,e);P.eye=lerp(1.62,0.95,e);watch();cry();});P.crouch=true;$('bDuck').classList.add('on');
   const leg=(x0,z0,x1,z1,sp)=>{K.yaw=Math.atan2(x1-x0,z1-z0);return tween(Math.hypot(x1-x0,z1-z0)/sp,k=>{K.x=lerp(x0,x1,k);K.z=lerp(z0,z1,k);K.y=cellAt(Math.floor(K.x/CELL),Math.floor(K.z/CELL))==='~'?CH+0.3:0;watch();cry();});};
   if(K.pan)cryBurst(K.pan,0.45,0);
   await leg(27,43.2,16.4,43.0,1.9);await leg(16.4,43.0,14.2,41.1,1.5);await leg(14.2,41.1,14.0,40.5,0.9);
-  K.yaw=Math.PI;await tween(0.8,k=>{K.climb=ease(k);K.z=lerp(40.5,40.06,k);watch();cry();});
-  await tween(2.3,k=>{K.y=lerp(0,1.5,k);watch();cry();});
-  await tween(1.4,k=>{K.climb=1-k*k;K.z=lerp(40.06,39.3,k);K.y=lerp(1.5,1.56,k);watch();cry();});
-  await tween(0.9,k=>{K.z=lerp(39.3,37.6,k);cry();});
+  K.yaw=Math.PI;K.gaitBoost=0.45;await tween(0.9,k=>{K.climb=ease(k);K.z=lerp(40.5,40.06,k);watch();cry();});K.gaitBoost=0;
+  await tween(2.5,k=>{K.y=lerp(0,1.2,ease(k));watch();cry();});
+  K.gaitBoost=0.35;await tween(0.5,k=>{K.y=1.2+Math.sin(k*Math.PI)*0.06;watch();cry();});
+  await tween(1.7,k=>{const e=ease(k);K.climb=1-e;K.vent=e;K.z=lerp(40.06,39.25,e);K.y=lerp(1.2,2.1,e);watch();cry();});
+  K.gaitBoost=0.2;await tween(2.6,k=>{K.z=lerp(39.25,35.4,k*k*(1.6-0.6*k));cry();});K.gaitBoost=0;K.vent=0;
   if(AC&&farIn){after(0.3,()=>sMeow(farIn,'yowl'));after(1.5,()=>sMeow(farIn,'mew'));}
   K.m.head.remove(pc.g);K.active=false;K.m.root.visible=false;K.frozen=false;K.climb=0;K.state='idle';K.lookAt=null;if(K.drag&&AC)tgt(K.drag.gain,0,0.05);setChase(false);
   P.lookT=[14,2.55,40];await sleep(1.6);speak('Marissa','He took her up there. Okay... okay. I\'m coming, Pip.',3.6);await sleep(1.2);P.lookT=null;
@@ -2553,16 +2596,17 @@ const waitFor=(fn,max)=>new Promise(res=>{const t0=time;const st=()=>{if(fn()||t
 async function emerge(v){if(F.emerged&&mode!=='play')return;F.emerged=true;setMode('cine');hidePrompt();$('tip').hidden=true;
   const doomed=D.present&&!F.doloresSafe&&!F.doloresDead,[vx,vy,vz]=v.pos,nx=v.n[0],nz=v.n[1],yaw=Math.atan2(nx,nz),ease=k=>k*k*(3-2*k),v3=new THREE.Vector3();
   spawnKiller(Math.floor((vx-nx)/CELL),Math.floor((vz-nz)/CELL),0);K.frozen=true;K.state='intro';
-  const put=(d,y)=>{K.x=vx+nx*d;K.z=vz+nz*d;K.y=y;};put(-1.7,vy-1.0);K.yaw=yaw;K.rx=K.x;K.rz=K.z;K.ry=K.y;K.ryaw=yaw;K.climb=0;
+  const put=(d,y)=>{K.x=vx+nx*d;K.z=vz+nz*d;K.y=y;};put(-2.0,vy-0.45);K.yaw=yaw;K.rx=K.x;K.rz=K.z;K.ry=K.y;K.ryaw=yaw;K.climb=0;K.vent=1;
   const watch=()=>{K.m.head.getWorldPosition(v3);P.lookT=[v3.x,v3.y,v3.z];};
   const fov0=camera.fov,zoomTo=(f,d)=>{const a=camera.fov;tween(d,k=>{camera.fov=lerp(a,fov0*f,ease(k));camera.updateProjectionMatrix();});};
   cineLight(true,vx+nx*1.8,3.4,vz+nz*1.8);P.lookT=[vx,vy,vz];zoomTo(0.5,1.6);if(AC){sting();oneShotAt(vx,vy,vz,(p,t)=>{sNoise(p,t,0.5,'bandpass',900,4,0.5,0.05,600);sClank(p,t+0.5,0.45);},3,2);}if(K.pan)cryBurst(K.pan,1.0,0.6);
   if(doomed)after(1.6,()=>{if(AC)oneShotAt(D.g.position.x,1.6,D.g.position.z,(p,t)=>scream(p,t,1.2,460,1.0,{old:true,fall:0.8}),8,3);});
   await sleep(0.9);
-  await tween(1.3,k=>{put(lerp(-1.7,-0.2,k),vy-1.0);watch();});
-  await tween(0.9,k=>{K.climb=-ease(k);put(lerp(-0.2,0.04,k),vy-1.0);watch();});
-  await tween(1.8,k=>{put(0.04,lerp(vy-1.0,1.25,k));watch();});
-  zoomTo(doomed?0.85:0.7,1.0);await tween(0.8,k=>{K.climb=-1+ease(k);put(lerp(0.04,1.4,k),lerp(1.25,0,k));watch();});
+  K.gaitBoost=0.15;await tween(1.7,k=>{put(lerp(-2.0,-0.4,ease(k)),vy-0.45);watch();});K.gaitBoost=0;
+  await tween(0.6,k=>{put(-0.4+Math.sin(k*Math.PI)*0.05,vy-0.45);watch();});
+  K.gaitBoost=0.5;await tween(1.2,k=>{const e=ease(k);K.climb=-e;K.vent=1-e;put(lerp(-0.4,0.04,e),vy-0.45-0.25*e);watch();});K.gaitBoost=0;K.vent=0;
+  await tween(1.9,k=>{put(0.04,lerp(vy-0.7,1.25,ease(k)));watch();});
+  zoomTo(doomed?0.85:0.7,1.0);K.gaitBoost=0.5;await tween(0.85,k=>{const e=ease(k);K.climb=-1+e;put(lerp(0.04,1.4,e),lerp(1.25,0,e));watch();});K.gaitBoost=0;
   K.climb=0;K.y=0;K.frozen=false;K.lookAt=null;cineLight(false);
   if(doomed){K.prey=D.npc;K.state='prey';D.npc.seen=true;F.doloresSeen=true;
     await waitFor(()=>{watch();return K.state==='npckill';},10);
@@ -2699,7 +2743,7 @@ requestAnimationFrame(t=>{last=t;frame(t);});
 initStore();
 window.__abandoned={get mode(){return mode;},get level(){return level;},P,get K(){return K;},F:()=>F,
   skipToSewer(){initAudio();$('title').hidden=true;F=freshFlags();P.onPlat=false;enterSewer(true);},ventIntro:()=>ventIntro(),climbPipe:(u,i)=>climbPipe(u,CLIMBS[i||0]),steams:()=>[SW.steam,...(SW.steams||[])],cell:(x,z)=>cellAt(Math.floor(x/CELL),Math.floor(z/CELL)),duct:e=>ductMove(e),takeTrap:i=>takeTrap(i),setTrap:()=>setTrap(),climb:up=>climb(up),openLock:()=>openLock(),LOCK,killer:()=>K,throwBiter:()=>throwBiter(),hurt:a=>hurtPlayer(a),enterHide:i=>enterHide(SW.hides[i]),hides:()=>SW.hides,street:()=>{initAudio();$('title').hidden=true;enterStreet();},teleport(cx,cz,yaw){P.x=wc(cx);P.z=wc(cz);if(yaw!=null)P.yaw=yaw;},
-  hunt(){pickValve();},emerge:w=>emerge(w==='e'?VENT_E:VENT_W),npcs:()=>NPCS,remains:()=>SW.remains,spawnK:(cx,cz,wp)=>spawnKiller(cx,cz,wp||0),openGate,startGame,AP,trap:()=>trapSpider(),takeGlass:()=>takeGlass(),openCab:i=>openCab(AP.cabs[i]),takeCan:()=>takeCan(),useOpener:()=>useOpener(),feed:()=>feedPip(),news:()=>startNews(),spider:()=>spiderAppear(),release:()=>releaseSpider(),rats:()=>SW.rats,grabRat:r=>grabRat(r),throwRat:()=>throwRat(),litter:i=>pickLitter(i),burn:i=>burnSave(SW.fires[i||0]),save:()=>lastSave,load:sv=>loadGame(sv)};
+  hunt(){pickValve();},emerge:w=>emerge(w==='e'?VENT_E:VENT_W),canSee:()=>canSee(),npcs:()=>NPCS,remains:()=>SW.remains,spawnK:(cx,cz,wp)=>spawnKiller(cx,cz,wp||0),openGate,startGame,AP,trap:()=>trapSpider(),takeGlass:()=>takeGlass(),openCab:i=>openCab(AP.cabs[i]),takeCan:()=>takeCan(),useOpener:()=>useOpener(),feed:()=>feedPip(),news:()=>startNews(),spider:()=>spiderAppear(),release:()=>releaseSpider(),rats:()=>SW.rats,grabRat:r=>grabRat(r),throwRat:()=>throwRat(),litter:i=>pickLitter(i),burn:i=>burnSave(SW.fires[i||0]),save:()=>lastSave,load:sv=>loadGame(sv)};
 })();
 </script>
 </body></html>
