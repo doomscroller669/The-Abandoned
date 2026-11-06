@@ -295,7 +295,8 @@ button{font:inherit;color:inherit}
 
 <section id="chap" class="screen" hidden aria-label="Chapter Two" style="z-index:60;background:#000">
   <div class="wrap" style="margin:auto 0">
-    <h2 class="t-title" style="font-size:clamp(40px,9vw,88px)">Chapter Two</h2>
+    <p class="kicker">Chapter Two</p>
+    <h2 class="t-title" style="font-size:clamp(40px,9vw,88px)">The Lab</h2>
   </div>
 </section>
 
@@ -3288,7 +3289,7 @@ function tryLiftGate(){const B2=SW.c2.bot,ease=k=>k*k*(3-2*k);
   F.liftGate=true;if(AC)oneShotAt(B2.door[0],1.2,B2.door[1],(p,t)=>sRattle(p,t,1.0),2.5);tween(1.0,k=>{B2.gate.scale.x=lerp(1,0.12,ease(k));});setObjective(OBJ.c2lab);writeSave(makeSave('Lower landing'));}
 function endBuild(){if(mode==='end')return;setMode('end');releaseLock();setChase(false);if(K)K.active=false;liftHumStop();
   if(AC){const t=now()+0.01;sClank(busFx,t,0.6);sNoise(busFx,t+0.2,1.4,'highpass',2200,0.7,0.18,0.3);}
-  fadeTo(1,1.4).then(()=>{$('endKick').textContent='Chapter Two';$('endTitle').textContent='To be continued';$('sumList').innerHTML='';$('endLine').textContent='The lab is next.';$('ch2Btn').hidden=true;$('againBtn').classList.add('primary');
+  fadeTo(1,1.4).then(()=>{$('endKick').textContent='Chapter Two';$('endTitle').textContent='The Lab';$('sumList').innerHTML='';$('endLine').textContent='To be continued.';$('ch2Btn').hidden=true;$('againBtn').classList.add('primary');
     $('end').hidden=false;$('fade').style.opacity='0';setTimeout(()=>$('againBtn').focus({preventScroll:true}),40);});}
 
 /* ---------- sounds ---------- */
