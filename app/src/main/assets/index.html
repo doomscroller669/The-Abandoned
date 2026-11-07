@@ -722,7 +722,7 @@ class GB{
 function hash3(x,y,z){const s=Math.sin(x*12.9898+y*78.233+z*37.719)*43758.5453;return s-Math.floor(s);}
 function grime(x,y,z){let b=0.74+hash3(x,y,z)*0.26;let r=b,g=b,bl=b;
   if(y<0.7){const k=Math.min(1,(0.7-y)/2.0);r*=1-k*0.45;g*=1-k*0.18;bl*=1-k*0.5;}
-  if(y>2.7){const k=Math.min(1,(y-2.7)/0.5)*0.35;r*=1-k;g*=1-k;bl*=1-k;}return [r,g,bl];}
+  if(y>2.7){const k=Math.min(1,(y-2.7)/0.5)*0.35;r*=1-k;g*=1-k;bl*=1-k;}const hd=hallDark(x,z);return [r*hd,g*hd,bl*hd];}
 function scaleUV(geo,su,sv){const uv=geo.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*su,uv.getY(i)*sv);uv.needsUpdate=true;return geo;}
 function headGeo(r,o={}){const g=new THREE.SphereGeometry(r,o.ws||20,o.hs||16);const p=g.attributes.position;const v=new THREE.Vector3();
   for(let i=0;i<p.count;i++){v.fromBufferAttribute(p,i);const nx=v.x/r,ny=v.y/r,nz=v.z/r;let x=v.x*0.9,y=v.y*1.13,z=v.z;
@@ -822,10 +822,10 @@ function ceilAt(cx,cz){if(cx>=70)return ceil2(cx,cz);if(cx>=56)return 2.6;if(cx>
 
 let F;
 function freshFlags(){return {called911:false,metDolores:false,askedWho:false,askedCops:false,askedGate:false,askedAny:false,doloresSafe:false,
-  hasValve:false,hunt:false,gateOpen:false,notes:new Set(),seen:0,teased:false,inCamp:false,waterTip:false,seenTip:false,gateCk:false,gateLooked:false,cageOpen:false,lockTried:false,glassTip:false,litter:0,litterTaken:new Set(),ratsEaten:new Set(),litterTip:false,throwTip:false,doloresYaw:null,doloresSeen:false,inv:[],trapsTaken:new Set(),trapTip:false,steamTip:false,fenceTip:false,emergeDue:false,emerged:false,valveT:0,doloresDead:false,hasMap:false,mapSeen:new Set(),emergeVent:null,ch2:false,ch2Woke:false,elevSeen:false,hasBattery:false,elevDown:false,elevDead:false,liftGate:false,gateTried:false,trashTip:false,crawlTip:false,labOpen:false,labIn:false,labT:0,labWoke:false,inj:0,cureT:0,injTip:false,mutTip:false,hasLabMap:false,labNotes:[],cureSeen:false,blastSeen:false,bossSeen:false,bossIn:false,blastOpen:false,blastWarn:false,bossDead:false,bossTip:false,bossTipArm:false,bossTipTail:false,bossTipBite:false,hasCode:false,liftOpen:false,bossHand:null,bossAt:null,tapes:[],tapesSeen:[],picked:[],cryoDone:false,chemDone:false,closetOpen:false,secOpen:false,mazeDone:false,maze:null,mutDead:[],keyDrops:[],keysTaken:[],cellMack:false,cellBee:false,injTip2:false};}
+  hasValve:false,hunt:false,gateOpen:false,notes:new Set(),seen:0,teased:false,inCamp:false,waterTip:false,seenTip:false,gateCk:false,gateLooked:false,cageOpen:false,lockTried:false,glassTip:false,litter:0,litterTaken:new Set(),ratsEaten:new Set(),litterTip:false,throwTip:false,doloresYaw:null,doloresSeen:false,inv:[],trapsTaken:new Set(),trapTip:false,steamTip:false,fenceTip:false,emergeDue:false,emerged:false,valveT:0,doloresDead:false,hasMap:false,mapSeen:new Set(),emergeVent:null,ch2:false,ch2Woke:false,elevSeen:false,hasBattery:false,elevDown:false,elevDead:false,liftGate:false,gateTried:false,trashTip:false,crawlTip:false,labOpen:false,labIn:false,labT:0,labWoke:false,inj:0,cureT:0,injTip:false,mutTip:false,hasLabMap:false,labNotes:[],cureSeen:false,blastSeen:false,bossSeen:false,bossIn:false,blastOpen:false,blastWarn:false,bossDead:false,bossTip:false,bossTipArm:false,bossTipTail:false,bossTipBite:false,hasCode:false,liftOpen:false,bossHand:null,bossAt:null,tapes:[],tapesSeen:[],picked:[],cryoDone:false,chemDone:false,closetOpen:false,secOpen:false,mazeDone:false,maze:null,mutDead:[],keyDrops:[],keysTaken:[],cellMack:false,cellBee:false,noteVent:false,ventOpen:false,vent_hold:false,vent_shop:false,ventTip:false,injTip2:false};}
 F=freshFlags();
 function solidCell(cx,cz){const c=cellAt(cx,cz);if(c==='G')return !F.gateOpen;if(c==='E')return !!(SW.c2&&SW.c2.topShut);if(c==='J'||c==='j'||c==='b'||c==='q'||c==='h')return labDoorShut(c,cx,cz);return c==='#'||c==='='||c==='C'||PROP_SOLID.includes(c);}
-function pSolid(cx,cz){const c=cellAt(cx,cz);if(cx===116&&cz===22&&F.ch2&&!F.liftGate)return true;if(c==='J'||c==='j'||c==='b'||c==='q'||c==='h')return labDoorShut(c,cx,cz);if(P.onPlat&&P.highKind==='pipe')return false;if(c==='K')return true;if(c==='#'||PROP_SOLID.includes(c))return true;if(c==='G')return !F.gateOpen;if(c==='C'&&!F.cageOpen)return true;return (c==='='||c==='C')!==!!P.onPlat;}
+function pSolid(cx,cz){if(P.inVent)return false;const c=cellAt(cx,cz);if(cx===116&&cz===22&&F.ch2&&!F.liftGate)return true;if(c==='J'||c==='j'||c==='b'||c==='q'||c==='h')return labDoorShut(c,cx,cz);if(P.onPlat&&P.highKind==='pipe')return false;if(c==='K')return true;if(c==='#'||PROP_SOLID.includes(c))return true;if(c==='G')return !F.gateOpen;if(c==='C'&&!F.cageOpen)return true;return (c==='='||c==='C')!==!!P.onPlat;}
 function propInset(cx,cz){const c=cellAt(cx,cz);if(c==='Z')return 0.74;if(c==='K')return 0;return (c==='#'||c==='G'||c==='='||c==='C'||c==='M'||c==='.'||c==='~'||c==='H'||c==='L'||c==='X'||c==='P'||c==='c'||c==='E'||c==='e'||c==='k'||c==='J'||c==='j'||c==='b'||c==='q'||c==='h'||'1234567'.includes(c))?0:0.26;}
 let mode='title',level='street',time=0;
 let activeScene=null;
@@ -1725,7 +1725,7 @@ function makeTrap(){const g=new THREE.Group();g.add(at(boxm(.27,.02,.13,lam({col
   bar.rotation.z=Math.PI*0.97;g.userData.bar=bar;g.scale.setScalar(1.25);return g;}
 function takeTrap(i){if(F.trapsTaken.has(i))return;if(F.inv.filter(x=>x==='trap').length>=4){sub('Your hands are full.',2.2);return;}F.trapsTaken.add(i);F.inv.push('trap');SW.ductTraps[i].visible=false;sClick();
   if(!F.trapTip){F.trapTip=true;tip(touchMode?'Tap TRAP to set a mouse trap on the floor in front of you. If he steps on it, it holds him for a few seconds.':'Press Q to set a mouse trap on the floor in front of you. If he steps on it, it holds him for a few seconds.',8);}}
-function setTrap(){if(mode!=='play'||level!=='sewer'||P.hidden||P.onPlat||P.inWater||P.sub)return;const i=F.inv.indexOf('trap');if(i<0)return;
+function setTrap(){if(mode!=='play'||level!=='sewer'||P.hidden||P.onPlat||P.inWater||P.sub||P.inVent)return;const i=F.inv.indexOf('trap');if(i<0)return;
   const fx=-Math.sin(P.yaw),fz=-Math.cos(P.yaw);let x=P.x+fx*0.8,z=P.z+fz*0.8;const cx=Math.floor(x/CELL),cz=Math.floor(z/CELL);if(pSolid(cx,cz)||cellAt(cx,cz)==='~'){x=P.x;z=P.z;}
   F.inv.splice(i,1);const m=makeTrap();m.position.set(x,0,z);m.rotation.y=P.yaw;SW.scene.add(m);SW.traps.push({x,z,m,armed:true});
   if(AC)oneShotAt(x,.05,z,(p,t)=>{sNoise(p,t,0.03,'bandpass',2600,3,0.3);sTone(p,t+0.04,0.05,'triangle',1800,1400,0.08);},1.2,1);noise(P.x,P.z,2);}
@@ -1847,7 +1847,7 @@ function kMove(tx,tz,speed,dt){
 }
 function playerLow(){return P.crouch||P.inWater||pCrawl();}
 function canSee(){
-  if(P.hidden||P.sub)return false;const dx=P.x-K.x,dz=P.z-K.z,d=Math.hypot(dx,dz);
+  if(P.hidden||P.sub||P.inVent)return false;const dx=P.x-K.x,dz=P.z-K.z,d=Math.hypot(dx,dz);
   const aware=K.state==='chase'||K.state==='throw';let range=aware?24:(P.light?16:11);if(!aware){if(P.crouch||pCrawl())range*=0.6;if(P.inWater)range*=0.75;}
   const onPipe=P.onPlat&&P.highKind==='pipe';
   if(!aware&&onPipe){if(Math.atan2(P.floor+P.eye-(K.y+1.0),d)>0.36)return false;range=Math.min(range,P.light?11:6);}
@@ -1934,7 +1934,7 @@ function updateKiller(dt){
   else{K.stuckT=(K.stuckT||0)+dt;if(Math.hypot(K.x-(K.sx||0),K.z-(K.sz||0))>0.6){K.sx=K.x;K.sz=K.z;K.stuckT=0;}
     if(K.stuckT>4){K.stuckT=0;if(K.state==='patrol')K.wp=(K.wp+K.dir+PATROL.length)%PATROL.length;else if(K.state==='investigate'){K.state='patrol';K.wp=nearestWp();}else if(K.state==='search'){K.sPhase=1;K.checks=[];K.searchT=Math.min(K.searchT,3);}}}
   if(K.state==='investigate'||K.state==='search'){for(const r of SW.rats){if((r.state==='idle'||r.state==='scurry')&&!r.onPlat&&Math.hypot(r.x-K.x,r.z-K.z)<1.3){eatRat(r);break;}}}
-  if(K.state==='chase'&&mode==='play'&&!P.hidden&&!P.sub&&!P.onPlat&&dP<1.45&&losClear(K.x,K.z,P.x,P.z,false))killPlayer();
+  if(K.state==='chase'&&mode==='play'&&!P.hidden&&!P.sub&&!P.onPlat&&!P.inVent&&dP<1.45&&losClear(K.x,K.z,P.x,P.z,false))killPlayer();
   if(K.moveSpeed>0.2){for(const gp of SW.glass){if(gp.kcool<=0&&Math.hypot(K.x-gp.x,K.z-gp.z)<gp.r+0.35){gp.kcool=0.9;if(K.pan&&AC)sCrunch(K.pan,now()+0.01,1.2);}}
     for(const cn of SW.cans){if(cn.cool<=0&&Math.hypot(K.x-cn.x,K.z-cn.z)<0.6){cn.vx=Math.sin(K.yaw)*2.6;cn.vz=Math.cos(K.yaw)*2.6;cn.cool=0.8;oneShotAt(cn.x,.05,cn.z,(pn,t)=>sClatter(pn,t,0.5),2);}}}
   const kc=cellAt(Math.floor(K.x/CELL),Math.floor(K.z/CELL));K.y=damp(K.y,kc==='~'?CH+0.3:0,6,dt);
@@ -2032,7 +2032,7 @@ function animKiller(dt,killing){
 const keys={};const joy={x:0,y:0,mag:0};let lookDX=0,lookDY=0;
 function playerUpdate(dt){
   if(P.hidden){const h=P.hidden,lk=h.type==='locker';P.yaw=h.yaw0+clamp(angDiff(h.yaw0,P.yaw),lk?-0.26:-0.7,lk?0.26:0.7);P.pitch=clamp(P.pitch,lk?-0.26:-0.75,lk?0.12:0.35);P.focus=null;
-    if(h.mack&&P.pitch<-0.3&&Math.abs(angDiff(h.yaw0,P.yaw))<0.5){P.focus={kind:'card',act(){openNote('7');}};showPrompt('Examine');}else showPrompt('Climb out');
+    if(h.mack&&P.pitch<-0.3&&Math.abs(angDiff(h.yaw0,P.yaw))<0.5){P.focus={kind:'card',act(){openNote('7');}};showPrompt('Examine');}else if(h.note&&P.pitch<-0.15){P.focus={kind:'card',act(){F.noteVent=true;openNote(h.note);}};showPrompt('Read the note');}else showPrompt('Climb out');if(h.note&&!h.noteHint){h.noteHint=true;after(1.0,()=>{if(P.hidden===h)sub('Something is taped low on the inside of the door.',3.2);});}
     if(time-(P.lastHurt||-99)>6)P.hp=Math.min(1,P.hp+dt*0.025);return;}
   let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)+joy.y;
   let s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joy.x;
@@ -2044,7 +2044,7 @@ function playerUpdate(dt){
   const sy=Math.sin(P.yaw),cy=Math.cos(P.yaw);
   const vx=(-sy*f+cy*s)*speed,vz=(-cy*f-sy*s)*speed;
   const ox=P.x,oz=P.z;P.x+=vx*dt;P.z+=vz*dt;
-  if(level==='sewer'&&P.highKind==='pipe'){clampPipe(P);P.platY=pipeH(P.x,P.z);}
+  if(level==='sewer'&&P.inVent){ventClamp(P);}else if(level==='sewer'&&P.highKind==='pipe'){clampPipe(P);P.platY=pipeH(P.x,P.z);}
   else if(level==='sewer'){collide(P,0.34,pSolid);if(D&&D.present&&!P.onPlat){const dx=P.x-D.g.position.x,dz=P.z-D.g.position.z,d=Math.hypot(dx,dz);if(d<0.62&&d>0.001){P.x=D.g.position.x+dx/d*0.62;P.z=D.g.position.z+dz/d*0.62;}}unstick();}
   else if(level==='apt'){collideBoxes(P,0.3,AP.cols);}
   else{P.x=clamp(P.x,-20,20);P.z=clamp(P.z,0.6,15.2);if(P.x>-13.4&&P.x<-8.6&&P.z>2.2&&P.z<4.6){P.z=(P.z-2.2<4.6-P.z)?2.2:4.6;}}
@@ -2055,18 +2055,18 @@ function playerUpdate(dt){
     const cx=Math.floor(P.x/CELL),cz=Math.floor(P.z/CELL);const wet=!P.onPlat&&cellAt(cx,cz)==='~';
     if(wet&&!P.inWater){sSplash();noise(P.x,P.z,run?11:6);if(!F.waterTip){F.waterTip=true;tip(touchMode?'Tap DIVE to go under and hold your breath. He doesn\'t look in the water.':'Press Space to go under and hold your breath. He doesn\'t look in the water.',6);}}
     if(!wet&&P.inWater&&P.sub){P.sub=false;}
-    P.inWater=wet;P.floor=damp(P.floor,P.onPlat?P.platY:(wet?CH:0),wet?9:5,dt);
+    P.inWater=wet;P.floor=damp(P.floor,P.inVent?VENT_Y:P.onPlat?P.platY:(wet?CH:0),wet?9:5,dt);
     if(P.sub){P.breath-=dt/16;if(P.breath<=0){P.breath=0;surface(true);}}else P.breath=Math.min(1,P.breath+dt/3.5);
     if(AC){const mv=moving>0.1;setAmb('wade',(P.inWater&&!P.sub&&mv)?(run?0.24:0.14)*(0.5+0.5*Math.abs(Math.sin(P.bob*0.8))):0,0.06,true);setAmb('swim',P.sub?(mv?0.32:0.1):0,0.15,true);
       if(P.sub){P.bubT-=dt;if(P.bubT<=0){P.bubT=0.25+R()*0.6;sTone(busFx,now()+0.01,0.05,'sine',260+R()*300,900,0.07);}}}
-    if(!P.onPlat&&!P.sub&&moving>0.1){
+    if(!P.onPlat&&!P.sub&&!P.inVent&&moving>0.1){
       for(const gp of SW.glass){if(gp.cool<=0&&Math.hypot(P.x-gp.x,P.z-gp.z)<gp.r){gp.cool=0.7;oneShotAt(gp.x,.05,gp.z,(pn,t)=>sCrunch(pn,t,P.crouch?0.55:1.4),2);noise(P.x,P.z,P.crouch?5:13);}}
       for(const cn of SW.cans){if(cn.cool<=0&&Math.hypot(P.x-cn.x,P.z-cn.z)<0.42){const sp2=Math.hypot(vx,vz)||1;const kick=run?3.4:(P.crouch?1.2:2.2);cn.vx=vx/sp2*kick;cn.vz=vz/sp2*kick;cn.cool=0.6;
         oneShotAt(cn.x,.05,cn.z,(pn,t)=>sClatter(pn,t,P.crouch?0.22:0.5),2);noise(cn.x,cn.z,P.crouch?6:11);}}}
   }else{P.inWater=false;P.floor=damp(P.floor,(level==='street'&&P.z>6)?0.25:0,8,dt);}
   const eyeT=P.highKind==='pipe'?(inDuct()?0.42:0.8):P.sub?0.5:(P.inWater?1.5:(nearCrawl()?0.62:(P.crouch?0.95:1.62)));P.eye=damp(P.eye,eyeT,nearCrawl()?12:9,dt);
   if(moving>0.1){P.bob+=dt*speed*2.3;P.stepT+=dt*speed;const stride=P.inWater?1.5:(pCrawl()?0.7:1.25);if(P.stepT>stride){P.stepT=0;if(!P.sub){if(pCrawl())sCrawl();else sStep(P.inWater,run);}
-      if(level==='sewer'){const pipe=P.highKind==='pipe'||pCrawl(),r=P.sub?0:pipe?(run?8:3):P.inWater?(run?18:9):(run?16:(P.crouch?0:7));if(r>0)noise(P.x,P.z,r,true);}}}
+      if(level==='sewer'){const pipe=P.highKind==='pipe'||pCrawl(),r=P.sub?0:P.inVent?1:pipe?(run?8:3):P.inWater?(run?18:9):(run?16:(P.crouch?0:7));if(r>0)noise(P.x,P.z,r,true);}}}
   findFocus();
   if(P.focus){const it=P.focus;showPrompt(it.label(),it.hold&&F.hasValve);}else hidePrompt();
   if(P.focus&&P.focus.kind==='gate'&&F.hasValve&&!F.gateOpen&&P.useHeld){
@@ -2121,11 +2121,11 @@ function lockKey(e){if(e.repeat&&!['ArrowUp','ArrowDown'].includes(e.code))retur
   else if(e.code==='Enter'){tryLock();}else if(e.code==='Escape'){closeLock();}}
 $('lockTry').addEventListener('click',tryLock);$('lockClose').addEventListener('click',closeLock);
 function findFocus(){P.focus=null;const list=level==='sewer'?SW.inter:level==='apt'?AP.inter:[];let best=null,bd=1e9;const fx=-Math.sin(P.yaw),fz=-Math.cos(P.yaw);
-  for(const it of list){if(!!it.plat!==!!P.onPlat)continue;if(it.can&&!it.can())continue;const dx=it.x-P.x,dz=it.z-P.z,d=Math.hypot(dx,dz);if(d>it.r)continue;const dot=(dx*fx+dz*fz)/(d||1);if(dot<0.35&&d>1.15)continue;const score=d-dot*0.6+(it.kind==='hide'?0.6:0);if(score<bd){bd=score;best=it;}}
+  for(const it of list){if(!!it.plat!==!!P.onPlat)continue;if(!!it.vent!==!!P.inVent)continue;if(it.can&&!it.can())continue;const dx=it.x-P.x,dz=it.z-P.z,d=Math.hypot(dx,dz);if(d>it.r)continue;const dot=(dx*fx+dz*fz)/(d||1);if(dot<0.35&&d>1.15)continue;const score=d-dot*0.6+(it.kind==='hide'?0.6:0);if(score<bd){bd=score;best=it;}}
   P.focus=best;}
 function tryInteract(){if(mode!=='play')return;if(P.hidden){if(P.focus&&P.focus.kind==='card'){P.focus.act();return;}exitHide();return;}const it=P.focus;if(!it)return;if(it.hold&&F.hasValve)return;it.act.call(it);}
 function toggleFlash(){if(mode!=='play')return;P.light=!P.light;flash.intensity=P.light?3.0:0;$('bLight').classList.toggle('on',P.light);sClick();}
-function toggleCrouch(){if(mode!=='play'||P.hidden||P.highKind==='pipe')return;if(P.inWater){toggleDive();return;}P.crouch=!P.crouch;$('bDuck').classList.toggle('on',P.crouch);}
+function toggleCrouch(){if(mode!=='play'||P.hidden||P.highKind==='pipe'||P.inVent)return;if(P.inWater){toggleDive();return;}P.crouch=!P.crouch;$('bDuck').classList.toggle('on',P.crouch);}
 function toggleDive(){if(mode!=='play'||P.hidden||level!=='sewer'||!P.inWater)return;
   if(P.sub)surface(false);else{if(P.breath<0.15){sub('You need air first.',1.8);return;}
     if(K&&K.active&&K.state==='chase'&&losClear(K.x,K.z,P.x,P.z,false)){K.state='seek';}
@@ -2204,7 +2204,7 @@ function landRat(r){r.g.rotation.set(0,0,0);if(r.biter&&r.onPlat){r.state='biter
 function grabRat(r){if(P.rat||P.sub)return;P.rat=r;r.state='held';r.biter=false;r.onPlat=false;r.pipe=false;camera.add(r.g);r.g.position.set(.22,-.27,-.5);r.g.rotation.set(.25,2.6,0);
   if(AC)sSqueal(busFx,now()+0.01,0.18);
   if(!F.throwTip){F.throwTip=true;tip(touchMode?'Tap THROW to toss the rat. Wherever it lands, it shrieks, and he goes to look.':'Press G to throw the rat. Wherever it lands, it shrieks, and he goes to look.',7);}}
-function throwRat(){if(P.junk&&mode==='play'&&!P.hidden){throwJunk();return;}if(mode!=='play'||!P.rat||P.hidden||P.sub||level!=='sewer')return;const r=P.rat;P.rat=null;SW.scene.add(r.g);
+function throwRat(){if(P.inVent)return;if(P.junk&&mode==='play'&&!P.hidden){throwJunk();return;}if(mode!=='play'||!P.rat||P.hidden||P.sub||level!=='sewer')return;const r=P.rat;P.rat=null;SW.scene.add(r.g);
   const cp=Math.cos(P.pitch),fx=-Math.sin(P.yaw)*cp,fy=Math.sin(P.pitch),fz=-Math.cos(P.yaw)*cp;
   r.x=camera.position.x+fx*0.2;r.y=camera.position.y-0.1;r.z=camera.position.z+fz*0.2;r.vx=fx*8.5;r.vy=fy*8.5+2.6;r.vz=fz*8.5;r.state='fly';r.g.rotation.set(0,0,0);
   if(AC){sNoise(busFx,now()+0.01,0.2,'bandpass',900,1,0.15);sSqueal(busFx,now()+0.03,0.25);}}
@@ -2221,7 +2221,7 @@ function burnSave(fire){if(F.litter<=0)return;
 const SAVE_KEY='abandoned.save.v1';
 const store={db:null,uid:null};
 let lastSave=null,saveChain=Promise.resolve();
-function makeSave(where){const f={};for(const k in F){const v=F[k];f[k]=v instanceof Set?[...v]:Array.isArray(v)?v.slice():v;}return {v:1,t:Date.now(),where,px:+P.x.toFixed(3),pz:+P.z.toFixed(3),yaw:+P.yaw.toFixed(3),plat:!!P.onPlat,hk:P.highKind||null,f};}
+function makeSave(where){const f={};for(const k in F){const v=F[k];f[k]=v instanceof Set?[...v]:Array.isArray(v)?v.slice():v;}return {v:1,t:Date.now(),where,px:+(P.inVent?VENT_X:P.x).toFixed(3),pz:+(P.inVent?ventSafeZ(P.z):P.z).toFixed(3),yaw:+P.yaw.toFixed(3),plat:!!P.onPlat,hk:P.highKind||null,f};}
 function writeSave(sv){lastSave=sv;try{localStorage.setItem(SAVE_KEY,JSON.stringify(sv));}catch(e){}
   if(store.db){const ref=store.db.doc('data/users/'+store.uid+'/save');saveChain=saveChain.then(()=>ref.set(sv)).catch(()=>{});}}
 function localSave(){try{const v=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');return v&&v.v===1?v:null;}catch(e){return null;}}
@@ -2246,7 +2246,7 @@ function farWp(){let b=0,bd=-1;PATROL.forEach(([cx,cz],i)=>{const d=Math.hypot(w
 function loadGame(sv){
   if(!sv)return;initAudio();stopMenuMusic();['title','dead','pause','end'].forEach(id=>{$(id).hidden=true;});postU.uFlash.value=0;timers=[];
   F=freshFlags();for(const k in sv.f){if(!(k in F))continue;F[k]=F[k] instanceof Set?new Set(sv.f[k]):Array.isArray(sv.f[k])?sv.f[k].slice():sv.f[k];}
-  applySewerFlags();if(F.ch2)ch2Setup();level='sewer';setScene(SW.scene);if(AP.glass&&AP.glass.parent===held)held.remove(AP.glass);
+  P.inVent=false;P.climbing=false;applySewerFlags();if(F.ch2)ch2Setup();level='sewer';setScene(SW.scene);if(AP.glass&&AP.glass.parent===held)held.remove(AP.glass);
   P.hp=1;P.lastHurt=-99;P.x=sv.px;P.z=sv.pz;P.yaw=sv.yaw;P.pitch=0;P.sub=false;P.hidden=null;P.crouch=false;P.breath=1;P.stam=1;P.stamLock=0;P.valveP=0;P.lookT=null;P.light=false;flash.intensity=0;
   $('bLight').classList.remove('on');$('bDuck').classList.remove('on');
   P.onPlat=!!sv.plat;P.highKind=sv.hk||(P.onPlat?'cat':null);P.platY=P.highKind==='pipe'?pipeH(sv.px,sv.pz):PLAT;P.climbing=false;P.inWater=!P.onPlat&&cellAt(Math.floor(P.x/CELL),Math.floor(P.z/CELL))==='~';P.floor=P.onPlat?P.platY:P.inWater?CH:0;P.eye=P.inWater?1.5:1.62;
@@ -3110,9 +3110,9 @@ function frame(t){requestAnimationFrame(frame);runAud();let dt=(t-last)/1000;las
 const CRAWL_H=1.5,C2_KEY='abandoned.ch2start.v1';
 function ceil2(cx,cz){if(cx>=127)return labCeil(cx,cz);const c=cellAt(cx,cz);if(c==='c')return CRAWL_H;if(c==='E'||c==='e')return 2.7;if(cz>=21&&cx>=113)return 3.0;return 3.4;}
 function isCrawlC(cx,cz){return cellAt(cx,cz)==='c';}
-function pCrawl(){return level==='sewer'&&!P.onPlat&&isCrawlC(Math.floor(P.x/CELL),Math.floor(P.z/CELL));}
+function pCrawl(){return level==='sewer'&&!P.onPlat&&(P.inVent||isCrawlC(Math.floor(P.x/CELL),Math.floor(P.z/CELL)));}
 /* the eye starts dropping just before a tunnel mouth so the camera never pokes through the low ceiling */
-function nearCrawl(){if(level!=='sewer'||P.onPlat)return false;for(const o of [[0,0],[0.66,0],[-0.66,0],[0,0.66],[0,-0.66]])if(isCrawlC(Math.floor((P.x+o[0])/CELL),Math.floor((P.z+o[1])/CELL)))return true;return false;}
+function nearCrawl(){if(level!=='sewer'||P.onPlat)return false;if(P.inVent)return true;for(const o of [[0,0],[0.66,0],[-0.66,0],[0,0.66],[0,-0.66]])if(isCrawlC(Math.floor((P.x+o[0])/CELL),Math.floor((P.z+o[1])/CELL)))return true;return false;}
 function kInCrawl(){return !!K&&isCrawlC(Math.floor(K.x/CELL),Math.floor(K.z/CELL));}
 
 const PATROL2=[[74,16],[79,14],[81,10],[84,8],[89,6],[93,3],[100,4],[108,4],[112,2],[120,5],[118,8],[113,9],[109,13],[108,19],[105,16],[104,12],[98,13],[92,10],[90,14],[86,18],[80,18],[76,9]];
@@ -3490,7 +3490,7 @@ const PAUSES3=new Set([0,3,8,12,14,20]);
 /* the lights the lab borrows (index 7 and 8 stay the bottom car and the landing) */
 const LAB_LIGHTS=[[0xd8e4ff,1.1,11,261,2.95,44,'fluor'],[0xd0dcff,1.0,13,269,2.8,12,'fluor'],[0x8ab8ff,1.05,11,281,3.0,9,'none'],[0xc8ffd8,1.05,12,283,3.0,23,'fluor'],
   [0xe8e0c8,0.95,11,261,3.0,31,'fluor'],[0xd8e4ff,0.9,11,261,3.0,13,'fluor'],[0xd0dcff,1.0,13,269,2.8,36,'fluor'],[0xffc070,0.6,5,231,2.5,45,'none'],[0xe8f0ff,1.0,12,247,2.85,45,'fluor'],
-  [0x9ad8ff,1.0,12,281,3.0,41,'none'],[0xd0dcff,1.0,14,311,3.0,32,'fluor'],[0xff3020,0.9,10,311,3.0,25,'pulse'],[0xffb060,0.9,10,309,3.0,41,'none'],[0x7aff9a,1.2,16,365,3.6,16,'pulse'],[0xd0dcff,0.9,14,365,4.4,36,'fluor']];
+  [0x9ad8ff,1.0,12,281,3.0,41,'none'],[0xff2010,0,9,311,2.7,32,'hall'],[0xff3020,0.9,10,311,3.0,25,'pulse'],[0xffb060,0.9,10,309,3.0,41,'none'],[0x7aff9a,1.2,16,365,3.6,16,'pulse'],[0xd0dcff,0.9,14,365,4.4,36,'fluor']];
 const MUT_DEF=[{kind:'sci',seed:11,start:[143,10],route:[[138,12],[144,10],[141,9],[136,11],[135,6],[135,3],[139,5],[135,7]]},
   {kind:'work',seed:23,start:[135,3],route:[[134,21],[135,14],[134,8],[135,3],[134,8],[135,14]]},
   {kind:'sci',seed:37,start:[165,16],route:[[140,16],[150,15],[155,13],[150,12],[160,13],[155,15],[165,16],[171,15]]},
@@ -3778,7 +3778,7 @@ function buildLab(S){SW.lab={tanks:[],dv:0,dspike:0,dNext:0,mapNew:false};const 
   VENTS_LAB.forEach(v=>{const y=.5,w=1.15,h=.85;ventTunnel(S,v.x,y,v.z,v.nx,v.nz,w,h,1.7);const f=new THREE.Group();f.position.set(v.x+v.nx*.03,y,v.z+v.nz*.03);f.rotation.y=Math.atan2(v.nx,v.nz);S.add(f);
     f.add(at(boxm(w+.12,.06,.05,fm),0,h/2+.03,0));f.add(at(boxm(w+.12,.06,.05,fm),0,-h/2-.03,0));f.add(at(boxm(.06,h,.05,fm),-w/2-.03,0,0));f.add(at(boxm(.06,h,.05,fm),w/2+.03,0,0));});
   /* light fixtures */
-  LAB_LIGHTS.forEach((d,i)=>{if(i===7||i===8)return;const [col,,,x,y,z,kind]=d;const b=kind==='fluor'||kind==='none'?boxm(1.3,.06,.16,basic({color:kind==='fluor'?0xe0ecff:0xd8d0b0})):boxm(.24,.16,.24,basic({color:0xff3a24}));b.position.set(x,y+.14,z);S.add(b);});
+  LAB_LIGHTS.forEach((d,i)=>{if(i===7||i===8)return;const [col,,,x,y,z,kind]=d;if(kind==='hall')return;const b=kind==='fluor'||kind==='none'?boxm(1.3,.06,.16,basic({color:kind==='fluor'?0xe0ecff:0xd8d0b0})):boxm(.24,.16,.24,basic({color:0xff3a24}));b.position.set(x,y+.14,z);S.add(b);});
   /* signs beside the doorways off the main corridor */
   [['DECONTAMINATION',268.01,1.95,40.6,Math.PI/2],['STAFF LOUNGE',268.01,1.95,29,Math.PI/2],['BEHAVIOR LAB',268.01,1.95,11,Math.PI/2],
    ['COLD STORAGE',271.99,1.95,7,-Math.PI/2],['CHEM LAB',271.99,1.95,21,-Math.PI/2],['CRYO STORAGE',271.99,1.95,39,-Math.PI/2],['HOLDING',309,1.95,30.01,0],['WORKSHOP',306.6,1.95,33.99,Math.PI],
@@ -3837,7 +3837,7 @@ function mMove(m,tx,tz,speed,dt){const cx=Math.floor(m.x/CELL),cz=Math.floor(m.z
   else if(m.noPath){m.spd=0;return 99;}
   const dx=sx-m.x,dz=sz-m.z,d=Math.hypot(dx,dz);if(d>0.05){const st=Math.min(d,speed*dt);m.x+=dx/d*st;m.z+=dz/d*st;m.yaw+=angDiff(m.yaw,Math.atan2(dx,dz))*Math.min(1,dt*6);m.spd=speed;}else m.spd=0;
   collide(m,0.32,mSolid);return Math.hypot(tx-m.x,tz-m.z);}
-function mCanSee(m){if(!m.alive||P.hidden||P.sub||mode!=='play')return false;if(pCrawl())return false;const dx=P.x-m.x,dz=P.z-m.z,d=Math.hypot(dx,dz);
+function mCanSee(m){if(!m.alive||P.hidden||P.sub||P.inVent||mode!=='play')return false;if(pCrawl())return false;const dx=P.x-m.x,dz=P.z-m.z,d=Math.hypot(dx,dz);
   const aware=m.state==='chase'||m.state==='wind';let range=aware?19:(P.light?16:11.5);if(!aware&&P.crouch)range*=0.6;if(d>range)return false;
   if(d>1.8||(P.crouch&&!aware)){const dot=(dx*Math.sin(m.yaw)+dz*Math.cos(m.yaw))/(d||1);if(dot<(aware?-0.2:m.state==='investigate'?0.2:0.3))return false;}return losClear(m.x,m.z,P.x,P.z,playerLow());}
 function mutSpot(m){if(m.state==='chase')return;m.state='chase';m.lost=0;m.lx=P.x;m.lz=P.z;m.lvx=P.vx||0;m.lvz=P.vz||0;m.pred=false;m.chk=null;m.stare=0;m.alertT=0;m.snapT=0.2;F.seen++;mutAlert(m);if(AC&&m.pan){const t=now()+0.02;voice(m.pan,t,1.1,190+R()*40,1.2,{contour:[0.9,1.3,1.1,0.8,0.6],drive:28,wobble:0.2,sub:0.4,breath:0.5,F1:640,wet:0.8,tract:0.9});m.snarlT=1.1+sSnarl(m.pan,t+1.0,1.0,true);m.voxT=2.6;}
@@ -4008,7 +4008,7 @@ function labSetup(){if(F.elevDown){labLights();PATROL=PATROL3;PAUSES=PAUSES3;}SW
 function openLabDoor(){if(F.labOpen)return;F.labOpen=true;if(AC){const t=now()+0.01;sClank(busFx,t,0.55);sNoise(busFx,t+0.15,1.6,'highpass',2400,0.7,0.2,0.2);sTone(busFx,t+0.2,1.4,'sawtooth',70,52,0.12,0.3);}
   const L=SW.c2.leaves;if(L)tween(1.4,k=>{const e=k*k*(3-2*k);L.forEach((h,i)=>{h.rotation.y=(i?-1.35:1.35)*e;});});noise(P.x,P.z,8);
   labMutantsStart();setObjective(OBJ.lab);after(1.8,()=>{if(mode==='play')speak('Marissa','Hello...? Is anyone...',2.6);});}
-function labTick(dt){if(!F.ch2||!SW.lab)return;for(const h of SW.hides)if(h.grp)h.grp.visible=P.hidden!==h;lockerLook();junkTick(dt);rankMutVox();if(SW.c2&&SW.c2.glow)SW.c2.glow.opacity=0.42+0.14*Math.sin(time*3.1)+(R()<0.02?-0.2:0);p2Tick(dt);mzTick(dt);bossTick(dt);SW.lab.dspike=Math.max(0,SW.lab.dspike-dt*0.8);
+function labTick(dt){if(!F.ch2||!SW.lab)return;for(const h of SW.hides)if(h.grp)h.grp.visible=P.hidden!==h;lockerLook();junkTick(dt);rankMutVox();if(SW.c2&&SW.c2.glow)SW.c2.glow.opacity=0.42+0.14*Math.sin(time*3.1)+(R()<0.02?-0.2:0);p2Tick(dt);mzTick(dt);hallTick(dt);bossTick(dt);SW.lab.dspike=Math.max(0,SW.lab.dspike-dt*0.8);
   for(const tk of SW.lab.tanks){const b=tk.userData.body;if(b){b.position.y+=Math.sin(time*0.6+tk.position.x)*dt*0.05;b.rotation.y+=dt*0.05;}}
   if(mode!=='play'){return;}
   for(const m of MUTS)mutUpdate(m,dt);
@@ -4032,7 +4032,7 @@ function labZone(cx,cz,c){if(cx>=192)return cx>=208?'Lift B':'Containment';if(c=
    ============================================================ */
 Object.assign(VOICES,{Mack:{f0:104,form:0.92,breath:0.32,rasp:true},Bee:{f0:206,form:1.1,breath:0.3},Doctor:{f0:116,form:0.94,breath:0.14,tv:true},Wife:{f0:198,form:1.08,breath:0.24,tv:true},Log:{f0:124,form:0.96,breath:0.2,tv:true}});
 Object.assign(OBJ,{lab:'Find out what happened here.',watch:'Watch the tape. There is a TV in the staff lounge.',more:'Find the other tapes.',baton:'Get the stun baton from Security.',craft:'Make something to fight them with. The workshop has a bench.',free:'Free the people in holding. The mutants carry the keys.',past:'Find a way past the blast door.'});
-const ITEM_NAMES={trap:'Trap',battery:'Battery',syringe:'Syringe',chem:'Chemical',baton:'Stun baton',injector:'Injector stick',key:'Key'};
+const ITEM_NAMES={trap:'Trap',battery:'Battery',syringe:'Syringe',chem:'Chemical',baton:'Stun baton',injector:'Injector stick',key:'Key',ventkey:'Vent key'};
 const LIMBS={limb1:'R. leg',limb2:'L. arm',limb3:'L. leg',limb4:'R. arm'};
 const LIMB_ORDER=['limb1','limb2','limb3','limb4'];
 const CHEMS=[{id:'eye',col:'#c0302a',name:'red, marked with an eye'},{id:'spiral',col:'#3a9a4a',name:'green, marked with a spiral'},{id:'tri',col:'#3a5ac0',name:'blue, marked with a triangle'},{id:'rat',col:'#c8a828',name:'yellow, marked with a rat'},{id:'moon',col:'#8a4ab0',name:'violet, marked with a moon'}];
@@ -4062,7 +4062,7 @@ function hasItem(k){return F.inv.includes(k);}
 function takeItem(k){F.inv.push(k);sClick();}
 function dropItem(k){const i=F.inv.indexOf(k);if(i>=0)F.inv.splice(i,1);}
 function invList(){const out=[],nt=F.inv.filter(x=>x==='trap').length,nk=F.inv.filter(x=>x==='key').length;if(nt)out.push('Trap ×'+nt);
-  ['battery','syringe','chem','baton','injector'].forEach(k=>{if(hasItem(k))out.push(ITEM_NAMES[k]);});if(nk)out.push('Key'+(nk>1?' ×'+nk:''));
+  ['battery','syringe','chem','baton','injector','ventkey'].forEach(k=>{if(hasItem(k))out.push(ITEM_NAMES[k]);});if(nk)out.push('Key'+(nk>1?' ×'+nk:''));
   const tp=(F.tapes||[]).filter(t=>!(F.tapesSeen||[]).includes(t)).length;if(tp)out.push('Tape'+(tp>1?' ×'+tp:''));
   const lm=(F.picked||[]).filter(p=>p.startsWith('limb')).length-(F.cryoDone?4:0);if(lm>0)out.push('Specimen jar ×'+lm);
   const pc=(F.picked||[]).filter(p=>p.startsWith('piece')).length-(F.maze||[]).filter(Boolean).length;if(pc>0&&!F.mazeDone)out.push('Maze piece ×'+pc);return out;}
@@ -4401,11 +4401,185 @@ function mzTick(dt){const L=SW.lab;if(!L||!L.mzRat||L.mzRun)return;if(Math.abs(P
   rat.rotation.x=F.mazeDone?Math.max(0,Math.sin(time*13))*0.14:(Math.sin(time*5.3+Math.sin(time*1.7)*2)>0.7?0.1:0);rat.rotation.z=Math.sin(time*29)*0.015;}
 function drawMazeBoard(){const L=SW.lab;if(!L.mazeCv)return;drawMazeFloor(L.mazeCv.getContext('2d'));L.mazeTex.needsUpdate=true;buildMazeWalls();if(!L.mzRun)mzRatHome();}
 function drawChemScreen(){const L=SW.lab;if(!L.chemCv)return;const g=L.chemCv.getContext('2d');g.fillStyle='#040806';g.fillRect(0,0,128,64);if(F.chemDone){g.fillStyle='#8aff8a';g.font='bold 22px VT323, monospace';g.textAlign='center';g.fillText('CLOSET',64,24);g.fillText(CLOSET_CODE.split('').join(' '),64,50);}L.chemTex.needsUpdate=true;}
-function buildCaptive(o){const g=new THREE.Group();const cl=lam({color:o.cloth,emissive:0x16120c}),sk=lam({color:o.skin,emissive:0x1a120c}),hm=lam({map:tex(256,128,(gg,w,h)=>paintHead(gg,w,h,o.head),false),emissive:0x24180f});
-  const body=new THREE.Group();body.position.y=.45;g.add(body);body.add(at(boxm(.36,.5,.22,cl),0,.28,0));[-1,1].forEach(s=>{const th=boxm(.13,.13,.44,cl);th.position.set(s*.1,0,.2);body.add(th);const sh=boxm(.11,.4,.11,cl);sh.position.set(s*.1,-.22,.42);body.add(sh);
-    const a=limb(.3,.05,.04,cl,7);a.position.set(s*.2,.5,0);a.rotation.set(-0.9,0,s*0.2);body.add(a);});
-  body.add(at(cylm(.04,.045,.08,7,sk),0,.58,0));const head=new THREE.Group();head.position.set(0,.7,0);body.add(head);head.add(new THREE.Mesh(headGeo(.1),hm));
-  const sh=blob(.8,.7,0.5);g.add(sh);bakeShade(g,0);return {g,body,head};}
+/* ---------- v6.9: Mack and Bee, rebuilt ----------
+   Jointed people in the same build as Dolores (lathe coat, round-jointed limbs, painted heads), grounded in every pose:
+   Mack sits against the back of his cell with his knees up, rocking; Bee kneels with her hands on the wall, whispering to it.
+   Freed, they stand, walk out and crawl into the east duct on hands and knees. */
+function headTexDirty(o,seed){return tex(256,128,(g,w,h)=>{paintHead(g,w,h,o);const rr=mulberry(seed);
+  for(let i=0;i<26;i++){g.fillStyle=`rgba(${30+rr()*20|0},${22+rr()*14|0},${14+rr()*10|0},${0.08+rr()*0.16})`;g.beginPath();g.ellipse(rr()*w,h*0.25+rr()*h*0.6,3+rr()*9,2+rr()*6,rr()*3,0,TAU);g.fill();}},false);}
+/* merge every mesh that moves with the same joint and shares a material into one, so a body is ~20 draws instead of ~45 */
+function mergeJoints(root,joints){root.updateMatrixWorld(true);const J=new Set([root,...joints]),by=new Map(),inv=new THREE.Matrix4(),M=new THREE.Matrix4(),nm=new THREE.Matrix3(),v=new THREE.Vector3();
+  root.traverse(o=>{if(!o.isMesh||o.userData.noShade||Array.isArray(o.material)||o.material.transparent)return;const A=o.geometry.attributes;if(!A.position||!A.normal||!A.uv||A.color)return;
+    let p=o.parent;while(p&&!J.has(p))p=p.parent;if(!p)return;const k=p.id+':'+o.material.uuid;if(!by.has(k))by.set(k,{j:p,mat:o.material,list:[]});by.get(k).list.push(o);});
+  by.forEach(({j,mat,list})=>{if(list.length<2)return;inv.copy(j.matrixWorld).invert();const pos=[],nor=[],uv=[],idx=[];let base=0;
+    list.forEach(o=>{M.multiplyMatrices(inv,o.matrixWorld);nm.getNormalMatrix(M);const flip=M.determinant()<0,g=o.geometry,Pa=g.attributes.position,Na=g.attributes.normal,Ua=g.attributes.uv;
+      for(let i=0;i<Pa.count;i++){v.fromBufferAttribute(Pa,i).applyMatrix4(M);pos.push(v.x,v.y,v.z);v.fromBufferAttribute(Na,i).applyMatrix3(nm).normalize();nor.push(v.x,v.y,v.z);uv.push(Ua.getX(i),Ua.getY(i));}
+      const n=g.index?g.index.count:Pa.count,ix=i=>g.index?g.index.getX(i):i;for(let i=0;i+2<n;i+=3){const a=ix(i),b=ix(i+1),c=ix(i+2);if(flip)idx.push(base+a,base+c,base+b);else idx.push(base+a,base+b,base+c);}base+=Pa.count;o.parent.remove(o);});
+    const ng=new THREE.BufferGeometry();ng.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));ng.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));ng.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));ng.setIndex(idx);ng.computeBoundingSphere();
+    j.add(new THREE.Mesh(ng,mat));});}
+function buildHomeless(o){const g=new THREE.Group(),em=0x120e0a;
+  const coat=lam({map:o.coatMap,color:o.coat,emissive:em}),pants=lam({map:T.pants,color:o.pants,emissive:em}),skinM=lam({color:o.skin,emissive:0x140e0a}),
+    headM=lam({map:headTexDirty(o.head,o.seed),emissive:0x1a120c}),boot=lam({color:o.boot,emissive:0x0c0a08}),glove=lam({color:o.glove,emissive:0x0c0a08});
+  const hips=new THREE.Group();g.add(hips);
+  const legs=[-1,1].map(sd=>{const th=limb(.43,.078,.062,pants,8);th.position.set(sd*.1,0,0);hips.add(th);const sh=limb(.42,.06,.048,pants,8);sh.position.y=-.43;th.add(sh);
+    const ft=new THREE.Group();ft.position.y=-.42;sh.add(ft);ft.add(at(cylm(.055,.06,.09,8,boot),0,-.025,0));const b=ball(.066,boot,8,6);b.scale.set(.95,.55,1.6);b.position.set(0,-.06,.05);ft.add(b);return {th,sh,ft};});
+  if(o.skirt){const sk=new THREE.Mesh(new THREE.CylinderGeometry(.19,.3,.46,12,2,true),lam({color:o.skirt,emissive:em,side:THREE.DoubleSide}));sk.position.y=-.24;hips.add(sk);}
+  const body=new THREE.Group();hips.add(body);
+  const cm=new THREE.Mesh(new THREE.LatheGeometry(o.prof.map(([r,y])=>new THREE.Vector2(r,y)),16),coat);cm.scale.set(1.05,1,.8);body.add(cm);
+  const arm=sd=>{const a=limb(.29,.066,.056,coat,8);a.position.set(sd*.235,.5,0);a.rotation.z=sd*.1;body.add(a);const f=limb(.26,.056,.047,coat,8);f.position.y=-.29;a.add(f);
+    const hd=new THREE.Group();hd.position.y=-.26;f.add(hd);const palm=ball(.042,glove,7,5);palm.scale.set(.8,1.1,.55);palm.position.y=-.03;hd.add(palm);
+    for(let k=0;k<3;k++){const fg=limb(.07,.012,.009,o.bareFingers?skinM:glove,4);fg.position.set((k-1)*.021,-.065,.008);fg.rotation.x=0.3;hd.add(fg);}return {a,f,hd};};
+  const armL=arm(1),armR=arm(-1);
+  body.add(at(cylm(.045,.05,.1,8,skinM),0,.63,0));
+  const head=new THREE.Group();head.position.set(0,.77,.01);body.add(head);head.add(new THREE.Mesh(headGeo(.103),headM));
+  o.extras&&o.extras({g,hips,body,head,armL,armR,coat,skinM});
+  mergeJoints(g,[hips,body,head,...legs.flatMap(l=>[l.th,l.sh,l.ft]),...[armL,armR].flatMap(a=>[a.a,a.f,a.hd])]);
+  const shadow=blob(.75,.65,0.55);g.add(shadow);bakeShade(g,0);
+  return {g,hips,body,legs,armL,armR,head,shadow,mode:null,ph:0};}
+function buildMack(){return buildHomeless({seed:71,coat:0x9a9a6a,coatMap:T.coat,pants:0x8a8272,skin:0x6a4a38,boot:0x2a2016,glove:0x2a2622,
+  head:{skin:[112,82,62],lip:[110,70,60],iris:'#2a1a10',brow:'rgba(80,72,60,0.95)',hair:'#5a5248',hairline:44,hairLen:96,age:1},
+  /* an army-surplus field jacket, boxy and too big */
+  prof:[[0,-0.15],[0.205,-0.15],[0.22,-0.06],[0.205,0.14],[0.21,0.34],[0.225,0.49],[0.2,0.57],[0.12,0.62],[0.06,0.645],[0,0.645]],
+  extras({body,head}){const cap=lam({map:T.knit,color:0x3a4458,emissive:0x0a0a0c}),beard=lam({color:0x6a645a,emissive:0x0e0c0a}),blanket=lam({map:T.knit,color:0x6a5644,emissive:0x0c0a08,side:THREE.DoubleSide});
+    /* a navy watch cap with a folded brim, and a grey beard gone to wire */
+    const hm=new THREE.Mesh(new THREE.SphereGeometry(.11,14,7,0,TAU,0,Math.PI*0.42),cap);hm.scale.set(1,1.1,1.04);hm.position.y=.012;head.add(hm);
+    const brim=new THREE.Mesh(new THREE.TorusGeometry(.1,.026,6,16),cap);brim.rotation.x=Math.PI/2;brim.position.y=.035;head.add(brim);
+    const bd=ball(.085,beard,9,7);bd.scale.set(1.05,1.0,.75);bd.position.set(0,-.075,.055);head.add(bd);const ch=ball(.05,beard,7,5);ch.scale.set(1,1.3,.8);ch.position.set(0,-.125,.06);head.add(ch);
+    /* a wool blanket bunched round his shoulders */
+    
+    const fold=new THREE.Mesh(new THREE.TorusGeometry(.17,.06,7,14),blanket);fold.rotation.x=Math.PI/2;fold.position.set(0,.58,-.02);fold.scale.set(1.22,.9,1);body.add(fold);const drape=boxm(.36,.3,.05,blanket);drape.position.set(0,.4,-.17);drape.rotation.x=-0.12;body.add(drape);}});}
+function buildBee(){return buildHomeless({seed:83,coat:0x6a2632,coatMap:T.knit,pants:0x3a3a44,skin:0x8a6a58,boot:0x9a968a,glove:0x8a6a58,bareFingers:true,skirt:0x3a4a60,
+  head:{skin:[150,112,92],lip:[150,86,80],iris:'#3a2a1a',brow:'rgba(40,30,24,0.95)',hair:'#1e1612',hairline:36,hairLen:110,age:0.3},
+  /* a maroon hoodie, sleeves too long */
+  prof:[[0,-0.08],[0.17,-0.08],[0.185,0.0],[0.165,0.18],[0.175,0.38],[0.185,0.5],[0.155,0.57],[0.09,0.62],[0,0.63]],
+  extras({body,head,coat}){const hair=lam({color:0x1e1612,emissive:0x060404}),scarf=lam({map:T.knit,color:0xa08a3a,emissive:0x0e0c06});
+    /* the hood, bunched at the back of her neck */
+    const hood=new THREE.Mesh(new THREE.TorusGeometry(.11,.05,7,14),coat);hood.rotation.x=Math.PI/2.3;hood.position.set(0,.62,-.07);hood.scale.set(1.2,1,.8);body.add(hood);
+    /* long, matted hair down her back */
+    const back=ball(.1,hair,9,7);back.scale.set(1.05,1.6,.55);back.position.set(0,-.08,-.07);head.add(back);
+    [-1,1].forEach(sd=>{const st=boxm(.035,.22,.03,hair);st.position.set(sd*.085,-.08,.02);st.rotation.z=sd*0.08;head.add(st);});
+    head.add(at(new THREE.Mesh(new THREE.SphereGeometry(.109,14,6,0,TAU,0,Math.PI*0.3),hair),0,.004,0));head.add(at(new THREE.Mesh(new THREE.SphereGeometry(.11,10,8,Math.PI,Math.PI,0,Math.PI*0.62),hair),0,.004,-.004));
+    /* a mustard scarf, wound twice */
+    const sc=new THREE.Mesh(new THREE.TorusGeometry(.085,.035,6,14),scarf);sc.rotation.x=Math.PI/2;sc.position.y=.61;body.add(sc);const tail=boxm(.07,.26,.025,scarf);tail.position.set(-.06,.47,.17);tail.rotation.set(.12,0,-.1);body.add(tail);}});}
+/* poses: each joint eases toward its target */
+function capPose(cp,mode,dt){const r=cp,s=Math.sin(cp.ph),k=8;const J=(o,ax,v,kk)=>{o.rotation[ax]=damp(o.rotation[ax],v,kk||k,dt);};
+  let hy=.93,lean=0.04,th=[0,0],sh=[0,0],ft=[0,0],aL=[0.05,-0.1],aR=[0.05,-0.1],hx=0.1,hz=0;
+  if(mode==='sit'){/* on the floor, knees up, arms round them, rocking */const rk=Math.sin(time*1.25);hy=.13;lean=0.5+rk*0.13;th=[-2.5,-2.5];sh=[2.28,2.28];ft=[0.22,0.22];aL=[-0.85,-1.35];aR=[-0.85,-1.35];hx=0.42+rk*0.06;}
+  else if(mode==='kneel'){/* kneeling at the wall, hands flat on it, whispering */const rk=Math.sin(time*0.9+1.1);hy=.5;lean=0.22+rk*0.05;th=[0.05,0.05];sh=[1.52,1.52];ft=[0,0];aL=[-1.55,-0.3];aR=[-1.45,-0.35];hx=0.18;hz=Math.sin(time*0.5)*0.12;}
+  else if(mode==='walk'){cp.ph+=dt*7.2;const q=Math.sin(cp.ph);hy=.93-Math.abs(Math.cos(cp.ph))*0.03;lean=0.12;th=[q*0.5,-q*0.5];sh=[Math.max(0,-q)*0.7+0.05,Math.max(0,q)*0.7+0.05];ft=[0,0];
+    if(cp.hug){aL=[-0.9,-1.6];aR=[-0.9,-1.6];}else{aL=[-q*0.35,-0.25];aR=[q*0.35,-0.25];}hx=0.2;}
+  else if(mode==='crawl'){/* hands and knees */cp.ph+=dt*5;const q=Math.sin(cp.ph);hy=.56;lean=1.35;th=[q*0.25,-q*0.25];sh=[1.55,1.55];ft=[0,0];aL=[-1.35-q*0.25,-0.2];aR=[-1.35+q*0.25,-0.2];hx=-1.0;}
+  r.hips.position.y=damp(r.hips.position.y,hy,mode==='walk'||mode==='crawl'?14:3.2,dt);J(r.body,'x',lean,mode==='sit'||mode==='kneel'?4:6);
+  r.legs.forEach((l,i)=>{J(l.th,'x',th[i],mode==='walk'?16:k);J(l.sh,'x',sh[i],mode==='walk'?16:k);J(l.ft,'x',ft[i]);});
+  J(r.armL.a,'x',aL[0],10);J(r.armL.f,'x',aL[1],10);J(r.armR.a,'x',aR[0],10);J(r.armR.f,'x',aR[1],10);
+  const inZ=mode==='sit'?0.4:mode==='walk'&&cp.hug?0.55:0.1;J(r.armL.a,'z',inZ*-1+0.2,6);J(r.armR.a,'z',inZ-0.2,6);
+  J(r.head,'x',hx,6);J(r.head,'z',hz,4);}
+function capTick(dt){const L=SW.lab;if(!L||!L.cap)return;for(const w of ['mack','bee']){const cp=L.cap[w];if(!cp.g.visible)continue;let mode=cp.mode||(w==='mack'?'sit':'kneel');
+    /* in their cells they can only be seen from the holding hall, so they aren't drawn from anywhere else */
+    const near=!!cp.walk||cp.mode==='stand'||(P.x>292&&P.x<326&&P.z>16&&P.z<31);cp.hips.visible=cp.shadow.visible=near;if(!near)continue;
+    if(cp.walk){const p=cp.walk.pts[cp.walk.i];const dx=p[0]-cp.g.position.x,dz=p[1]-cp.g.position.z,d=Math.hypot(dx,dz);
+      if(d<0.1){cp.walk.i++;if(cp.walk.i>=cp.walk.pts.length){cp.g.visible=false;cp.walk=null;}continue;}
+      const crawl=cp.walk.i>=3,sp=crawl?0.9:1.6,st=Math.min(d,sp*dt);cp.g.position.x+=dx/d*st;cp.g.position.z+=dz/d*st;cp.g.rotation.y+=angDiff(cp.g.rotation.y,Math.atan2(dx,dz))*Math.min(1,dt*7);mode=crawl?'crawl':'walk';}
+    capPose(cp,mode,dt);}}
+/* put one back in their cell pose at once (load, restart) */
+function capReset(w){const cp=SW.lab.cap[w];cp.mode=null;cp.walk=null;cp.g.position.set(w==='mack'?303:311,0,w==='mack'?19.05:18.72);cp.g.rotation.y=w==='mack'?0:Math.PI;cp.hug=w==='bee';
+  for(let i=0;i<40;i++)capPose(cp,w==='mack'?'sit':'kneel',0.25);}
+
+/* ---------- v6.9: the long hall runs dark, lit only by red emergency beacons that fire in a sweep ---------- */
+const HALL_X0=272,HALL_X1=348,HALL_Z0=30,HALL_Z1=34,HALL_BEACONS=[138,142,146,150,154,158,162,166,170];
+/* baked into the level's vertex colours: the hall's floor, walls and ceiling are much darker than the rooms off it */
+function hallDark(x,z){if(x<271.99||x>348.01||z<29.99||z>34.01)return 1;const e=clamp(Math.min(x-272,348-x)/5,0,1);return 1-0.64*e;}
+function buildHall(S){const L=SW.lab;L.hall=[];const cageM=lam({map:T.metal,color:0x3a3a34});
+  HALL_BEACONS.forEach(bcx=>{const H=labCeil(bcx,15),bx=wc(bcx),bz=32;
+    const g=new THREE.Group();g.position.set(bx,H,bz);S.add(g);
+    g.add(at(boxm(.34,.05,.34,cageM),0,-.025,0));
+    const bulbM=basic({color:0x2a0604}),dome=new THREE.Mesh(new THREE.SphereGeometry(.1,9,5,0,TAU,0,Math.PI/2),bulbM);dome.rotation.x=Math.PI;dome.position.y=-.05;g.add(dome);
+    for(let k=0;k<4;k++){const a=k*Math.PI/2+0.78;g.add(at(boxm(.014,.15,.014,cageM),Math.cos(a)*.115,-.12,Math.sin(a)*.115));}
+    g.add(at(boxm(.25,.014,.014,cageM),0,-.19,0));g.add(at(boxm(.014,.014,.25,cageM),0,-.19,0));
+    /* its red light on the floor, ceiling and walls around it, one batch per beacon so each can fire on its own */
+    const Q=quadBatch();
+    for(let ox=-2;ox<=2;ox++)for(const cz of [15,16]){const cx=bcx+ox,d=Math.hypot(ox,(cz===15?-0.5:0.5)),k=Math.max(0,1-d/2.7);if(k<=0)continue;const x0=wc(cx),z0=wc(cz),Hc=labCeil(cx,cz),col=[k,k,k];
+      Q.add(x0,0.02,z0,0,1,0,0,0,1,CELL*1.5,CELL*1.5,-1,false,col.map(v=>v*0.85));Q.add(x0,Hc-0.02,z0,0,-1,0,0,0,1,CELL*1.3,CELL*1.3,-1,false,col);
+      const dz=cz===15?-1:1;if(cellAt(cx,cz+dz)==='#')Q.add(x0,Hc*0.55,z0+dz*(CELL/2-0.02),0,0,-dz,0,1,0,CELL*1.4,Hc*1.2,-1,false,col);}
+    const glow=decal(new THREE.MeshBasicMaterial({map:glowTex(),color:0xff1a08,vertexColors:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0,side:THREE.DoubleSide}),-2,-6);
+    const gm=Q.mesh(glow,true);if(gm){gm.renderOrder=4;gm.visible=false;S.add(gm);}
+    L.hall.push({x:bx,z:bz,H,bulb:bulbM,glow,mesh:gm,was:false});});}
+/* the sweep: each beacon fires in turn down the hall, then back, with dark in between; the one point light jumps to whichever is lit */
+function hallTick(dt){const L=SW.lab;if(!L||!L.hall||!L.hall.length)return;const per=3.4,t=time%(per*2),dir=t<per?1:-1,tc=t%per,n=L.hall.length;let best=-1,bv=0;
+  const near=P.x>262&&P.x<356&&P.z>18&&P.z<48;
+  L.hall.forEach((b,i)=>{const k=dir>0?i:n-1-i,u=tc-(0.35+k*0.2);let v=0;if(u>=0){if(u<0.05)v=u/0.05;else if(u<0.3)v=1;else v=Math.max(0,1-(u-0.3)/0.42);}
+    if(i===5&&Math.sin(time*7.3)+Math.sin(time*2.9)>0.9)v*=0.2;
+    b.glow.opacity=v*0.62;if(b.mesh)b.mesh.visible=v>0.01;b.bulb.color.setRGB(0.16+0.84*v,0.02+0.1*v,0.015+0.03*v);if(v>bv){bv=v;best=i;}
+    const on=v>0.9;if(on&&!b.was&&near&&AC&&Math.hypot(P.x-b.x,P.z-b.z)<13)oneShotAt(b.x,b.H-0.2,b.z,(pn,t0)=>{sNoise(pn,t0,0.02,'highpass',1900,0.7,0.32);sTone(pn,t0+0.01,0.26,'square',58,56,0.03);},2.2,0.6,true);
+    b.was=on;});
+  if(L.vglow){L.vglow.opacity=(L.hall[4]?L.hall[4].glow.opacity:0)*0.8;if(L.vglowM)L.vglowM.visible=L.vglow.opacity>0.01;}
+  const o=SW.c2Pool&&SW.c2Pool[10];if(o&&o.kind==='hall'){if(best>=0)o.l.position.set(L.hall[best].x,2.7,L.hall[best].z);o.base=bv*1.8;}}
+
+/* ---------- v6.9: the crawlway under the long hall ----------
+   A sheet-metal duct below the floor, running north-south under the hall from a grate in the holding hall to one in the workshop,
+   with a padlocked grate in the hall between them. It is not on the map grid at all, so neither he nor the mutants can follow:
+   they can't see her, can't reach her, and barely hear her. The key is on the body in decon; a note in the decon locker says so. */
+const VENT_X=301,VENT_Z0=26.35,VENT_Z1=40.95,VENT_Y=-0.95,VENT_TOP=-0.1,VENT_HW=0.45;
+const VENT_GRATES=[{id:'hold',z:26.9,flag:'vent_hold',out:'Climb up into the cells'},{id:'hall',z:32,flag:'ventOpen',out:'Climb up into the hall'},{id:'shop',z:40.4,flag:'vent_shop',out:'Climb up into the workshop'}];
+function ventClamp(o){o.x=clamp(o.x,VENT_X-0.16,VENT_X+0.16);o.z=clamp(o.z,VENT_Z0+0.32,VENT_Z1-0.32);}
+function buildVent(S){const L=SW.lab;L.vent={grates:{}};
+  const metal=lam({map:T.metal,color:0x7a7a70,emissive:0x0c0c0a,vertexColors:true,side:THREE.DoubleSide}),Q=quadBatch(),dk=(y,z)=>{const k=0.42+0.3*hash3(VENT_X,y*3,z*2.3);return [k,k*0.95,k*0.88];};
+  const holes=VENT_GRATES.map(g=>g.z),inHole=z=>holes.some(h=>Math.abs(z-h)<0.45);
+  /* floor, walls and roof in 0.5 m strips; the roof is open over each grate */
+  for(let z=VENT_Z0;z<VENT_Z1-0.01;z+=0.5){const zc=z+0.25,h=VENT_TOP-VENT_Y;
+    Q.add(VENT_X,VENT_Y,zc,0,1,0,0,0,1,VENT_HW*2,0.5,-1,false,dk(0,zc).map(v=>v*0.8));
+    Q.add(VENT_X-VENT_HW,VENT_Y+h/2,zc,1,0,0,0,1,0,0.5,h,-1,false,dk(1,zc));Q.add(VENT_X+VENT_HW,VENT_Y+h/2,zc,-1,0,0,0,1,0,0.5,h,-1,false,dk(2,zc));}
+  /* the roof, in pieces between the grate openings so its edges meet the shaft walls exactly */
+  {const cuts=[VENT_Z0];holes.forEach(h=>{cuts.push(h-0.4,h+0.4);});cuts.push(VENT_Z1);
+    for(let i=0;i<cuts.length;i+=2){const a=cuts[i],b=cuts[i+1];if(b-a<0.01)continue;const n=Math.ceil((b-a)/0.5),st=(b-a)/n;
+      for(let j=0;j<n;j++){const zc=a+st*(j+0.5);Q.add(VENT_X,VENT_TOP,zc,0,-1,0,0,0,1,VENT_HW*2,st,-1,false,dk(3,zc).map(v=>v*0.7));}}}
+  Q.add(VENT_X,(VENT_Y+VENT_TOP)/2,VENT_Z0,0,0,1,0,1,0,VENT_HW*2,VENT_TOP-VENT_Y,-1,false,[0.35,0.33,0.3]);
+  Q.add(VENT_X,(VENT_Y+VENT_TOP)/2,VENT_Z1,0,0,-1,0,1,0,VENT_HW*2,VENT_TOP-VENT_Y,-1,false,[0.35,0.33,0.3]);
+  /* the short shaft up to each grate */
+  for(const z of holes){const h=-VENT_TOP;Q.add(VENT_X-VENT_HW,VENT_TOP+h/2,z,1,0,0,0,1,0,0.8,h,-1,false,[0.5,0.5,0.46]);Q.add(VENT_X+VENT_HW,VENT_TOP+h/2,z,-1,0,0,0,1,0,0.8,h,-1,false,[0.5,0.5,0.46]);
+    Q.add(VENT_X,VENT_TOP+h/2,z-0.4,0,0,1,0,1,0,VENT_HW*2,h,-1,false,[0.5,0.5,0.46]);Q.add(VENT_X,VENT_TOP+h/2,z+0.4,0,0,-1,0,1,0,VENT_HW*2,h,-1,false,[0.5,0.5,0.46]);}
+  const tube=Q.mesh(metal,true);if(tube)S.add(tube);
+  /* rivets and seams every metre, and grime down the middle where things have dragged */
+  const seamM=lam({map:T.metal,color:0x3a3a34});for(let z=VENT_Z0+1;z<VENT_Z1;z+=1){if(inHole(z))continue;[-1,1].forEach(sd=>S.add(at(boxm(.02,VENT_TOP-VENT_Y,.04,seamM),VENT_X+sd*(VENT_HW-0.01),(VENT_Y+VENT_TOP)/2,z)));S.add(at(boxm(VENT_HW*2,.012,.04,seamM),VENT_X,VENT_Y+0.006,z));}
+  /* light falling through each grate onto the duct floor (the hall one turns red with the beacon above it) */
+  const gl=g=>{const m=decal(new THREE.MeshBasicMaterial({map:glowTex(),color:g.id==='hall'?0xff2010:0x8a98a0,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:g.id==='hall'?0:0.22}),-2,-6);
+    const q=new THREE.Mesh(new THREE.PlaneGeometry(1.1,1.2),m);q.rotation.x=-Math.PI/2;q.position.set(VENT_X,VENT_Y+0.01,g.z);q.userData.noShade=true;q.renderOrder=4;S.add(q);if(g.id==='hall'){L.vglow=m;L.vglowM=q;}};
+  /* the grates themselves, flush with the floor: a frame, bars, black underneath (seen only from above), and a padlock on the hall one */
+  const frameM=lam({map:T.metal,color:0x55554c}),holeM=decal(basic({color:0x050504}),-3,-10);
+  VENT_GRATES.forEach(g=>{gl(g);const G=new THREE.Group();G.position.set(VENT_X,0,g.z);S.add(G);
+    G.add(at(boxm(1.0,.035,.1,frameM),0,.0175,-.45));G.add(at(boxm(1.0,.035,.1,frameM),0,.0175,.45));G.add(at(boxm(.1,.035,.8,frameM),-.45,.0175,0));G.add(at(boxm(.1,.035,.8,frameM),.45,.0175,0));
+    for(let i=-3;i<=3;i++)G.add(at(boxm(.024,.03,.8,frameM),i*.115,.015,0));
+    const hole=new THREE.Mesh(new THREE.PlaneGeometry(.8,.8),holeM);hole.rotation.x=-Math.PI/2;hole.position.y=.012;hole.userData.noShade=true;G.add(hole);
+    if(g.id==='hall'){const lk=new THREE.Group();lk.position.set(.3,.05,.42);G.add(lk);lk.add(at(boxm(.07,.08,.03,lam({color:0x8a7a3a})),0,0,0));const sh=new THREE.Mesh(new THREE.TorusGeometry(.025,.007,5,10,Math.PI),lam({color:0xa0a098}));sh.position.y=.04;lk.add(sh);L.vent.lock=lk;}
+    G.traverse(o=>{o.userData.noShade=true;});L.vent.grates[g.id]=G;
+    /* from above */
+    SW.inter.push({kind:'vent',x:VENT_X,z:g.z,r:1.6,can:()=>!P.inVent&&!P.hidden&&!F.bossIn,
+      label:()=>F[g.flag]?'Climb into the vent':(g.id==='hall'&&hasItem('ventkey'))?'Unlock the grate':'Examine',
+      act(){if(F[g.flag]){ventEnter(g);return;}
+        if(g.id!=='hall'){sub('A floor grate. Bolted shut from underneath.',2.8);return;}
+        if(!hasItem('ventkey')){sub('A floor grate with a padlock on it. Cold air breathes up through the bars.',3.2);return;}
+        dropItem('ventkey');F.ventOpen=true;if(L.vent.lock)L.vent.lock.visible=false;if(AC){const t=now()+0.01;sClank(busFx,t,0.4);sNoise(busFx,t+0.25,0.3,'highpass',2600,0.7,0.2);}
+        sub('The padlock opens. The grate lifts. It\'s tight down there. Too tight for him.',3.6);}});
+    /* from below */
+    SW.inter.push({kind:'ventOut',vent:true,x:VENT_X,z:g.z,r:0.9,can:()=>P.inVent,label:()=>F[g.flag]?g.out:'Push the grate open',
+      act(){if(!F[g.flag]){F[g.flag]=true;if(AC){const t=now()+0.01;sNoise(busFx,t,0.35,'bandpass',900,2,0.3);sClank(busFx,t+0.3,0.35);}}ventExit(g);}});});}
+function ventApply(){const L=SW.lab;if(!L||!L.vent)return;if(L.vent.lock)L.vent.lock.visible=!F.ventOpen;}
+const easeV=k=>k*k*(3-2*k);
+async function ventEnter(g){if(mode!=='play'||P.inVent||P.climbing)return;P.climbing=true;setMode('cine');hidePrompt();P.lookT=null;P.crouch=false;$('bDuck').classList.remove('on');
+  const x0=P.x,z0=P.z,y0=P.yaw,e0=P.eye,p0=P.pitch,yT=g.id==='hold'?Math.PI:g.id==='shop'?0:(Math.abs(angDiff(y0,0))<Math.PI/2?0:Math.PI);
+  if(AC){const t=now()+0.01;sNoise(busFx,t,0.3,'bandpass',1100,2,0.25);sClank(busFx,t+0.2,0.3);}
+  await tween(0.45,k=>{const e=easeV(k);P.x=lerp(x0,VENT_X,e);P.z=lerp(z0,g.z,e);P.pitch=lerp(p0,-1.1,e);});
+  P.inVent=true;
+  await tween(0.95,k=>{const e=easeV(k);P.floor=lerp(0,VENT_Y,e);P.eye=lerp(e0,0.62,e);P.pitch=lerp(-1.1,0,e);P.yaw=y0+angDiff(y0,yT)*e;});
+  P.floor=VENT_Y;P.eye=0.62;P.climbing=false;setMode('play');sCrawl();
+  if(!F.ventTip){F.ventTip=true;after(0.6,()=>sub('Sheet metal, cold against her knees. Nothing his size fits down here.',3.6));}}
+async function ventExit(g){if(mode!=='play'||!P.inVent||P.climbing)return;P.climbing=true;setMode('cine');hidePrompt();
+  const z0=P.z,p0=P.pitch,e0=P.eye;if(AC){const t=now()+0.01;sNoise(busFx,t,0.25,'bandpass',1000,2,0.22);sClank(busFx,t+0.35,0.25);}
+  await tween(0.35,k=>{const e=easeV(k);P.z=lerp(z0,g.z,e);P.x=VENT_X;P.pitch=lerp(p0,0.9,e);});
+  await tween(0.9,k=>{const e=easeV(k);P.floor=lerp(VENT_Y,0,e);P.eye=lerp(e0,0.95,e);P.pitch=lerp(0.9,0,e);});
+  P.inVent=false;P.floor=0;P.crouch=true;$('bDuck').classList.add('on');P.climbing=false;setMode('play');noise(P.x,P.z,3);}
+/* a save made while she's down there puts her back on the floor at the nearest grate */
+function ventSafeZ(z){let b=VENT_GRATES[0].z;for(const g of VENT_GRATES)if(Math.abs(g.z-z)<Math.abs(b-z))b=g.z;return b;}
 /* ---------- v6.7: the lounge couch, the closet shelf ---------- */
 function buildCouch(S){const g=new THREE.Group();g.position.set(259.4,0,31);g.rotation.y=Math.PI/2;S.add(g);
   const fab=lam({color:0x5a4632}),dark=lam({color:0x3a2c1e}),leg=lam({color:0x1a1410}),stain=lam({color:0x3a0806});
@@ -4542,10 +4716,12 @@ function buildLab2(S){const L=SW.lab;L.picks=[];L.doors={};L.gore=[];L.keys=[];
   {const g=new THREE.Group();g.position.set(317.2,0,39);g.rotation.y=-Math.PI/2;S.add(g);const w=lam({map:T.wood}),m=lam({map:T.metal});g.add(at(boxm(1.8,.08,.8,w),0,.9,0));[[-.85,-.35],[.85,-.35],[-.85,.35],[.85,.35]].forEach(([a,b])=>g.add(at(boxm(.07,.9,.07,m),a,.45,b)));
     g.add(at(boxm(.2,.15,.2,m),-.6,1.02,0));g.add(at(boxm(1.6,.9,.05,lam({map:T.wood,color:0x8a7a6a})),0,1.5,-.38));for(let i=0;i<5;i++)g.add(at(boxm(.04,.25,.02,m),-.6+i*.3,1.55,-.34));
     SW.inter.push({kind:'bench',x:316,z:39,r:2.0,label:()=>hasItem('injector')?'Examine':'Use the workbench',act:useBench});}
+  /* v6.9: the red hall, the crawlway under it, the note in the decon locker and the key on the body by the showers */
+  buildHall(S);buildVent(S);
+  {const h=SW.hides.find(h=>h.cx===132&&h.cz===23);if(h)h.note='L10';}
+  {const kp=addPick(S,'ventkey',new THREE.Group(),263,0.1,41,'Search the body',()=>{takeItem('ventkey');sub('A small brass key on a shoelace, in his shirt pocket.',3.2);},1.7);kp.cond=()=>!!F.noteVent;}
   /* the captives */
-  L.cap={mack:buildCaptive({cloth:0x4a4232,skin:0x6a4a38,head:{skin:[112,82,62],lip:[110,70,60],iris:'#2a1a10',brow:'rgba(80,72,60,0.95)',hair:'#5a5248',hairline:44,hairLen:96,age:1}}),
-    bee:buildCaptive({cloth:0x8a8a80,skin:0x8a6a58,head:{skin:[150,112,92],lip:[150,86,80],iris:'#3a2a1a',brow:'rgba(40,30,24,0.95)',hair:'#1e1612',hairline:36,hairLen:110,age:0.3}})};
-  L.cap.mack.g.position.set(303,0,19.4);L.cap.bee.g.position.set(311,0,19.4);S.add(L.cap.mack.g);S.add(L.cap.bee.g);
+  L.cap={mack:buildMack(),bee:buildBee()};L.cap.bee.g.scale.setScalar(.95);S.add(L.cap.mack.g);S.add(L.cap.bee.g);capReset('mack');capReset('bee');{/* what they had with them: his cardboard and a plastic bag, her bedroll */const cb=decal(lam({color:0x6a5a40}),-2,-6);S.add(at(boxm(.9,.02,.75,cb),303,.01,19.15));const bag=ball(.12,lam({color:0xc8c4b8}),7,5);bag.scale.set(1.2,.8,1);bag.position.set(304.3,.09,18.55);S.add(bag);const bed=cylm(.13,.13,.72,9,lam({map:T.knit,color:0x4a5638}));bed.rotation.z=Math.PI/2;bed.position.set(312.5,.13,18.45);S.add(bed);[-.24,.24].forEach(o=>S.add(at(cylm(.135,.135,.03,9,lam({color:0x2a2a24})),312.5+o,.13,18.45).rotateZ(Math.PI/2)));}
   [['mack',303],['bee',311]].forEach(([w,x])=>{SW.inter.push({kind:'cell',x,z:24.7,r:1.7,label:()=>hasItem('key')?'Unlock':'Examine',can:()=>!(w==='mack'?F.cellMack:F.cellBee),act(){cellDoor(w);}});});
   /* gore, reused */
   const gm=[lam({color:0x9a1a10,emissive:0x300604}),lam({color:0x5a0a06,emissive:0x200402}),lam({map:T.rawFlesh,emissive:0x2a0a06})];for(let i=0;i<26;i++){const p=boxm(.06+R()*.08,.05+R()*.06,.06+R()*.08,gm[i%3]);p.visible=false;S.add(p);L.gore.push({m:p,vx:0,vy:0,vz:0,on:false});}
@@ -4557,10 +4733,10 @@ function buildLab2(S){const L=SW.lab;L.picks=[];L.doors={};L.gore=[];L.keys=[];
     SW.inter.push({kind:'stab',get x(){return m.x;},get z(){return m.z;},r:1.9,label:()=>'Stab',can:()=>canStab(m),act(){stab(m);}});});}
 
 /* ---------- applying saved state ---------- */
-function applyLab2(){const L=SW.lab;if(!L||!L.picks)return;resetJunk();L.picks.forEach(p=>{p.mesh.visible=!(F.picked||[]).includes(p.id);});
+function applyLab2(){const L=SW.lab;if(!L||!L.picks)return;resetJunk();ventApply();L.picks.forEach(p=>{p.mesh.visible=!(F.picked||[]).includes(p.id);});
   if(L.pod)L.pod.position.y=L.pod.userData.y0+(F.cryoDone?2.0:0);if(L.drawer)L.drawer.position.z=L.drawer.userData.z0+(F.mazeDone?0.45:0);drawMazeBoard();drawChemScreen();
   [['closet',F.closetOpen],['sec',F.secOpen]].forEach(([k,o])=>{const d=L.doors[k];if(!d)return;if(d.userData.p0==null)d.userData.p0=[d.position.x,d.position.z];const s=Math.sin(d.rotation.y),c=Math.cos(d.rotation.y);d.position.x=d.userData.p0[0]+(o?c*1.85:0);d.position.z=d.userData.p0[1]-(o?s*1.85:0);});
-  ['mack','bee'].forEach(w=>{const free=w==='mack'?F.cellMack:F.cellBee,cp=L.cap[w];cp.g.visible=!free;cp.walk=null;cp.g.position.set(w==='mack'?303:311,0,19.4);cp.body.position.y=.45;const b=L.cellBars&&L.cellBars[w];if(b)b.position.x=b.userData.x0+(free?1.8:0);});
+  ['mack','bee'].forEach(w=>{const free=w==='mack'?F.cellMack:F.cellBee,cp=L.cap[w];cp.g.visible=!free;capReset(w);const b=L.cellBars&&L.cellBars[w];if(b)b.position.x=b.userData.x0+(free?1.8:0);});
   L.keys.forEach(k=>{SW.scene.remove(k.mesh);});L.keys=[];(F.keyDrops||[]).forEach(d=>{if(!(F.keysTaken||[]).includes(d.i))spawnKey(d.i,d.x,d.z);});
   MUTS.forEach(m=>{if(m.rig.keyM)m.rig.keyM.visible=!(F.keyDrops||[]).some(d=>d.i===m.i);});
   if(SW.lab.tv)SW.lab.tv.material.color.setHex(0x0a0e0c);}
@@ -4595,18 +4771,14 @@ function spawnKey(i,x,z){const old=SW.inter.find(it=>it.kind==='key'&&it.ki===i)
 const CAP_LINES={mack:[['Marissa','Mack? From the camp? Your tent... Dolores told me about you.'],['Mack','You ain\'t one of them. Thank God.'],['Mack','The vents. They can\'t fit in the vents. I\'ll find my own way. Go.']],
   bee:[['Marissa','Bee? Your name\'s on the wall. At the camp.'],['Bee','We\'re still here... we\'re still here...'],['Bee','She talks in your head down here. Don\'t listen to her. Don\'t.']]};
 function cellDoor(w){const free=w==='mack'?F.cellMack:F.cellBee;if(free)return;
-  if(!hasItem('key')){labMark('cells');sub(w==='mack'?'Locked. A man sits in the dark, rocking. He doesn\'t look up.':'Locked. A woman in a gown, whispering to the wall.',3.2);return;}
+  if(!hasItem('key')){labMark('cells');sub(w==='mack'?'Locked. A man sits in the dark, rocking. He doesn\'t look up.':'Locked. A woman kneels at the back wall, whispering to it.',3.2);return;}
   dropItem('key');if(w==='mack')F.cellMack=true;else F.cellBee=true;if(AC)sClank(busFx,now()+0.01,0.5);
   const door=SW.lab.cellBars&&SW.lab.cellBars[w];if(door)tween(0.9,k=>{door.position.x=door.userData.x0+k*1.8;});
   const cp=SW.lab.cap[w],lines=CAP_LINES[w];setMode('cine');hidePrompt();P.lookT=[cp.g.position.x,1.0,cp.g.position.z];{const x0=P.x,z0=P.z,tx=cp.g.position.x,tz=23.6;after(0.5,()=>tween(1.2,k=>{const e=k*k*(3-2*k);P.x=x0+(tx-x0)*e;P.z=z0+(tz-z0)*e;}));}
   let t=0.6;lines.forEach(([n,l])=>{after(t,()=>speak(n,l,3.2));t+=3.3;});
-  after(1.0,()=>{tween(1.0,k=>{cp.body.position.y=.45+k*.45;});});
+  after(1.0,()=>{cp.mode='stand';});
   after(t,()=>{P.lookT=null;setMode('play');cp.walk={pts:[[cp.g.position.x,23.2],[cp.g.position.x,25.0],[322.5,25.0],[325.5,25.0]],i:0};setObjective(ch2Obj());writeSave(makeSave(zoneName()));
     if(F.cellMack&&F.cellBee)after(1.5,()=>speak('Marissa','Both of them. Okay.',2.4));});}
-function capTick(dt){const L=SW.lab;if(!L||!L.cap)return;for(const w of ['mack','bee']){const cp=L.cap[w];if(!cp.g.visible)continue;
-    if(cp.walk){const p=cp.walk.pts[cp.walk.i];const dx=p[0]-cp.g.position.x,dz=p[1]-cp.g.position.z,d=Math.hypot(dx,dz);if(d<0.1){cp.walk.i++;if(cp.walk.i>=cp.walk.pts.length){cp.g.visible=false;cp.walk=null;}continue;}
-      const s=Math.min(d,1.8*dt);cp.g.position.x+=dx/d*s;cp.g.position.z+=dz/d*s;cp.g.rotation.y=Math.atan2(dx,dz);cp.body.position.y=.9+Math.abs(Math.sin(time*7))*0.03;if(cp.walk.i===3)cp.body.position.y=.5;}
-    else if(!(w==='mack'?F.cellMack:F.cellBee)){cp.body.rotation.x=Math.sin(time*1.3+(w==='bee'?1:0))*0.12;cp.head.rotation.x=0.35;}}}
 
 /* ---------- objectives and hints ---------- */
 function labObj(){if(F.bossIn)return bossObj();if(F.inj>0)return OBJ.cure;if(hasItem('injector'))return (F.cellMack&&F.cellBee)?OBJ.past:OBJ.free;if(hasItem('baton'))return OBJ.craft;if((F.tapesSeen||[]).includes(3))return OBJ.baton;
@@ -4638,6 +4810,8 @@ $('puzClose').addEventListener('click',closePuz);$('vhs').addEventListener('poin
 const LIFT_CODE='0302';
 const BZ={x:401,z:26,r:4};                      /* the floor she keeps to */
 Object.assign(OBJ,{boss:'Kill Delilah.',bossCode:'Search what is left of her.',bossLift:'Take the elevator down.'});
+Object.assign(NOTES,{
+ L10:{verb:'Read',title:'',cls:'hand',html:`<p>If you found this you know how to hide. Good.</p><p>The key to the floor grate is on Ray. He's the first one, by the showers. He won't mind.</p><p>The grate is in the long hall. It's too small for the big one. It runs under the floor to the cells and the shop.</p><div class="margin">don't let them see you go down</div>`}});
 Object.assign(NOTES,{
  L8:{verb:'Read',title:'',cls:'hand',html:`<p>She lets us hear her now. The ones who drank hear her best.</p><p>Red is pretty. The skin is bad. We take the skin off so she can see us.</p><p>We feed her and she makes the water sing.</p><div class="margin">she isn't dead. she's only down there</div>`},
  L9:{verb:'Read',title:'',cls:'hand',html:`<p>LIFT B &middot; OLD TOWN</p><p style="font-size:2.2em;letter-spacing:.25em;margin:.2em 0">0 3 0 2</p><p>Don't let her have it. Don't let her</p>`}});
