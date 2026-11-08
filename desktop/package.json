@@ -1,0 +1,24 @@
+{
+  "name": "the-abandoned",
+  "productName": "The Abandoned",
+  "version": "1.0.0",
+  "description": "The Abandoned",
+  "author": "Doomscroller669",
+  "main": "main.js",
+  "private": true,
+  "devDependencies": {
+    "electron": "31.7.7",
+    "electron-builder": "24.13.3"
+  },
+  "build": {
+    "appId": "com.doomscroller.theabandoned",
+    "productName": "The Abandoned",
+    "files": ["main.js", "icon.png", "game/**/*"],
+    "directories": { "output": "dist" },
+    "win": {
+      "target": [{ "target": "portable", "arch": ["x64"] }],
+      "icon": "icon.png"
+    },
+    "portable": { "artifactName": "TheAbandoned-Windows.exe" }
+  }
+}

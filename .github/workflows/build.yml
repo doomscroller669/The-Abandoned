@@ -1,4 +1,4 @@
-name: Build Android app
+name: Build Android and Windows apps
 
 on:
   push:
@@ -36,3 +36,33 @@ jobs:
           name: The Abandoned, build ${{ github.run_number }}
           files: TheAbandoned.apk
           make_latest: true
+
+  windows:
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Copy the game into the desktop wrapper
+        shell: bash
+        run: |
+          mkdir -p desktop/game
+          cp app/src/main/assets/index.html app/src/main/assets/three.min.js app/src/main/assets/three.LICENSE.txt desktop/game/
+          cp game/icon-512.png desktop/icon.png
+
+      - name: Build the Windows app
+        working-directory: desktop
+        shell: bash
+        run: |
+          npm install --no-audit --no-fund
+          npx electron-builder --win portable --x64 --publish never
+
+      - name: Add it to this build's release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          files: desktop/dist/TheAbandoned-Windows.exe
