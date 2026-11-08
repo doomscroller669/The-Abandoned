@@ -1484,11 +1484,12 @@ function buildBox(){
   g.add(at(boxm(1.0,.06,.5,lam({color:0x4a3a5a})),0,.03,.95));
   return g;}
 /* ---------- v7.1: vaulted brick ceilings in the sewer, round pipes with running water in the crawl maze ---------- */
-/* walls with something set high in them (the vents he climbs through, the duct off the camp pipes) keep a flat ceiling above them */
-const ARCH_SKIP=new Set(['7,19','7,10','25,13','23,7','24,7','25,7']);
+/* walls with something set high on them keep a flat ceiling above them: the vents he climbs through, the camp duct, Mack's cage, the pipe runs,
+   wall lamps, painted names and signs, the service lift door. Found by checking every object against the vault (v7.1 QA) */
+const ARCH_SKIP=new Set(['0,1','0,2','0,19','0,20','2,0','3,0','4,0','6,19','7,9','7,10','7,19','8,19','9,1','10,1','11,1','12,1','13,1','20,1','22,0','22,1','23,0','23,7','24,7','25,7','25,13','30,0','31,0','32,1','32,2','72,12','74,12']);
 function archWall(cx,cz){return cellAt(cx,cz)==='#'&&!ARCH_SKIP.has(cx+','+cz);}
 /* how far the vault curves down at a wall (0 = flat). Only the old sewer and the maze rooms; not the lab, the cars, the gate or the pipes */
-function archR(cx,cz){if(cx>=127)return 0;const c=cellAt(cx,cz);if(c==='#'||c==='c'||c==='E'||c==='e'||c==='G'||c==='L')return 0;const ce=ceilAt(cx,cz);return ce>=3?1.0:ce>=2.5?0.85:0;}
+function archR(cx,cz){if(cx>=127||(cx>=113&&cz>=21))return 0;const c=cellAt(cx,cz);if(c==='#'||c==='c'||c==='E'||c==='e'||c==='G'||c==='L')return 0;const ce=ceilAt(cx,cz);return ce>=3?1.0:ce>=2.5?0.85:0;}
 function archBusy(cx,cz){for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++)if((i||j)&&archWall(cx+i,cz+j))return true;return false;}
 /* the ceiling height at a point inside a cell: a quarter circle of radius R springing from every wall it is near */
 function archY(cx,cz,x,z){const ce=ceilAt(cx,cz),R=archR(cx,cz);if(R<=0)return ce;let d=R;
@@ -1512,8 +1513,8 @@ function vStrip(gb,e,bot,top,cf){const n=6,m=4,cols=[];let any=false;
   for(let j=0;j<m;j++)for(let i=0;i<n;i++){const a=base+j*(n+1)+i,b=a+1,c=a+n+1,d=c+1;if(!flip)gb.i.push(a,b,d,a,d,c);else gb.i.push(a,d,b,a,c,d);}}
 /* one quad with its own normals; turned so it faces along nf */
 function gbQuad(gb,P4,N4,U4,nf,cf){const base=gb.v;for(let k=0;k<4;k++){const p=P4[k],n=N4[k]||N4[0];gb.p.push(p[0],p[1],p[2]);gb.n.push(n[0],n[1],n[2]);gb.u.push(U4[k][0],U4[k][1]);const col=cf?cf(p[0],p[1],p[2]):[1,1,1];gb.c.push(col[0],col[1],col[2]);gb.v++;}
-  const a=P4[0],b=P4[1],c=P4[2],ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
-  const fx=uy*vz-uz*vy,fy=uz*vx-ux*vz,fz=ux*vy-uy*vx,ok=fx*nf[0]+fy*nf[1]+fz*nf[2]>=0;
+  /* Newell's normal over all four corners, so a quad with one collapsed triangle still faces the right way */
+  let fx=0,fy=0,fz=0;for(let k=0;k<4;k++){const p=P4[k],q=P4[(k+1)%4];fx+=(p[1]-q[1])*(p[2]+q[2]);fy+=(p[2]-q[2])*(p[0]+q[0]);fz+=(p[0]-q[0])*(p[1]+q[1]);}const ok=fx*nf[0]+fy*nf[1]+fz*nf[2]>=0;
   if(ok)gb.i.push(base,base+1,base+2,base,base+2,base+3);else gb.i.push(base,base+2,base+1,base,base+3,base+2);}
 
 /* ---------- the crawl maze: straight runs and dead ends are concrete pipes; bends and junctions stay little brick chambers ---------- */
@@ -1529,7 +1530,7 @@ function pipeDist(cx,cz){if(!PIPE_DIST){PIPE_DIST=new Map();const q=[];
   const c=cellAt(cx,cz);if(c==='#')return 1e9;if(c!=='c')return -1;const v=PIPE_DIST.get(cx+','+cz);return v==null?1e9:v;}
 function pipeCell(t,cx,cz){const ax=pOpen(cx,cz,1,0)||pOpen(cx,cz,-1,0)?'x':'z',x0=cx*CELL,z0=cz*CELL,mx=x0+CELL/2,mz=z0+CELL/2,N=14,M=3;
   const capA=ax==='x'?!pOpen(cx,cz,-1,0):!pOpen(cx,cz,0,-1),capB=ax==='x'?!pOpen(cx,cz,1,0):!pOpen(cx,cz,0,1);
-  const P=(s,a)=>ax==='x'?[x0+s,PIPE_YC+Math.sin(a)*PIPE_R,mz+Math.cos(a)*PIPE_R]:[mx+Math.cos(a)*PIPE_R,PIPE_YC+Math.sin(a)*PIPE_R,z0+s];
+  const PY=a=>Math.max(0,PIPE_YC+Math.sin(a)*PIPE_R),P=(s,a)=>ax==='x'?[x0+s,PY(a),mz+Math.cos(a)*PIPE_R]:[mx+Math.cos(a)*PIPE_R,PY(a),z0+s];
   const Nn=a=>ax==='x'?[0,-Math.sin(a),-Math.cos(a)]:[-Math.cos(a),-Math.sin(a),0];
   for(let k=0;k<M;k++)for(let i=0;i<N;i++){const s0=k/M*CELL,s1=(k+1)/M*CELL,a0=i/N*TAU,a1=(i+1)/N*TAU,am=(a0+a1)/2,gb=PIPE_YC+Math.sin(am)*PIPE_R<0.42?t.gS:t.gF;
     const so=ax==='x'?x0:z0;gbQuad(gb,[P(s0,a0),P(s1,a0),P(s1,a1),P(s0,a1)],[Nn(a0),Nn(a0),Nn(a1),Nn(a1)],[[(so+s0)/2,a0/TAU*2.5],[(so+s1)/2,a0/TAU*2.5],[(so+s1)/2,a1/TAU*2.5],[(so+s0)/2,a1/TAU*2.5]],Nn(am),grime);}
@@ -1541,14 +1542,17 @@ function pipeCell(t,cx,cz){const ax=pOpen(cx,cz,1,0)||pOpen(cx,cz,-1,0)?'x':'z',
   gbQuad(t.gFl,[W(0,-hw),W(CELL,-hw),W(CELL,hw),W(0,hw)],[[0,1,0]],[uv(0,-hw),uv(CELL,-hw),uv(CELL,hw),uv(0,hw)],[0,1,0],null);}
 /* a bend or junction: still water over its floor */
 function flowBox(t,cx,cz){const x0=cx*CELL,z0=cz*CELL,P=(a,b)=>[x0+a,PIPE_WY,z0+b];gbQuad(t.gFl,[P(0,0),P(CELL,0),P(CELL,CELL),P(0,CELL)],[[0,1,0]],[[x0/2,z0/2],[(x0+CELL)/2,z0/2],[(x0+CELL)/2,(z0+CELL)/2],[x0/2,(z0+CELL)/2]],[0,1,0],null);}
-/* the wall where a pipe comes out into a room or a chamber: the doorway filled in around a round mouth */
-function pipeFrame(gb,cx,cz,dx,dz,cf){const ex=cx*CELL+CELL/2+dx*CELL/2,ez=cz*CELL+CELL/2+dz*CELL/2,lat=dx?[0,1]:[1,0],nf=[-dx,0,-dz],H=CRAWL_H;
-  const angs=[];for(let i=0;i<20;i++)angs.push(i/20*TAU);[[1,H],[-1,H],[-1,0],[1,0]].forEach(([l,y])=>{let a=Math.atan2(y-PIPE_YC,l);if(a<0)a+=TAU;angs.push(a);});angs.sort((a,b)=>a-b);
-  const W=(l,y)=>[ex+lat[0]*l,y,ez+lat[1]*l],pts=angs.map(a=>{const ca=Math.cos(a),sa=Math.sin(a);let tm=1e9;
-    if(Math.abs(ca)>1e-6)tm=Math.min(tm,(ca>0?1:-1)/ca);if(sa>1e-6)tm=Math.min(tm,(H-PIPE_YC)/sa);if(sa<-1e-6)tm=Math.min(tm,(0-PIPE_YC)/sa);
-    const cl=ca*PIPE_R,cy=Math.max(0,PIPE_YC+sa*PIPE_R);return {c:[cl,cy],r:[ca*tm,PIPE_YC+sa*tm]};});
-  for(let i=0;i<pts.length;i++){const A=pts[i],B=pts[(i+1)%pts.length];const uv=p=>[p[0]/2+0.5,p[1]/2];
-    gbQuad(gb,[W(...A.c),W(...A.r),W(...B.r),W(...B.c)],[nf],[uv(A.c),uv(A.r),uv(B.r),uv(B.c)],nf,cf);}}
+/* the wall where a pipe comes out into a room or a chamber: the doorway filled in around a round mouth.
+   Stitched between the pipe's own 14-sided ring and the doorway's edge, using only points the pipe, the walls, the floor and the ceiling
+   (or the room's step face) also have, so there are no T-junctions and no cracks */
+function pipeFrame(gb,cx,cz,dx,dz,cf){const ex=cx*CELL+CELL/2+dx*CELL/2,ez=cz*CELL+CELL/2+dz*CELL/2,lat=dx?[0,1]:[1,0],nf=[-dx,0,-dz],H=CRAWL_H,N=14;
+  const ang=(l,y)=>{let a=Math.atan2(y-PIPE_YC,l);if(a<0)a+=TAU;return a;},W=(l,y)=>[ex+lat[0]*l,y,ez+lat[1]*l],uv=p=>[p.l/2+0.5,p.y/2];
+  const inner=[];for(let i=0;i<N;i++){const a=i/N*TAU;inner.push({a,l:Math.cos(a)*PIPE_R,y:Math.max(0,PIPE_YC+Math.sin(a)*PIPE_R)});}
+  const outer=[],add=(l,y)=>outer.push({a:ang(l,y),l,y});
+  (cellAt(cx,cz)==='c'?[1,1/3,-1/3,-1]:[1,2/3,1/3,0,-1/3,-2/3,-1]).forEach(l=>add(l,H));[0.5,1.0].forEach(y=>{add(-1,y);add(1,y);});[-1,-0.5,0,0.5,1].forEach(l=>add(l,0));
+  outer.sort((p,q)=>p.a-q.a);const NI=inner.length,NO=outer.length,aI=k=>inner[k%NI].a+(k>=NI?TAU:0),aO=k=>outer[k%NO].a+(k>=NO?TAU:0);
+  const tri=(p,q,r)=>{const P3=[W(p.l,p.y),W(q.l,q.y),W(r.l,r.y)];gbQuad(gb,[P3[0],P3[1],P3[2],P3[2]],[nf],[uv(p),uv(q),uv(r),uv(r)],nf,cf);};
+  let i=0,j=0;while(i<NI||j<NO){const takeI=j>=NO||(i<NI&&aI(i+1)<=aO(j+1));if(takeI){tri(inner[i%NI],outer[j%NO],inner[(i+1)%NI]);i++;}else{tri(inner[i%NI],outer[j%NO],outer[(j+1)%NO]);j++;}}}
 function pipeTick(dt){if(SW.flowT)SW.flowT.offset.x+=dt*0.42;if(!AC||!F.ch2||F.elevDown||level!=='sewer')return;const cx=Math.floor(P.x/CELL),cz=Math.floor(P.z/CELL);
   let v=0.03;if(isTube(cx,cz)||(cellAt(cx,cz)==='c'&&cx>=70&&cx<127))v=0.2;else if(DIR4.some(([dx,dz])=>cellAt(cx+dx,cz+dz)==='c'))v=0.1;setAmb('flow',v,0.8,true);}
 
@@ -1658,6 +1662,9 @@ function buildProps(S){const rr=mulberry(7071),blocks=new Map();SW.pbox=new Map(
   [...VENTS2,...VENTS_LAB].forEach(v=>avoid.push([v.x,v.z,2.4]));(typeof JUNK_SPOTS!=='undefined'?JUNK_SPOTS:[]).forEach(([cx,cz])=>avoid.push([wc(cx),wc(cz),1.6]));
   (typeof LAB_NOTES!=='undefined'?LAB_NOTES:[]).forEach(n=>avoid.push([n[1],n[3],1.6]));
   const near=(x,z)=>avoid.some(([ax,az,r])=>Math.hypot(ax-x,az-z)<r);
+  /* everything already standing or painted in the level (signs, graffiti, lamps, lumps): a prop that would overlap one is left out */
+  const tileM=new Set(Object.values(SW.M)),obs=[],tb=new THREE.Box3(),tv=new THREE.Vector3();S.updateMatrixWorld(true);
+  S.traverse(o=>{if(!o.isMesh)return;const m=Array.isArray(o.material)?o.material[0]:o.material;if(!m||tileM.has(m)||m.blending===THREE.AdditiveBlending)return;tb.setFromObject(o);tb.getSize(tv);if(Math.max(tv.x,tv.z)>4.5||tb.max.y<0.08)return;obs.push(tb.clone());});
   const used=new Set(),list=k=>Object.entries(PROPS).filter(([n,p])=>p[k]).flatMap(e=>Array(e[1].wt||1).fill(e));const LAB_FL=list('lab').filter(([n,p])=>p.fl),LAB_W=list('lab').filter(([n,p])=>p.wall),SEW_FL=list('sew').filter(([n,p])=>p.fl),SEW_W=list('sew').filter(([n,p])=>p.wall);
   for(let cz=1;cz<MH-1;cz++)for(let cx=1;cx<MW-1;cx++){const c=cellAt(cx,cz);if(c!=='.')continue;const lab=cx>=127&&cx<191,sew=cx<55||(cx>=70&&cx<127);if(!lab&&!sew)continue;if(cx>=113&&cz>=21&&cx<127)continue;
     const walls=DIR4.filter(([dx,dz])=>cellAt(cx+dx,cz+dz)==='#');if(!walls.length)continue;const corr=walls.some(([a,b])=>walls.some(([c2,d2])=>c2===-a&&d2===-b));
@@ -1665,7 +1672,7 @@ function buildProps(S){const rr=mulberry(7071),blocks=new Map();SW.pbox=new Map(
     const [dx,dz]=walls[(rr()*walls.length)|0],k=cx+','+cz+','+dx+','+dz;if(used.has(k))continue;used.add(k);
     const floorOK=!corr&&!used.has('f'+cx+','+cz)&&walls.length<3;const pool=lab?(floorOK&&rr()<.62?LAB_FL:LAB_W):(floorOK&&rr()<.55?SEW_FL:SEW_W);const [name,def]=pool[(rr()*pool.length)|0];if(def.fl)used.add('f'+cx+','+cz);
     const wx=mx+dx*CELL/2,wz=mz+dz*CELL/2,lat=dx?[0,1]:[1,0],room=Math.max(0,(CELL-def.w)/2-.06),off=name==='conduit'?0:(rr()-.5)*2*room;
-    const b=blk(wx,wz),g=def.make(b.pm,rr,lab);g.position.set(wx+lat[0]*off,0,wz+lat[1]*off);g.rotation.y=Math.atan2(-dx,-dz);b.root.add(g);
+    const b=blk(wx,wz),g=def.make(b.pm,rr,lab);g.position.set(wx+lat[0]*off,0,wz+lat[1]*off);g.rotation.y=Math.atan2(-dx,-dz);b.root.add(g);b.root.userData.props=true;{const pb=new THREE.Box3().setFromObject(g).expandByScalar(-0.03);if(obs.some(o=>o.intersectsBox(pb))){b.root.remove(g);continue;}}(SW.propList||(SW.propList=[])).push({name,cx,cz,box:new THREE.Box3().setFromObject(g)});
     if(def.fl){const hw=def.w/2,dd=def.d,cxw=wx+lat[0]*off,czw=wz+lat[1]*off,ex=-dx*dd,ez=-dz*dd,lx=lat[0]*hw,lz=lat[1]*hw;
       const bx=[Math.min(cxw-lx,cxw+lx,cxw-lx+ex,cxw+lx+ex),Math.min(czw-lz,czw+lz,czw-lz+ez,czw+lz+ez),Math.max(cxw-lx,cxw+lx,cxw-lx+ex,cxw+lx+ex),Math.max(czw-lz,czw+lz,czw-lz+ez,czw+lz+ez)];
       const key=cx+','+cz;if(!SW.pbox.has(key))SW.pbox.set(key,[]);SW.pbox.get(key).push(bx);}}
@@ -3467,9 +3474,9 @@ function buildGore(S){const rr=mulberry(9031),Q=quadBatch(),G=quadBatch(),lumps=
       const k=rr(),tile=k<0.3?4:k<0.44?7:k<0.58?1:k<0.72?3:k<0.88?6:5;
       const w=tile===6?0.7+rr()*0.5:0.6+rr()*0.65,hh=tile===6?Math.min(H-0.2,0.9+rr()*0.7):w*(0.85+rr()*0.35);
       const yc=tile===6?H-0.08-hh/2:clamp(0.2+hh/2+rr()*Math.max(0,H-0.5-hh),hh/2+0.04,H-hh/2-0.04),lat=(rr()-0.5)*Math.max(0,CELL-w-0.1);
-      Q.add(x0+dx*(CELL/2-0.012)+(dx?0:lat),yc,z0+dz*(CELL/2-0.012)+(dz?0:lat),-dx,0,-dz,0,1,0,w,hh,tile,rr()<0.5);}
+      {const tb=isTube(cx,cz),o=tb?0.69:CELL/2-0.012;Q.add(x0+dx*o+(dx?0:lat),tb?0.7:yc,z0+dz*o+(dz?0:lat),-dx,0,-dz,0,1,0,tb?Math.min(w,0.9):w,tb?Math.min(hh,0.5):hh,tile,rr()<0.5);}}
     /* the ceiling: claws where something dragged itself along */
-    if(rr()<(crawl?0.45:0.14)){const k=rr(),tile=k<0.55?4:k<0.8?7:1,a=rr()*TAU,s=0.7+rr()*0.7;Q.add(x0+(rr()-0.5)*0.9,H-0.012,z0+(rr()-0.5)*0.9,0,-1,0,Math.sin(a),0,Math.cos(a),s,s,tile,rr()<0.5);}}
+    if(rr()<(crawl?0.45:0.14)){const k=rr(),tile=k<0.55?4:k<0.8?7:1,a=rr()*TAU,s=0.7+rr()*0.7;{const tb=isTube(cx,cz),ax=tb&&(cellAt(cx+1,cz)!=='#'||cellAt(cx-1,cz)!=='#'),ox=(rr()-0.5)*0.9,oz=(rr()-0.5)*0.9,s2=tb?Math.min(s,0.5):s;Q.add(x0+(tb&&!ax?ox*0.3:ox),tb?1.43:H-0.012,z0+(tb&&ax?oz*0.3:oz),0,-1,0,Math.sin(a),0,Math.cos(a),s2,s2,tile,rr()<0.5);}}}
   /* the cistern: the water's gone red */
   {const wcs=[];for(let cz=0;cz<MH;cz++)for(let cx=70;cx<127;cx++)if(MAP[cz][cx]==='~')wcs.push([cx,cz]);
     if(wcs.length){const xs=wcs.map(p=>p[0]),zs=wcs.map(p=>p[1]),x0=Math.min(...xs)*CELL,x1=(Math.max(...xs)+1)*CELL,z0=Math.min(...zs)*CELL,z1=(Math.max(...zs)+1)*CELL;
@@ -3479,16 +3486,15 @@ function buildGore(S){const rr=mulberry(9031),Q=quadBatch(),G=quadBatch(),lumps=
       for(const [cx,cz] of wcs)for(const [dx,dz] of DIRS){const n=cellAt(cx+dx,cz+dz);if(n==='~')continue;Q.add(wc(cx)+dx*(CELL/2-0.02),WATER_Y+0.18,wc(cz)+dz*(CELL/2-0.02),-dx,0,-dz,0,1,0,CELL*0.95,0.42,2,rr()<0.5);}}}
   /* a few dead rats in the crawls, opened up */
   {const cr=[];for(let cz=1;cz<MH-1;cz++)for(let cx=70;cx<127;cx++)if(MAP[cz][cx]==='c')cr.push([cx,cz]);
-    for(let i=0;i<6&&cr.length;i++){const [cx,cz]=cr.splice((rr()*cr.length)|0,1)[0],x=wc(cx)+(rr()-0.5)*0.8,z=wc(cz)+(rr()-0.5)*0.8,r=buildRat().g;r.rotation.set(0,rr()*TAU,Math.PI/2*(rr()<0.5?1:-1));r.position.set(x,0.05,z);S.add(r);
-      Q.add(x,0.016,z,0,1,0,1,0,0,0.6,0.6,0,false);}}
+    for(let i=0;i<6&&cr.length;i++){const [cx,cz]=cr.splice((rr()*cr.length)|0,1)[0],x=wc(cx)+(rr()-0.5)*0.8,z=wc(cz)+(rr()-0.5)*0.8,r=buildRat().g;r.rotation.set(0,rr()*TAU,Math.PI/2*(rr()<0.5?1:-1));const tb=isTube(cx,cz),axr=tb&&(cellAt(cx+1,cz)!=='#'||cellAt(cx-1,cz)!=='#'),x2=tb&&!axr?wc(cx)+(x-wc(cx))*0.25:x,z2=tb&&axr?wc(cz)+(z-wc(cz))*0.25:z;r.position.set(x2,tb?0.09:0.05,z2);S.add(r);Q.add(x2,0.016,z2,0,1,0,1,0,0,0.6,0.6,0,false);}}
   /* red emergency lamps: a caged bulb and its light on everything near it */
   const bulbM=basic({color:0xff3420}),cageM=lam({map:T.metal,color:0x4a4a44});
   for(const [zx,zz] of RED_ZONES){const H=ceilAt(zx,zz),bx=wc(zx),bz=wc(zz);S.add(at(ball(0.07,bulbM,7,5),bx,H-0.12,bz));S.add(at(boxm(0.22,0.04,0.22,cageM),bx,H-0.03,bz));
     for(let k=0;k<4;k++){const a=k*Math.PI/2+0.78;S.add(at(boxm(0.012,0.14,0.012,cageM),bx+Math.cos(a)*0.09,H-0.11,bz+Math.sin(a)*0.09));}
     for(let oz=-2;oz<=2;oz++)for(let ox=-2;ox<=2;ox++){const cx=zx+ox,cz=zz+oz,c=cellAt(cx,cz);if(skip(c)&&c!=='W'&&c!=='Q')continue;const d=Math.hypot(ox,oz),k=Math.max(0,1-d/2.6);if(k<=0)continue;
       const x0=wc(cx),z0=wc(cz),Hc=ceilAt(cx,cz),col=[k,k,k];
-      G.add(x0,0.02,z0,0,1,0,0,0,1,CELL*1.5,CELL*1.5,-1,false,col.map(v=>v*0.8));G.add(x0,Hc-0.02,z0,0,-1,0,0,0,1,CELL*1.3,CELL*1.3,-1,false,col);
-      for(const [dx,dz] of DIRS){if(cellAt(cx+dx,cz+dz)!=='#')continue;G.add(x0+dx*(CELL/2-0.02),Hc*0.55,z0+dz*(CELL/2-0.02),-dx,0,-dz,0,1,0,CELL*1.4,Hc*1.2,-1,false,col);}}}
+      G.add(x0,0.02,z0,0,1,0,0,0,1,CELL*1.5,CELL*1.5,-1,false,col.map(v=>v*0.8));const tbz=isTube(cx,cz);G.add(x0,tbz?1.41:Hc-0.02,z0,0,-1,0,0,0,1,tbz?1.0:CELL*1.3,tbz?1.0:CELL*1.3,-1,false,col);
+      for(const [dx,dz] of DIRS){if(cellAt(cx+dx,cz+dz)!=='#')continue;{const o=tbz?0.68:CELL/2-0.02;G.add(x0+dx*o,tbz?0.72:Hc*0.55,z0+dz*o,-dx,0,-dz,0,1,0,tbz?CELL*1.2:CELL*1.4,tbz?0.75:Hc*1.2,-1,false,col);}}}}
   const gm=Q.mesh(decal(lam({map:goreTex(),color:0x8a7470,transparent:true,depthWrite:false,side:THREE.DoubleSide}),-2,-6));if(gm)S.add(gm);
   const glow=new THREE.MeshBasicMaterial({map:glowTex(),color:0xff2410,vertexColors:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0.5,side:THREE.DoubleSide});
   const gl=G.mesh(decal(glow,-3,-10),true);if(gl){gl.renderOrder=4;S.add(gl);SW.c2.glow=glow;}
@@ -5604,7 +5610,7 @@ setScene(ST.scene);resize();placeIdleJoy();
 try{K.m.root.visible=true;[AP.scene,SW.scene,ST.scene].forEach(sc=>{sc.add(camera);renderer.compile(sc,camera);});}catch(e){}K.m.root.visible=false;setScene(ST.scene);
 requestAnimationFrame(t=>{last=t;frame(t);});
 initStore();
-window.__abandoned={get mode(){return mode;},pbox:()=>SW.pbox,look:p=>{P.pitch=p;},rend:()=>renderer,blackout(){F.blackout=true;blackoutStart();},blackoutApply:()=>blackoutApply(),tvApply:()=>tvApply(),openNote:id=>openNote(id),closeNote:()=>closeNote(),endChapter:()=>endChapter(),newGame:()=>startGame(),inters:()=>SW.inter,SW:()=>SW,get level(){return level;},P,get K(){return K;},F:()=>F,
+window.__abandoned={get mode(){return mode;},pbox:()=>SW.pbox,look:p=>{P.pitch=p;},rend:()=>renderer,qa:()=>({archY,archR,isTube,cellAt,props:SW.propList,MW,MH,K,MUTS,PIPE_YC,PIPE_R}),blackout(){F.blackout=true;blackoutStart();},blackoutApply:()=>blackoutApply(),tvApply:()=>tvApply(),openNote:id=>openNote(id),closeNote:()=>closeNote(),endChapter:()=>endChapter(),newGame:()=>startGame(),inters:()=>SW.inter,SW:()=>SW,get level(){return level;},P,get K(){return K;},F:()=>F,
   skipToSewer(){initAudio();$('title').hidden=true;F=freshFlags();P.onPlat=false;enterSewer(true);},ventIntro:()=>ventIntro(),climbPipe:(u,i)=>climbPipe(u,CLIMBS[i||0]),steams:()=>[SW.steam,...(SW.steams||[])],cell:(x,z)=>cellAt(Math.floor(x/CELL),Math.floor(z/CELL)),duct:e=>ductMove(e),takeTrap:i=>takeTrap(i),setTrap:()=>setTrap(),climb:up=>climb(up),openLock:()=>openLock(),LOCK,killer:()=>K,throwBiter:()=>throwBiter(),hurt:a=>hurtPlayer(a),enterHide:i=>enterHide(SW.hides[i]),hides:()=>SW.hides,street:()=>{initAudio();$('title').hidden=true;enterStreet();},teleport(cx,cz,yaw){P.x=wc(cx);P.z=wc(cz);if(yaw!=null)P.yaw=yaw;},
   hunt(){pickValve();},emerge:w=>emerge(w==='e'?VENT_E:VENT_W),canSee:()=>canSee(),kWord:w=>kWord(K.pan,w,1),kVox:w=>({hum:kHum,whimper:kWhimper,giggle:kGiggle,moan:kMoan,clicks:kClicks})[w](K.pan,1),cineScore:()=>cineScore(),scoreStop:(S,f)=>scoreStop(S,f),setMode:m=>setMode(m),hintNow:()=>hintNow(),openMap:()=>openMap(),closeMap:()=>closeMap(),release:w=>releaseSpider(w),npcs:()=>NPCS,remains:()=>SW.remains,spawnK:(cx,cz,wp)=>spawnKiller(cx,cz,wp||0),openGate,startGame,AP,trap:()=>trapSpider(),takeGlass:()=>takeGlass(),openCab:i=>openCab(AP.cabs[i]),takeCan:()=>takeCan(),useOpener:()=>useOpener(),feed:()=>feedPip(),news:()=>startNews(),spider:()=>spiderAppear(),release:()=>releaseSpider(),rats:()=>SW.rats,grabRat:r=>grabRat(r),throwRat:()=>throwRat(),litter:i=>pickLitter(i),burn:i=>burnSave(SW.fires[i||0]),save:()=>lastSave,load:sv=>loadGame(sv),ch2:()=>ch2FromTitle(),startCh2:()=>startChapter2(),ch2Wake:()=>ch2Wake(),vents:()=>VENTS2,ventHunt:()=>ventHunt(true),ventRoam:()=>ventRoam(),takeBattery:()=>takeBattery(),liftExamine:()=>liftExamine(),liftDown:()=>liftDown(),liftDead:()=>liftDead(),liftGate:()=>tryLiftGate(),endBuild:()=>endBuild(),pCrawl:()=>pCrawl(),c2:()=>SW.c2,ch2Lights:()=>SW.ch2L,lab:()=>SW.lab,muts:()=>MUTS,openLabDoor:()=>openLabDoor(),infect:i=>infect(MUTS[i||0]),cure:()=>useCure(),labWake:()=>labWake(),takeLabMap:()=>takeLabMap(),openLabMap:()=>openLabMap(),mSolid:(x,z)=>mSolid(x,z),mBfs:(a,b,c,d)=>mBfs(a,b,c,d),bfs:(a,b,c,d)=>bfs(a,b,c,d),patrol:()=>PATROL,openPuz:k=>openPuz(k),closePuz:()=>closePuz(),PZ,renderPuz:()=>renderPuz(),pzDigit:d=>pzDigit(d),pzEnter:()=>pzEnter(),cryoCheck:()=>cryoCheck(),chemMix:()=>chemMix(),mazeRun:()=>mazeRun(),mzPath:()=>mzPath(),playTape:n=>playTape(n),VHS,vhsEnd:()=>vhsEnd(),stab:i=>stab(MUTS[i]),canStab:i=>canStab(MUTS[i]),cellDoor:w=>cellDoor(w),useBench:()=>useBench(),applyLab2:()=>applyLab2(),labObj:()=>labObj(),labHint:()=>labHint(),inter:()=>SW.inter,give:k=>F.inv.push(k),boss:()=>SW.boss,bossIntro:()=>bossIntro(),bGo:x=>bGo(x),bossStab:()=>bossStab(),bossTarget:()=>bossTarget(),bossHurt:x=>bossHurt(x||'test',0,0,0),applyBoss:()=>applyBoss(),liftGo:()=>liftGo(),endCh2:()=>endCh2(),bmOn:()=>BM.on,blastAct:()=>blastAct(),bossLos:()=>bossLos()};
 })();
