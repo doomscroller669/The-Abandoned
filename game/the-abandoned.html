@@ -170,6 +170,12 @@ button{font:inherit;color:inherit}
 .paper.type{font-family:var(--f-type);font-size:16px;line-height:1.5}
 .paper.hand{font-family:var(--f-hand);font-size:28px;line-height:1.08;background-image:radial-gradient(circle at 82% 18%,rgba(120,95,50,.28),transparent 42%),radial-gradient(circle at 12% 88%,rgba(80,62,34,.32),transparent 38%),repeating-linear-gradient(0deg,transparent 0 29px,rgba(70,80,120,.16) 29px 30px)}
 .paper.faded{color:#4d4232}
+.paper.skin{background:#8d977d radial-gradient(circle at 28% 24%,rgba(255,236,214,.22),transparent 50%);color:#121310;text-align:center}
+.paper.tag{background:#d6c08a;color:#1c1408;text-align:center;font-family:var(--f-type)}
+.paper .mk{font-family:PMarker,var(--f-hand);font-size:clamp(72px,20vw,128px);line-height:1;margin:.1em 0 0}
+.paper .mkd{font-size:clamp(26px,7vw,40px);letter-spacing:.3em;padding-left:.3em;line-height:1;margin:0 0 .3em}
+.paper .tagh{letter-spacing:.2em;font-size:14px;opacity:.75}
+.paper .tagl{font-size:13px;opacity:.6}
 .paper p{margin:0 0 .6em}
 #noteTitle{font-family:var(--f-ui);font-size:16px;letter-spacing:.18em;text-transform:uppercase;color:#6d6149;margin-bottom:12px}
 .mast{font-size:13px;letter-spacing:.32em;border-bottom:2px solid var(--ink);padding-bottom:4px;margin-bottom:8px}
@@ -193,6 +199,8 @@ button{font:inherit;color:inherit}
 .puzt{font-size:18px;letter-spacing:.16em;text-transform:uppercase;color:var(--ash);margin:0}
 #puzCv{width:100%;max-width:480px;aspect-ratio:320/200;image-rendering:pixelated;border:1px solid rgba(220,213,192,.25);background:#0b0d0b}
 #puzCtl{display:flex;flex-wrap:wrap;gap:6px}#puzCtl .btn{font-size:18px;padding:6px 12px 4px}#puzCtl .btn.key{min-width:46px}
+#puzCtl .btn.sgb{padding:4px 6px;min-width:0}
+#puzCtl .btn.sgb canvas{display:block;width:40px;height:40px;image-rendering:pixelated}
 #vhs{position:fixed;inset:0;z-index:46;background:#000;display:flex;align-items:center;justify-content:center;cursor:pointer}
 #vhsCv{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
 #vhsSkip{position:absolute;right:var(--gr);bottom:calc(var(--sb) + 12px);font-size:15px;letter-spacing:.14em;color:rgba(220,213,192,.5);margin:0;text-transform:uppercase}
@@ -325,7 +333,6 @@ button{font:inherit;color:inherit}
     <p class="kicker" id="endKick">End of Chapter One</p>
     <h2 class="t-title" id="endTitle" style="font-size:clamp(40px,9vw,88px)">The Drain</h2>
     <ul class="sumlist" id="sumList"></ul>
-    <p class="lede" id="endLine">Past the floodgate, under the dripping, someone is humming a lullaby.</p>
     <div class="row"><button class="btn primary" id="ch2Btn" type="button">Chapter Two</button><button class="btn" id="againBtn" type="button">Play again</button></div>
   </div>
 </section>
@@ -357,8 +364,8 @@ let sens=1;
 try{const s=parseFloat(localStorage.getItem('abandoned.sens'));if(s>0)sens=s;}catch(e){}
 
 /* ---------- controls copy ---------- */
-const CTL_DESK=[['W A S D','Move'],['Mouse','Look (click the game to lock it)'],['Shift','Run'],['C','Crouch behind debris'],['Space','Dive / surface while in water'],['E','Use, read, hide, grab, climb out'],['G','Throw what you are holding'],['Q','Set a mouse trap'],['F','Flashlight'],['M','Look at the map, once you find one'],['Esc','Pause, objective and a hint'],['Saving','Burn litter in a fire can']];
-const CTL_TOUCH=[['II','Pause, objective and a hint'],['MAP','Look at the map, once you find one'],['Left side','Drag to move. Push far to run'],['Right side','Drag to look'],['USE','Use, read, hide, grab, climb out'],['THROW','Throw what you are holding'],['TRAP','Set a mouse trap'],['DUCK','Crouch behind debris'],['DIVE','Go under / surface in water'],['LIGHT','Flashlight'],['Saving','Burn litter in a fire can']];
+const CTL_DESK=[['W A S D','Move'],['Mouse','Look (click the game to lock it)'],['Shift','Run'],['C','Crouch behind debris'],['Space','Dive / surface while in water'],['E','Use, read, hide, grab, climb out'],['G','Throw what you are holding'],['Q','Set a mouse trap'],['F','Flashlight'],['M','Look at the map, once you find one'],['Esc','Pause, objective and a hint'],['Saving','Burn litter in a fire can, or drop trash in a bin']];
+const CTL_TOUCH=[['II','Pause, objective and a hint'],['MAP','Look at the map, once you find one'],['Left side','Drag to move. Push far to run'],['Right side','Drag to look'],['USE','Use, read, hide, grab, climb out'],['THROW','Throw what you are holding'],['TRAP','Set a mouse trap'],['DUCK','Crouch behind debris'],['DIVE','Go under / surface in water'],['LIGHT','Flashlight'],['Saving','Burn litter in a fire can, or drop trash in a bin']];
 function ctlHTML(){const L=touchMode?CTL_TOUCH:CTL_DESK;return '<dl class="ctl">'+L.map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('')+'</dl>';}
 $('ctlPanel').innerHTML=ctlHTML();
 $('ctlBtn').addEventListener('click',()=>{const p=$('ctlPanel');p.innerHTML=ctlHTML();p.hidden=!p.hidden;$('ctlBtn').setAttribute('aria-expanded',String(!p.hidden));});
@@ -821,7 +828,7 @@ function floorOf(c){return c==='~'?CH:(c==='='||c==='C')?PLAT:0;}
 function ceilAt(cx,cz){if(cx>=70)return ceil2(cx,cz);if(cx>=56)return 2.6;if(cx>=34&&cz>=3&&cz<=19)return 6.4;if(cx>=49&&cx<=53&&cz>=15&&cz<=17)return 3.8;if(cx>=21&&cz<=5)return 5.6;if(cx>=8&&cx<=33&&cz>=8&&cz<=14)return 5.4;return WALL_H;}
 
 let F;
-function freshFlags(){return {called911:false,metDolores:false,askedWho:false,askedCops:false,askedGate:false,askedAny:false,doloresSafe:false,
+function freshFlags(){return {sigilOpen:false,tvRed:false,lockSeen:false,blackout:false,called911:false,metDolores:false,askedWho:false,askedCops:false,askedGate:false,askedAny:false,doloresSafe:false,
   hasValve:false,hunt:false,gateOpen:false,notes:new Set(),seen:0,teased:false,inCamp:false,waterTip:false,seenTip:false,gateCk:false,gateLooked:false,cageOpen:false,lockTried:false,glassTip:false,litter:0,litterTaken:new Set(),ratsEaten:new Set(),litterTip:false,throwTip:false,doloresYaw:null,doloresSeen:false,inv:[],trapsTaken:new Set(),trapTip:false,steamTip:false,fenceTip:false,emergeDue:false,emerged:false,valveT:0,doloresDead:false,hasMap:false,mapSeen:new Set(),emergeVent:null,ch2:false,ch2Woke:false,elevSeen:false,hasBattery:false,elevDown:false,elevDead:false,liftGate:false,gateTried:false,trashTip:false,crawlTip:false,labOpen:false,labIn:false,labT:0,labWoke:false,inj:0,cureT:0,injTip:false,mutTip:false,hasLabMap:false,labNotes:[],cureSeen:false,blastSeen:false,bossSeen:false,bossIn:false,blastOpen:false,blastWarn:false,bossDead:false,bossTip:false,bossTipArm:false,bossTipTail:false,bossTipBite:false,hasCode:false,liftOpen:false,bossHand:null,bossAt:null,tapes:[],tapesSeen:[],picked:[],cryoDone:false,chemDone:false,closetOpen:false,secOpen:false,mazeDone:false,maze:null,mutDead:[],keyDrops:[],keysTaken:[],cellMack:false,cellBee:false,noteVent:false,ventOpen:false,vent_hold:false,vent_shop:false,ventTip:false,injTip2:false};}
 F=freshFlags();
 function solidCell(cx,cz){const c=cellAt(cx,cz);if(c==='G')return !F.gateOpen;if(c==='E')return !!(SW.c2&&SW.c2.topShut);if(c==='J'||c==='j'||c==='b'||c==='q'||c==='h')return labDoorShut(c,cx,cz);return c==='#'||c==='='||c==='C'||PROP_SOLID.includes(c);}
@@ -1478,7 +1485,7 @@ function buildBox(){
   return g;}
 function buildSewer(){
   const S=new THREE.Scene();S.background=new THREE.Color(0x040504);S.fog=new THREE.Fog(0x040504,1.5,21);
-  S.add(new THREE.AmbientLight(0x27301f,0.75));S.add(new THREE.HemisphereLight(0x6e7e64,0x0b0d08,1.0));
+  S.userData.amb=new THREE.AmbientLight(0x27301f,0.75);S.userData.hemi=new THREE.HemisphereLight(0x6e7e64,0x0b0d08,1.0);S.add(S.userData.amb);S.add(S.userData.hemi);
   const M={lwall:lam({map:T.labTile,vertexColors:true}),lfloor:lam({map:T.labFloor,vertexColors:true}),lceil:lam({map:T.labCeil,vertexColors:true}),duct:lam({map:T.metal,vertexColors:true}),wall:lam({map:T.brick,vertexColors:true}),floor:lam({map:T.concrete,vertexColors:true}),ceil:lam({map:T.ceil,vertexColors:true}),slime:lam({map:T.slime,vertexColors:true}),
     grate:lam({map:T.grateM,vertexColors:true}),plat:lam({map:T.metal,vertexColors:true}),
     water:lam({map:T.water,transparent:true,opacity:0.84,side:THREE.DoubleSide,depthWrite:false,emissive:0x060a04})};
@@ -1768,7 +1775,7 @@ function updateSteam(dt){if(!SW.steam)return;if(!SW.steam.box){SW.steam.box=PIPE
     if(on&&S.cool<=0&&mode==='play'&&P.highKind==='pipe'&&!inDuct()&&pipeAt(P.x,P.z)===S.box&&Math.abs(along)<0.55){S.cool=1.6;hurtPlayer(0.16);if(S.axis==='x')P.x+=along<0?-0.7:0.7;else P.z+=along<0?-0.7:0.7;clampPipe(P);noise(P.x,P.z,30);
       if(K&&K.active&&!['kill','npckill','stunned','chase','throw','intro'].includes(K.state)){K.lx=P.x;K.lz=P.z;startChase();}}});}
 function addLight(S,col,int,distance,x,y,z,kind){const l=new THREE.PointLight(col,int,distance,1.6);l.position.set(x,y,z);S.add(l);SW.lights.push({l,base:int,kind,ph:R()*10});return l;}
-function updateSewer(dt){labTick(dt);
+function updateSewer(dt){blackoutTick(dt);labTick(dt);
   T.water.offset.x+=dt*0.025;T.water.offset.y+=dt*0.012;
   for(const L of SW.lights){let v=L.base;
     if(L.kind==='fire')v=L.base*(0.82+0.18*Math.sin(time*9+L.ph)+0.1*Math.sin(time*23.7));
@@ -2712,7 +2719,7 @@ function runTimers(dt){if(!timers.length)return;const due=[];timers=timers.filte
 const sleep=s=>new Promise(r=>after(s,r));
 let subT=null,tipT=null;
 function sub(text,dur=3){const el=$('sub');el.textContent=text;el.hidden=false;clearTimeout(subT);subT=setTimeout(()=>{el.hidden=true;},dur*1000);}
-function tip(text,dur=6){const el=$('tip');el.textContent=text;el.hidden=false;clearTimeout(tipT);tipT=setTimeout(()=>{el.hidden=true;},dur*1000);}
+function tip(text,dur=6){/* v7.0: pop-up tips are off; the controls are in the pause menu */}
 let objDone=[];
 function setObjective(t){const cur=$('objText').textContent;if(cur===t)return;if(cur&&!objDone.includes(cur))objDone.push(cur);objDone=objDone.filter(x=>x!==t);$('objText').textContent=t;const o=$('obj');o.classList.remove('flash');void o.offsetWidth;o.classList.add('flash');}
 function showPrompt(text,hold){$('prompt').hidden=false;$('pKey').textContent=(hold?'Hold ':'')+(touchMode?'USE':'E');$('pText').textContent=text;$('bUse').classList.add('ready');}
@@ -3078,7 +3085,7 @@ let hbNext=0,last=performance.now(),hudInv=null;
 function step(dt){
   time+=dt;runTimers(dt);
   if(mode==='title'){camera.position.set(-9+Math.sin(time*0.08)*1.2,1.9,8.2);camera.rotation.set(0.02,-1.05+Math.sin(time*0.11)*0.12,0);updateStreet(dt);return;}
-  if(level==='street')updateStreet(dt);else if(level==='apt')updateApt(dt);else updateSewer(dt);hintTick(dt);mapTick(dt);
+  if(level==='street')updateStreet(dt);else if(level==='apt')updateApt(dt);else updateSewer(dt);mapTick(dt);
   if(mode==='play')playerUpdate(dt);else if(mode==='cine')updateCine(dt);
   if(level==='sewer'){updateKiller(dt);updateSteam(dt);}
   updateDialogue(dt);
@@ -3089,7 +3096,7 @@ function step(dt){
   // underwater + danger
   const under=level==='sewer'&&P.inWater&&camera.position.y<WATER_Y;
   postU.uTint.value.setRGB(0.42,0.66,0.38);postU.uTintAmt.value=damp(postU.uTintAmt.value,under?0.85:0,8,dt);postU.uWarp.value=damp(postU.uWarp.value,under?1:0,6,dt);postU.uInfect.value=damp(postU.uInfect.value,infectLevel(),2.5,dt);
-  if(level==='sewer'){const fg=SW.scene.fog;const labF=F.ch2&&P.x>=254;fg.far=damp(fg.far,under?6.5:(labF?(F.bossIn?34:19):21),6,dt);fg.near=under?0.3:1.5;if(labF&&!under)fg.color.setRGB(0.03,0.036,0.034);else fg.color.setRGB(under?0.03:0.016,under?0.05:0.02,under?0.025:0.016);}
+  if(level==='sewer'){const fg=SW.scene.fog;const labF=F.ch2&&P.x>=254;fg.far=damp(fg.far,under?6.5:(labF?(F.bossIn?34:19):21),6,dt);fg.near=under?0.3:1.5;if(labF&&!under){if(F.blackout&&!F.bossIn)fg.color.setRGB(0.004,0.004,0.005);else fg.color.setRGB(0.03,0.036,0.034);}else fg.color.setRGB(under?0.03:0.016,under?0.05:0.02,under?0.025:0.016);}
   if(!P.hidden)setMuffle(under?520:18000);
   let danger=0;if(K&&K.active){const d=Math.hypot(P.x-K.x,P.z-K.z);danger=K.state==='chase'||K.state==='seek'||K.state==='kill'||K.state==='throw'?1:Math.max(K.sus*0.8,d<11?(1-d/11)*0.6:0);}if(F.ch2&&F.labOpen)danger=Math.max(danger,mutDanger(),bossDanger());
   postU.uDanger.value=damp(postU.uDanger.value,danger,4,dt);
@@ -3426,7 +3433,7 @@ function tryLiftGate(){const B2=SW.c2.bot,ease=k=>k*k*(3-2*k);
   F.liftGate=true;if(AC)oneShotAt(B2.door[0],1.2,B2.door[1],(p,t)=>sRattle(p,t,1.0),2.5);tween(1.0,k=>{B2.gate.scale.x=lerp(1,0.12,ease(k));});setObjective(OBJ.c2lab);writeSave(makeSave('Lower landing'));}
 function endBuild(){if(mode==='end')return;setMode('end');releaseLock();setChase(false);if(K)K.active=false;liftHumStop();
   if(AC){const t=now()+0.01;sClank(busFx,t,0.6);sNoise(busFx,t+0.2,1.4,'highpass',2200,0.7,0.18,0.3);}
-  fadeTo(1,1.4).then(()=>{$('endKick').textContent='Chapter Two';$('endTitle').textContent='The Lab';$('sumList').innerHTML='';$('endLine').textContent='To be continued.';$('ch2Btn').hidden=true;$('againBtn').classList.add('primary');
+  fadeTo(1,1.4).then(()=>{$('endKick').textContent='Chapter Two';$('endTitle').textContent='The Lab';$('sumList').innerHTML='';$('ch2Btn').hidden=true;$('againBtn').classList.add('primary');
     $('end').hidden=false;$('fade').style.opacity='0';setTimeout(()=>$('againBtn').focus({preventScroll:true}),40);});}
 
 /* ---------- sounds ---------- */
@@ -3507,11 +3514,134 @@ function labSign(text,w){const c=document.createElement('canvas');c.width=256;c.
   g.fillStyle='#e6e8de';g.font='bold 24px Arial, Helvetica, sans-serif';g.textAlign='center';g.textBaseline='middle';g.fillText(text,128,26);wear(g,256,48,120,text.length);
   const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.LinearFilter;t.generateMipmaps=false;
   return new THREE.Mesh(new THREE.PlaneGeometry(w||1.5,(w||1.5)*0.1875),decal(lam({map:t})));}
-function sigilTex(){const c=document.createElement('canvas');c.width=256;c.height=128;const g=c.getContext('2d');g.strokeStyle='rgba(120,10,6,0.92)';g.fillStyle='rgba(120,10,6,0.92)';g.lineCap='round';
-  const rr=mulberry(99);for(let i=0;i<5;i++){const x=28+i*50,y=56+(rr()-0.5)*20,r=14+rr()*8;g.lineWidth=3+rr()*2;g.beginPath();g.arc(x,y,r,0,TAU);g.stroke();
-    g.beginPath();g.moveTo(x-r,y+r*0.6);g.lineTo(x,y-r*1.2);g.lineTo(x+r,y+r*0.6);g.closePath();g.stroke();g.beginPath();g.moveTo(x,y-r*1.6);g.lineTo(x,y+r*1.5);g.stroke();
-    for(let k=0;k<3;k++)g.fillRect(x-6+k*5,y+r+2,2,8+rr()*20);}
+/* ---------- v7.0: her marks. Cheese with rat tails and teeth, and the ten numerals her people used ---------- */
+/* everything is drawn in a unit box (-1..1) around (x,y) at scale s; o.w is the stroke width in pixels */
+function sgPath(g,pts,close){g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));if(close)g.closePath();}
+/* a rat tail: thick at the root, tapering to a hair, curling at the end */
+function sgTail(g,x0,y0,ang,len,curl,w){let x=x0,y=y0,a=ang;const n=18,sl=len/n;for(let i=0;i<n;i++){const k=i/n,nx=x+Math.cos(a)*sl,ny=y+Math.sin(a)*sl;g.lineWidth=Math.max(1.2,w*(1-k*0.72));g.beginPath();g.moveTo(x,y);g.lineTo(nx,ny);g.stroke();x=nx;y=ny;a+=curl*(0.02+k*k*0.34);}
+}
+/* a row of teeth along a segment, pointing to one side (side 1 = left of the direction of travel) */
+function sgTeeth(g,x0,y0,x1,y1,n,h,side,fill){const dx=(x1-x0)/n,dy=(y1-y0)/n,L=Math.hypot(x1-x0,y1-y0)||1,px=-(y1-y0)/L*side,py=(x1-x0)/L*side;
+  for(let i=0;i<n;i++){const ax=x0+dx*i,ay=y0+dy*i,bx=ax+dx,by=ay+dy,hh=h*(0.75+0.5*((i*7919)%5)/4);g.beginPath();g.moveTo(ax,ay);g.lineTo((ax+bx)/2+px*hh,(ay+by)/2+py*hh);g.lineTo(bx,by);if(fill){g.closePath();g.fill();}g.stroke();}}
+function sgHole(g,x,y,r){g.beginPath();g.ellipse(x,y,r,r*0.82,0.3,0,TAU);g.stroke();}
+/* a wedge of cheese: the rind is the flat end, the point is where it thins out. dir: r, l, u, d */
+function sgWedge(g,x,y,s,dir){const P0={r:[[-1,-.55],[-1,.6],[1,.6]],l:[[1,-.55],[1,.6],[-1,.6]],u:[[-.8,.75],[.8,.75],[-.1,-1]],d:[[-.8,-.75],[.8,-.75],[.1,1]]}[dir].map(([a,b])=>[x+a*s,y+b*s]);sgPath(g,P0,true);g.stroke();return P0;}
+/* Delilah's mark, the one painted on the walls: a wedge of cheese with a jaw of teeth under it and tails off the rind */
+function drawCheeseSigil(g,x,y,s,o){o=o||{};const w=o.w||Math.max(2,s*0.12),rr=o.rr||Math.random;g.lineCap='round';g.lineJoin='round';g.lineWidth=w;
+  sgWedge(g,x,y-s*0.15,s,'r');
+  /* fangs hanging off the bottom edge */
+  g.lineWidth=w*0.7;const by=y+s*0.45;sgTeeth(g,x-s*0.92,by,x+s*0.7,by,5,s*0.42,1,true);
+  /* holes */
+  g.lineWidth=w*0.7;sgHole(g,x-s*0.62,y-s*0.15,s*0.17);sgHole(g,x-s*0.2,y+s*0.12,s*0.12);if(rr()<0.7)sgHole(g,x-s*0.58,y+s*0.25,s*0.08);
+  /* the tails come off the rind and curl away */
+  const n=o.tails||3;for(let i=0;i<n;i++){const ty=y-s*0.55+i*s*0.45;sgTail(g,x-s,ty,Math.PI+(i-1)*0.42+(rr()-0.5)*0.2,s*(1.1+rr()*0.4),(i%2?1:-1)*(0.8+rr()*0.5),w*1.1);}}
+/* the ten numerals. Each is its own little mark built from the same pieces */
+const SIGIL_N=10;
+function drawNumSigil(g,n,x,y,s,o){o=o||{};const w=o.w||Math.max(1.6,s*0.13);g.lineCap='round';g.lineJoin='round';g.lineWidth=w;const T=(a,b,ang,len,c)=>sgTail(g,x+a*s,y+b*s,ang,len*s,c,w*0.85);
+  switch(n){
+  case 1:{sgWedge(g,x,y-s*.1,s*.8,'r');g.lineWidth=w*.7;sgHole(g,x-s*.3,y,s*.14);T(-.8,.35,Math.PI*.75,1.0,1.2);break;}
+  case 2:{sgWedge(g,x,y-s*.25,s*.85,'r');g.lineWidth=w*.75;sgTeeth(g,x-s*.85,y+s*.27,x+s*.85,y+s*.27,5,s*.34,-1);break;}
+  case 3:{g.beginPath();g.arc(x,y,s*.42,0,TAU);g.stroke();for(let i=0;i<3;i++){const a=-Math.PI/2+i*TAU/3;T(Math.cos(a)*.42,Math.sin(a)*.42,a+0.3,.75,1.4);}break;}
+  case 4:{g.beginPath();g.arc(x-s*.1,y,s*.72,0.7,TAU-0.7);g.stroke();const bx=x+s*.42,by=y;g.lineWidth=w*.75;g.beginPath();g.arc(bx+s*.12,by,s*.36,Math.PI*0.62,Math.PI*1.38);g.stroke();
+    for(let i=0;i<4;i++){const a=Math.PI*0.7+i*Math.PI*0.2,r1=s*.36;g.beginPath();g.moveTo(bx+s*.12+Math.cos(a)*r1,by+Math.sin(a)*r1);g.lineTo(bx+s*.12+Math.cos(a)*(r1-s*.15),by+Math.sin(a)*(r1-s*.15));g.stroke();}
+    sgHole(g,x-s*.4,y-s*.2,s*.13);sgHole(g,x-s*.25,y+s*.32,s*.1);break;}
+  case 5:{sgWedge(g,x,y-s*.1,s*.78,'u');g.lineWidth=w*.75;sgTeeth(g,x-s*.6,y+s*.48,x+s*.6,y+s*.48,4,s*.3,1);T(-.62,.5,Math.PI*.6,.6,-1.1);T(.62,.5,Math.PI*.4,.6,1.1);break;}
+  case 6:{g.strokeRect(x-s*.75,y-s*.5,s*1.5,s*1.0);g.lineWidth=w*.75;sgTeeth(g,x-s*.75,y-s*.5,x+s*.75,y-s*.5,4,s*.32,-1);sgTeeth(g,x-s*.75,y+s*.5,x+s*.75,y+s*.5,4,s*.32,1);T(.75,0,0,.55,1.6);break;}
+  case 7:{sgWedge(g,x,y-s*.15,s*.82,'l');g.lineWidth=w*.7;sgHole(g,x+s*.45,y-s*.2,s*.12);sgHole(g,x+s*.1,y+s*.15,s*.1);sgHole(g,x+s*.5,y+s*.25,s*.08);T(.82,-.3,-.35,.9,1.3);T(.82,.3,.35,.9,-1.3);break;}
+  case 8:{sgWedge(g,x-s*.05,y-s*.45,s*.5,'r');sgWedge(g,x+s*.05,y+s*.42,s*.5,'l');T(-.55,-.15,Math.PI*.5,.9,-2.2);break;}
+  case 9:{g.beginPath();g.arc(x,y-s*.15,s*.62,0,TAU);g.stroke();g.lineWidth=w*.7;for(let i=0;i<8;i++){const a=i*TAU/8,r1=s*.62;g.beginPath();g.moveTo(x+Math.cos(a-.2)*r1,y-s*.15+Math.sin(a-.2)*r1);g.lineTo(x+Math.cos(a)*(r1-s*.26),y-s*.15+Math.sin(a)*(r1-s*.26));g.lineTo(x+Math.cos(a+.2)*r1,y-s*.15+Math.sin(a+.2)*r1);g.stroke();}T(0,.47,Math.PI*.5,.55,1.8);break;}
+  case 10:{sgWedge(g,x,y+s*.2,s*.7,'d');g.lineWidth=w*.7;sgHole(g,x-s*.1,y,s*.12);g.lineWidth=w*.85;g.beginPath();g.ellipse(x,y-s*.62,s*.62,s*.22,0,0,TAU);g.stroke();T(.6,-.6,.6,.45,1.6);break;}}}
+/* the blood marks on the walls by the blast door and in the pit: her cheese, in pairs, with drips */
+function sigilTex(seed){const c=document.createElement('canvas');c.width=512;c.height=256;const g=c.getContext('2d');g.strokeStyle='rgba(120,10,6,0.92)';g.fillStyle='rgba(120,10,6,0.92)';
+  const rr=mulberry(seed||99);for(let i=0;i<2;i++){const s=60+rr()*8,x=160+i*236+(rr()-0.5)*14,y=108+(rr()-0.5)*16;drawCheeseSigil(g,x,y,s,{rr,w:11+rr()*3});
+    for(let k=0;k<5;k++){if(rr()<0.3)continue;const dx=x-s*0.85+k*s*0.33+(rr()-0.5)*6,dy=y+s*0.62+rr()*s*0.3;g.fillRect(dx,dy,2+rr()*3,8+rr()*48);}}
   const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.LinearFilter;t.generateMipmaps=false;return t;}
+
+/* ---------- v7.0: the lock on the blast door ---------- */
+/* the pods give the first two marks, the tables the last two; the dots under each number give its place */
+const SIGIL_CODE=[8,3,10,6];
+/* the lock's buttons are not in number order, so the red screen on the TV is needed to read them */
+const SIGIL_ORDER=[7,2,9,4,10,1,6,3,8,5];
+const MARKS=[{id:'S1',n:8,pos:1,kind:'pod',cx:181,cz:7},{id:'S2',n:3,pos:2,kind:'pod',cx:185,cz:18},{id:'S3',n:10,pos:3,kind:'gurney',cx:128,cz:8},{id:'S4',n:6,pos:4,kind:'table',cx:128,cz:18}];
+const MARK_FONT='PMarker, "Permanent Marker", sans-serif';
+function cvTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');draw(g,w,h);const t=new THREE.CanvasTexture(c);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.LinearFilter;t.generateMipmaps=false;
+  /* the marker font is bundled but may still be decoding: draw again once it is ready */
+  try{document.fonts.load('40px PMarker').then(()=>{g.clearRect(0,0,w,h);draw(g,w,h);t.needsUpdate=true;}).catch(()=>{});}catch(e){}return t;}
+function markDots(g,cx,y,pos,r){for(let i=0;i<pos;i++){g.beginPath();g.arc(cx+(i-(pos-1)/2)*r*3.2,y,r,0,TAU);g.fill();}}
+/* written on a body in black marker */
+function markSkinTex(n,pos){return cvTex(64,64,(g,w,h)=>{g.fillStyle='rgba(16,16,12,0.9)';g.font=(n>9?30:40)+'px '+MARK_FONT;g.textAlign='center';g.textBaseline='middle';g.fillText(String(n),32,26);markDots(g,32,54,pos,3);});}
+/* a manila toe tag */
+function markTagTex(n,pos){return cvTex(48,72,(g,w,h)=>{g.fillStyle='#d6c08a';g.fillRect(0,0,w,h);g.fillStyle='#b09a64';g.fillRect(0,0,w,3);g.fillStyle='#2a2418';g.beginPath();g.arc(24,8,3,0,TAU);g.fill();
+  g.fillStyle='rgba(40,34,24,0.6)';for(let y=60;y<70;y+=4)g.fillRect(6,y,36,1);g.fillStyle='#16120a';g.font=(n>9?24:30)+'px '+MARK_FONT;g.textAlign='center';g.textBaseline='middle';g.fillText(String(n),24,32);markDots(g,24,51,pos,2.2);});}
+/* put a foot (if the body has none showing) and a numbered toe tag at the end of a covered body; y is the sheet's height */
+function addTagFoot(g,y,z,sd,haveFoot,tex){const skin=lam({color:0x9a8676});
+  if(!haveFoot){const ft=ball(.05,skin,8,6);ft.scale.set(.75,.65,1.9);ft.rotation.x=-1.25;ft.position.set(sd*.085,y+.09,z);g.add(ft);
+    for(let k=0;k<5;k++){const t=ball(k?.011:.015,skin,5,4);t.position.set(sd*.085+(k-2)*.017*sd,y+.17,z-.055+Math.abs(k-1)*.004);g.add(t);}}
+  const tag=new THREE.Mesh(new THREE.PlaneGeometry(.075,.112),lam({map:tex,emissive:0x16140e,side:THREE.DoubleSide}));tag.position.set(sd*.06,y+.035,z-.08);tag.rotation.set(-.15,Math.PI,-.2);g.add(tag);return tag;}
+function buildMarks(S){const L=SW.lab;L.marks=[];
+  for(const m of MARKS){let wx,wz;
+    if(m.kind==='pod'){const tk=(L.tanks||[]).find(t=>Math.abs(t.position.x-wc(m.cx))<0.1&&Math.abs(t.position.z-wc(m.cz))<0.1);if(!tk)continue;const b=tk.userData.body;
+      const mat=decal(lam({map:markSkinTex(m.n,m.pos),transparent:true,depthWrite:false}));
+      b.rotation.y=m.cz<12?0:Math.PI;b.userData.still=true;
+      [[.135,0],[-.135,Math.PI]].forEach(([z,ry])=>{const p=new THREE.Mesh(new THREE.PlaneGeometry(.3,.3),mat);p.position.set(0,.46,z);p.rotation.y=ry;p.renderOrder=1;b.add(p);});
+      wx=wc(m.cx);wz=wc(m.cz)+(m.cz<12?1.5:-1.5);}
+    else{let g,y,sd=1,have=false;
+      if(m.kind==='gurney'){const gu=(L.gurneys||[]).find(q=>q.cx===m.cx&&q.cz===m.cz);if(!gu)continue;g=gu.g;y=.83;if(gu.g.userData.ft!=null){sd=gu.g.userData.ft;have=true;}}
+      else{const [dx,dz]=openSide(m.cx,m.cz),o=new THREE.Group();o.position.set(wc(m.cx),0,wc(m.cz));o.rotation.y=Math.atan2(dx,dz);S.add(o);g=new THREE.Group();g.rotation.y=Math.PI/2;o.add(g);y=.95;
+        const sh=new THREE.Mesh(sheetGeo(mulberry(4242)),lam({map:sheetTex(1),color:0x9c998c,side:THREE.DoubleSide}));sh.position.y=y;g.add(sh);bakeShade(g,0);}
+      const tag=addTagFoot(g,y,-1.0,sd,have,markTagTex(m.n,m.pos));g.updateMatrixWorld(true);const p=tag.getWorldPosition(new THREE.Vector3());wx=p.x;wz=p.z;}
+    L.marks.push(m);SW.inter.push({kind:'mark',x:wx,z:wz,r:2.0,label:()=>m.kind==='pod'?'Look closer':'Read the toe tag',act(){openNote(m.id);}});}
+  /* the lock plate beside the blast door */
+  const pl=new THREE.Mesh(new THREE.PlaneGeometry(.5,.62),lam({map:lockPlateTex(),emissive:0x100604}));pl.position.set(381.96,1.35,23.35);pl.rotation.y=-Math.PI/2;S.add(pl);
+  /* the TV's red light, once it sticks */
+  const gm=new THREE.MeshBasicMaterial({map:glowTex(),color:0xff2010,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0.3});
+  const a=new THREE.Mesh(new THREE.PlaneGeometry(1.6,1.3),gm);a.position.set(255.08,1.13,31);a.rotation.y=Math.PI/2;
+  const fl=new THREE.Mesh(new THREE.PlaneGeometry(3.2,3.2),gm.clone());fl.material.opacity=0.22;fl.rotation.x=-Math.PI/2;fl.position.set(256.6,0.03,31);[a,fl].forEach(o=>{o.visible=false;S.add(o);});L.tvGlow=[a,fl];}
+function lockPlateTex(){return cvTex(80,100,(g,w,h)=>{g.fillStyle='#34332e';g.fillRect(0,0,w,h);g.fillStyle='#46443c';g.fillRect(3,3,w-6,h-6);g.fillStyle='#1c1b18';[[6,6],[w-8,6],[6,h-8],[w-8,h-8]].forEach(([x,y])=>g.fillRect(x,y,3,3));
+  for(let i=0;i<4;i++){const x=9+i*16;g.fillStyle='#0c0b0a';g.fillRect(x,52,12,18);g.fillStyle='#a8a090';markDots(g,x+6,77,i+1,1.1);}
+  g.strokeStyle='rgba(130,12,8,0.95)';g.fillStyle='rgba(130,12,8,0.95)';drawCheeseSigil(g,46,26,13,{w:2.4,rr:mulberry(5),tails:2});});}
+
+/* ---------- v7.0: the TV gets stuck on her numbers once all three tapes are watched ---------- */
+function drawSigilKey(g,W,H,big){g.fillStyle='#560404';g.fillRect(0,0,W,H);const gr=g.createRadialGradient(W/2,H/2,8,W/2,H/2,W*0.7);gr.addColorStop(0,'rgba(210,24,12,0.6)');gr.addColorStop(1,'rgba(0,0,0,0.55)');g.fillStyle=gr;g.fillRect(0,0,W,H);
+  const cw=W/5,ch=H/2;for(let n=1;n<=10;n++){const i=n-1,cx=cw*(i%5)+cw/2,cy=ch*Math.floor(i/5)+ch/2;g.fillStyle='#f4e2c8';g.strokeStyle='#f4e2c8';g.font='bold '+Math.round(ch*0.27)+'px VT323, monospace';g.textAlign='center';g.textBaseline='middle';g.fillText(String(n),cx,cy-ch*0.29);
+    drawNumSigil(g,n,cx,cy+ch*0.13,Math.min(cw,ch)*(big?0.27:0.25),{w:big?2.6:1.8});}
+  for(let y=0;y<H;y+=2){g.fillStyle='rgba(0,0,0,0.2)';g.fillRect(0,y,W,1);}}
+let KEY_TEX=null;
+function keyTex(){if(!KEY_TEX){const c=document.createElement('canvas');c.width=256;c.height=196;drawSigilKey(c.getContext('2d'),256,196,false);KEY_TEX=new THREE.CanvasTexture(c);KEY_TEX.magFilter=THREE.NearestFilter;KEY_TEX.minFilter=THREE.LinearFilter;KEY_TEX.generateMipmaps=false;}return KEY_TEX;}
+function tvStuck(){const s=F.tapesSeen||[];return s.includes(1)&&s.includes(2)&&s.includes(3);}
+function tvApply(){const L=SW.lab,s=L&&L.tv;if(!s)return;const on=tvStuck();s.material.map=on?keyTex():null;s.material.color.setHex(on?0xffffff:0x101822);s.material.needsUpdate=true;if(L.tvGlow)L.tvGlow.forEach(o=>{o.visible=on;});}
+
+/* ---------- v7.0: the lock panel ---------- */
+function openSigilLock(){openPuz('sigil');PZ.sg=[];if(!F.lockSeen){F.lockSeen=true;PZ.msg='Something huge is breathing on the other side.';}renderPuz();}
+function drawLockPanel(g){const gr=g.createLinearGradient(0,0,0,200);gr.addColorStop(0,'#3e3c36');gr.addColorStop(1,'#24231f');g.fillStyle=gr;g.fillRect(0,0,320,200);
+  g.fillStyle='#16150f';[[10,10],[304,10],[10,184],[304,184]].forEach(([x,y])=>{g.beginPath();g.arc(x+3,y+3,4,0,TAU);g.fill();});
+  g.fillStyle='rgba(110,10,6,0.35)';g.fillRect(232,20,6,60);g.fillRect(250,26,3,90);
+  const sg=PZ.sg||[];for(let i=0;i<4;i++){const x=46+i*62;g.fillStyle='#0a0908';g.fillRect(x,40,48,74);g.strokeStyle='#5a574c';g.lineWidth=2;g.strokeRect(x-1,39,50,76);
+    if(sg[i]){g.strokeStyle='#ff3a24';g.fillStyle='#ff3a24';drawNumSigil(g,sg[i],x+24,77,17,{w:2.6});}
+    g.fillStyle='#a8a090';markDots(g,x+24,134,i+1,3);}}
+function sigBtn(n){const b=document.createElement('button');b.type='button';b.className='btn key sgb';b.setAttribute('aria-label','Mark');const c=document.createElement('canvas');c.width=44;c.height=44;const g=c.getContext('2d');g.strokeStyle='#e8dcc0';g.fillStyle='#e8dcc0';drawNumSigil(g,n,22,22,12.5,{w:2.4});b.append(c);
+  b.addEventListener('click',e=>{e.stopPropagation();const s=PZ.sg||(PZ.sg=[]);if(s.length<4){s.push(n);PZ.msg='';if(AC)sTone(comp,now()+0.005,0.09,'triangle',180+n*22,120+n*18,0.08);}renderPuz();});return b;}
+function sigilEnter(){const s=PZ.sg||[];if(s.length<4)return;const ok=s.every((v,i)=>v===SIGIL_CODE[i]);
+  if(!ok){PZ.sg=[];PZ.msg='The lock grinds and spits the marks back out.';if(AC){const t=now()+0.01;sNoise(comp,t,0.5,'lowpass',320,0.8,0.4);sTone(comp,t,0.45,'sawtooth',70,48,0.12);}noise(P.x,P.z,6);renderPuz();return;}
+  F.sigilOpen=true;closePuz();if(AC){const t=now()+0.02;sClank(busFx,t,0.5);sClank(busFx,t+0.38,0.45);sClank(busFx,t+0.8,0.55);sTone(busFx,t+0.8,1.2,'sawtooth',58,40,0.12);}
+  sub('Bolts slide back, one after another, deep inside the door.',3.4);setObjective(ch2Obj());writeSave(makeSave(zoneName()));}
+
+/* ---------- v7.0: the power dies once the injector is made. Only the red beacons in the long hall stay on ---------- */
+const BO_AMB=0.2,BO_HEMI=0.12;
+function setLabPow(pw){const pool=SW.c2Pool,L=SW.lab;if(pool&&SW.labLit&&!SW.bossLit)LAB_LIGHTS.forEach((d,i)=>{if(i===7||i===8||d[6]==='hall')return;const o=pool[i];if(o)o.base=d[1]*pw;});
+  const on=pw>0.5;if(L.fix)L.fix.forEach(f=>f.b.material.color.setHex(on?f.c:0x0d0d0c));
+  if(L.tanks)L.tanks.forEach(t=>{const gl=t.userData.glass;if(!gl)return;if(gl.userData.e0==null)gl.userData.e0=gl.material.emissive.getHex();gl.material.emissive.setHex(on?gl.userData.e0:0x010201);});}
+function blackoutApply(){const L=SW.lab;if(!L)return;L.bo=null;setLabPow(F.blackout?0:1);}
+function blackoutStart(){const L=SW.lab;if(!L||L.bo)return;L.bo={t:0,done:false};
+  if(AC){const t=now()+0.01;sNoise(busFx,t,0.3,'highpass',3200,0.7,0.35);sTone(busFx,t,0.9,'square',120,110,0.06);sTone(busFx,t+0.1,0.7,'sawtooth',60,58,0.08);}}
+function blackoutThunk(){if(AC){const t=now()+0.01;sClank(busFx,t,0.6);sTone(busFx,t,1.8,'sawtooth',64,24,0.2);sNoise(busFx,t,0.6,'lowpass',260,0.7,0.5);sTone(busFx,t+0.05,2.4,'sine',120,30,0.08);}
+  noise(P.x,P.z,12);after(1.6,()=>{if(mode==='play')speak('Marissa','No. No, no, no...',2.4);});}
+function blackoutTick(dt){const L=SW.lab,u=SW.scene&&SW.scene.userData;if(!u||!u.amb)return;const inLab=!!(L&&F.ch2&&F.elevDown&&!F.bossIn);let a=1;
+  if(L&&L.bo){L.bo.t+=dt;const t=L.bo.t;const pw=t<0.95?((Math.sin(t*61)+Math.sin(t*23.7))>0.4?1:0.06):0;setLabPow(pw);a=pw;if(t>=0.95){L.bo=null;blackoutThunk();}}
+  else if(F.blackout&&inLab)a=0;
+  if(!inLab)a=1;u.amb.intensity=0.75*(BO_AMB+(1-BO_AMB)*a);u.hemi.intensity=1.0*(BO_HEMI+(1-BO_HEMI)*a);
+  if(L&&L.tvGlow&&L.tvGlow[0].visible){const f=0.85+0.15*Math.sin(time*7.3)+(R()<0.03?-0.3:0);L.tvGlow[0].material.opacity=0.3*f;L.tvGlow[1].material.opacity=0.22*f;}}
+
 /* ---------- v6.4: shared model helpers ---------- */
 /* bake every mesh under root into one mesh per material, in root's own space (draw calls stay low on phones) */
 function flattenMerge(root){root.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(root.matrixWorld).invert(),M=new THREE.Matrix4(),nm=new THREE.Matrix3(),v=new THREE.Vector3(),by=new Map(),keep=[];
@@ -3599,11 +3729,11 @@ function buildGurney(S,cx,cz,rr){const g=new THREE.Group();g.position.set(wc(cx)
   g.add(at(boxm(.8,.06,1.9,m),0,.8,0));[[-.35,-.85],[.35,-.85],[-.35,.85],[.35,.85]].forEach(([a,b])=>{g.add(at(cylm(.025,.025,.74,5,m),a,.43,b));const w=cylm(.05,.05,.035,8,wh);w.rotation.z=Math.PI/2;g.add(at(w,a,.05,b));});
   g.add(at(boxm(.7,.03,.03,m),0,.25,-.85));g.add(at(boxm(.7,.03,.03,m),0,.25,.85));
   const sh=new THREE.Mesh(sheetGeo(rr),lam({map:sheetTex((rr()*4)|0),color:0x9c998c,side:THREE.DoubleSide}));sh.position.y=.83;g.add(sh);
-  if(rr()<0.6){const skin=lam({color:0x9a8676}),sd=rr()<0.5?-1:1;
+  if(rr()<0.6){const skin=lam({color:0x9a8676}),sd=rr()<0.5?-1:1;g.userData.ft=sd;
     const ft=ball(.05,skin,8,6);ft.scale.set(.75,.65,1.9);ft.rotation.x=-1.25;ft.position.set(sd*.085,.92,-1.0);g.add(ft);
     for(let k=0;k<5;k++){const t=ball(k?.011:.015,skin,5,4);t.position.set(sd*.085+(k-2)*.017*sd,1.0,-1.055+Math.abs(k-1)*.004);g.add(t);}
     const tag=boxm(.045,.075,.003,lam({color:0xd8d0b0,emissive:0x141410}));tag.position.set(sd*.06,.88,-1.07);tag.rotation.set(.15,0,.2);g.add(tag);}
-  mergeChildren(g);bakeShade(g,0);}
+  mergeChildren(g);bakeShade(g,0);(SW.lab.gurneys||(SW.lab.gurneys=[])).push({g,cx,cz});}
 
 /* ---------- the tanks: babies in the cryo pods, bodies in the trial hall ---------- */
 const BABY_TEX=[];
@@ -3644,7 +3774,7 @@ function tankBody(rr){const b=new THREE.Group(),sk=lam({color:0x8a9a7a,emissive:
   flattenMerge(b);return b;}
 function buildTank(S,cx,cz,rr){const x=wc(cx),z=wc(cz),big=cx>=170,g=new THREE.Group();g.position.set(x,0,z);S.add(g);const m=lam({map:T.metal,color:0x7a8480});
   const r=big?.78:.48,h=big?3.2:2.1;g.add(at(cylm(r+.08,r+.12,.3,12,m),0,.15,0));g.add(at(cylm(r+.08,r+.08,.2,12,m),0,h+.1,0));
-  const glass=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h-.3,12,1,true),lam({color:big?0x5a8a5a:0x8ab8d8,emissive:big?0x0a2a10:0x0a1a2a,transparent:true,opacity:0.42,side:THREE.DoubleSide,depthWrite:false}));glass.position.y=.3+(h-.3)/2;glass.renderOrder=2;g.add(glass);
+  const glass=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h-.3,12,1,true),lam({color:big?0x5a8a5a:0x8ab8d8,emissive:big?0x0a2a10:0x0a1a2a,transparent:true,opacity:0.42,side:THREE.DoubleSide,depthWrite:false}));glass.position.y=.3+(h-.3)/2;glass.renderOrder=2;g.add(glass);g.userData.glass=glass;
   const b=big?tankBody(rr):podBaby(rr,cx===143);b.position.set(0,big?1.45+rr()*.3:1.06,0);b.rotation.y=rr()*TAU;if(big)b.rotation.x=(rr()-0.5)*.25;g.add(b);g.userData.body=b;
   [-.3,.3].forEach(a=>{const p=cylm(.05,.05,1.2,6,m);p.position.set(a,h+.7,0);g.add(p);});SW.lab.tanks.push(g);}
 
@@ -3740,7 +3870,7 @@ function buildLocker(S,cx,cz){const f=lockerFit(cx,cz),{x,z,dx,dz,lx,lz}=f,g=new
   const h={kind:'hide',type:'locker',grp:g,cx,cz,x:x+dx*.8,z:z+dz*.8,camX:x+lx*.33,camZ:z+lz*.33,dx,dz,yaw0:Math.atan2(-dx,-dz),camY:1.52,r:2.0,label:()=>'Hide',can:()=>!P.hidden,act(){enterHide(this);}};SW.inter.push(h);SW.hides.push(h);}
 function buildTable(S,cx,cz){const x=wc(cx),z=wc(cz),[dx,dz]=openSide(cx,cz),g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=Math.atan2(dx,dz);S.add(g);
   const m=lam({map:T.metal,color:0x9aa09a}),top=lam({color:0x3e4440});g.add(at(boxm(1.9,.06,1.0,top),0,.92,0));[[-.88,-.44],[.88,-.44],[-.88,.44],[.88,.44]].forEach(([a,b])=>g.add(at(boxm(.05,.9,.05,m),a,.45,b)));
-  const rr=mulberry(cx*31+cz);for(let i=0;i<3;i++){const bk=cylm(.05,.06,.16+rr()*.1,7,lam({color:[0x6a8a7a,0x8a7a5a,0x5a6a8a][i],transparent:true,opacity:0.7}));bk.position.set(-.6+rr()*1.2,1.03,-.3+rr()*.4);g.add(bk);}
+  const rr=mulberry(cx*31+cz);for(let i=0;i<(cx===128&&cz===18?0:3);i++){const bk=cylm(.05,.06,.16+rr()*.1,7,lam({color:[0x6a8a7a,0x8a7a5a,0x5a6a8a][i],transparent:true,opacity:0.7}));bk.position.set(-.6+rr()*1.2,1.03,-.3+rr()*.4);g.add(bk);}
   const h={kind:'hide',type:'table',cx,cz,x,z,dx,dz,yaw0:Math.atan2(-dx,-dz),camY:.42,r:2.0,label:()=>'Hide',can:()=>!P.hidden,act(){enterHide(this);}};SW.inter.push(h);SW.hides.push(h);}
 function buildCure(S,cx,cz){const x=wc(cx),z=wc(cz),g=new THREE.Group();g.position.set(x,0,z);S.add(g);const en=lam({color:0xd8dcd6}),frost=lam({color:0xe8f0f4,emissive:0x101418});
   g.add(at(boxm(1.6,.85,.8,en),0,.425,0));g.add(at(boxm(1.62,.06,.82,frost),0,.88,0));g.add(at(boxm(1.4,.02,.6,frost),0,.92,0));
@@ -3778,7 +3908,7 @@ function buildLab(S){SW.lab={tanks:[],dv:0,dspike:0,dNext:0,mapNew:false};const 
   VENTS_LAB.forEach(v=>{const y=.5,w=1.15,h=.85;ventTunnel(S,v.x,y,v.z,v.nx,v.nz,w,h,1.7);const f=new THREE.Group();f.position.set(v.x+v.nx*.03,y,v.z+v.nz*.03);f.rotation.y=Math.atan2(v.nx,v.nz);S.add(f);
     f.add(at(boxm(w+.12,.06,.05,fm),0,h/2+.03,0));f.add(at(boxm(w+.12,.06,.05,fm),0,-h/2-.03,0));f.add(at(boxm(.06,h,.05,fm),-w/2-.03,0,0));f.add(at(boxm(.06,h,.05,fm),w/2+.03,0,0));});
   /* light fixtures */
-  LAB_LIGHTS.forEach((d,i)=>{if(i===7||i===8)return;const [col,,,x,y,z,kind]=d;if(kind==='hall')return;const b=kind==='fluor'||kind==='none'?boxm(1.3,.06,.16,basic({color:kind==='fluor'?0xe0ecff:0xd8d0b0})):boxm(.24,.16,.24,basic({color:0xff3a24}));b.position.set(x,y+.14,z);S.add(b);});
+  LAB_LIGHTS.forEach((d,i)=>{if(i===7||i===8)return;const [col,,,x,y,z,kind]=d;if(kind==='hall')return;const b=kind==='fluor'||kind==='none'?boxm(1.3,.06,.16,basic({color:kind==='fluor'?0xe0ecff:0xd8d0b0})):boxm(.24,.16,.24,basic({color:0xff3a24}));b.position.set(x,y+.14,z);S.add(b);(SW.lab.fix||(SW.lab.fix=[])).push({b,c:b.material.color.getHex()});});
   /* signs beside the doorways off the main corridor */
   [['DECONTAMINATION',268.01,1.95,40.6,Math.PI/2],['STAFF LOUNGE',268.01,1.95,29,Math.PI/2],['BEHAVIOR LAB',268.01,1.95,11,Math.PI/2],
    ['COLD STORAGE',271.99,1.95,7,-Math.PI/2],['CHEM LAB',271.99,1.95,21,-Math.PI/2],['CRYO STORAGE',271.99,1.95,39,-Math.PI/2],['HOLDING',309,1.95,30.01,0],['WORKSHOP',306.6,1.95,33.99,Math.PI],
@@ -4004,12 +4134,12 @@ function drawLabMap(cv,o){o=o||{};const c0=127,c1=192,r0=1,r1=24,cs=10,mx=16,top
 function labLights(){ch2Lights();if(SW.labLit||!SW.c2Pool)return;SW.labLit=true;LAB_LIGHTS.forEach((d,i)=>{const o=SW.c2Pool[i];if(!o)return;if(i===7||i===8)return;o.l.color.setHex(d[0]);o.base=d[1];o.l.distance=d[2];o.l.position.set(d[3],d[4],d[5]);o.kind=d[6];});SW.ch2L=SW.c2Pool;}
 function labSetup(){if(F.elevDown){labLights();PATROL=PATROL3;PAUSES=PAUSES3;}SW.lab.t0=time;
   if(SW.c2.leaves)SW.c2.leaves.forEach((h,i)=>{h.rotation.y=F.labOpen?(i?-1.35:1.35):0;});if(SW.lab.board){SW.lab.board.visible=!F.hasLabMap;SW.lab.ghost.visible=!!F.hasLabMap;}
-  labMutantsStart();labHud(true);applyLab2();applyBoss();}
+  labMutantsStart();labHud(true);applyLab2();applyBoss();tvApply();blackoutApply();}
 function openLabDoor(){if(F.labOpen)return;F.labOpen=true;if(AC){const t=now()+0.01;sClank(busFx,t,0.55);sNoise(busFx,t+0.15,1.6,'highpass',2400,0.7,0.2,0.2);sTone(busFx,t+0.2,1.4,'sawtooth',70,52,0.12,0.3);}
   const L=SW.c2.leaves;if(L)tween(1.4,k=>{const e=k*k*(3-2*k);L.forEach((h,i)=>{h.rotation.y=(i?-1.35:1.35)*e;});});noise(P.x,P.z,8);
   labMutantsStart();setObjective(OBJ.lab);after(1.8,()=>{if(mode==='play')speak('Marissa','Hello...? Is anyone...',2.6);});}
 function labTick(dt){if(!F.ch2||!SW.lab)return;for(const h of SW.hides)if(h.grp)h.grp.visible=P.hidden!==h;lockerLook();junkTick(dt);rankMutVox();if(SW.c2&&SW.c2.glow)SW.c2.glow.opacity=0.42+0.14*Math.sin(time*3.1)+(R()<0.02?-0.2:0);p2Tick(dt);mzTick(dt);hallTick(dt);bossTick(dt);SW.lab.dspike=Math.max(0,SW.lab.dspike-dt*0.8);
-  for(const tk of SW.lab.tanks){const b=tk.userData.body;if(b){b.position.y+=Math.sin(time*0.6+tk.position.x)*dt*0.05;b.rotation.y+=dt*0.05;}}
+  for(const tk of SW.lab.tanks){const b=tk.userData.body;if(b){b.position.y+=Math.sin(time*0.6+tk.position.x)*dt*0.05;if(!b.userData.still)b.rotation.y+=dt*0.05;}}
   if(mode!=='play'){return;}
   for(const m of MUTS)mutUpdate(m,dt);
   if(F.inj>0){F.cureT-=dt;labHud(false);if(F.cureT<=0){F.cureT=0;dieInfection(false);return;}
@@ -4048,13 +4178,13 @@ function mzPath(){const path=[MZ_START.slice()];let [x,y]=MZ_START,from=-1;for(l
 
 /* ---------- lore ---------- */
 Object.assign(NOTES,{
- L1:{verb:'Read',title:'',cls:'type',html:`<div class="mast">OFFICE OF THE MAYOR &middot; INTERNAL</div><div class="hl">Re: Water Quality Program (Delilah)</div><p>Funding continues under Reservoir Maintenance. No names on paper. The Mayor asks that the trial results stay inside the wing.</p><div class="margin">he knows what she is</div>`},
- L2:{verb:'Read',title:'',cls:'hand',html:`<p>She has to be fed before she can see. Never open her eye first.</p><p>The rat follows the spiral down. Always right behind it.</p><p>What points up goes in last, so it reaches her.</p><p>Never the moon. Never.</p>`},
+ L1:{verb:'Read',title:'',cls:'type',html:`<div class="mast">OFFICE OF THE MAYOR &middot; INTERNAL</div><div class="hl">Re: Water Quality Program (Delilah)</div><p>Per our call: the Mayor has signed off on another year. It runs under Reservoir Maintenance again, so nobody's name goes on anything.</p><p>He'd like the trial results kept inside the wing. Not in email. Not in a binder. If the council asks, it's pipes.</p><div class="margin">he's been down here. he's seen her</div>`},
+ L2:{verb:'Read',title:'',cls:'hand',html:`<p>Mixing order, since SOMEBODY keeps getting it wrong:</p><p>Feed her before you open her eye.</p><p>The rat goes in right after the spiral. Right after.</p><p>The one that points up goes in last.</p><p>Don't touch the moon. I mean it.</p>`},
  L3:{verb:'Examine',title:'',cls:'type',html:`<div class="mast">SPECIMEN 7 &middot; ASSEMBLY SEQUENCE</div><svg viewBox="0 0 200 180" width="100%" style="max-width:300px;display:block;margin:6px auto" aria-label="An outline of an infant, front view, with numbered limbs"><g fill="none" stroke="#2a2a24" stroke-width="2.2"><circle cx="100" cy="34" r="20"/><rect x="78" y="56" width="44" height="58" rx="18"/><path d="M78 66 L48 98"/><path d="M122 66 L152 98"/><path d="M88 112 L76 162"/><path d="M112 112 L124 162"/></g><g font-family="Courier New,monospace" font-size="20" font-weight="bold" fill="#8a1a10"><text x="34" y="96">4</text><text x="156" y="96">2</text><text x="60" y="160">1</text><text x="130" y="160">3</text></g></svg><p>Front view. Load drawers in numbered order for later assembly.</p><div class="margin">left and right are HIS</div>`},
- L4:{verb:'Read',title:'',cls:'type',html:`<div class="mast">HOLDING &middot; PROTOCOL 3</div><p>Condition subjects for 72 hours before injection. No light. No talking.</p><p>They hear her better when they are quiet.</p>`},
+ L4:{verb:'Read',title:'',cls:'type',html:`<div class="mast">HOLDING &middot; PROTOCOL 3</div><p>Subjects are kept in the dark for 72 hours before injection. Lights off. Staff do not speak to them, answer them, or use their names.</p><p>The quiet ones hear her sooner.</p>`},
  L5:{verb:'Read',title:'',cls:'hand',html:`<p>Somebody put it in the water cooler. Six of us drank it before we knew.</p><p>Henderson started first. He kept touching his face like it didn't fit.</p>`},
- L6:{verb:'Read',title:'',cls:'type',html:`<div class="mast">SEISMIC SURVEY &middot; OLD RIVERSIDE</div><p>Epicenter directly beneath the Trial Hall. Not a fault line.</p><p>Something underneath moved.</p>`},
- L7:{verb:'Read',title:'',cls:'hand',html:`<p>Rat 12 won't run the maze with pieces missing.</p><p>Somebody threw them around the room again.</p>`}});
+ L6:{verb:'Read',title:'',cls:'type',html:`<div class="mast">SEISMIC SURVEY &middot; OLD RIVERSIDE</div><p>Readings put the epicenter directly under the Trial Hall, about forty feet down.</p><p>There's no fault line there. There's nothing down there at all except the old town.</p><div class="margin">something down there rolled over in its sleep</div>`},
+ L7:{verb:'Read',title:'',cls:'hand',html:`<p>Rat 12 won't run the maze with three pieces missing.</p><p>Whoever keeps throwing them around the room: grow up.</p>`}});
 const LAB_NOTES=[['L1',263,.02,45.2],['L2',279,.97,23],['L4',307,.02,26.6],['L5',303,.02,41],['L6',378.5,.02,25],['L7',257,.02,14.6]];
 
 /* ---------- items ---------- */
@@ -4075,9 +4205,11 @@ function openPuz(kind){releaseLock();setMode('ui');hidePrompt();PZ.open=kind;PZ.
   setTimeout(()=>{const b=$('puzCtl').querySelector('button');if(b&&!touchMode)b.focus({preventScroll:true});},30);}
 function closePuz(){if(!PZ.open)return;PZ.open=null;$('puz').hidden=true;setMode('play');}
 function pzBtn(text,fn,cls){const b=document.createElement('button');b.type='button';b.className='btn'+(cls?' '+cls:'');b.textContent=text;b.addEventListener('click',e=>{e.stopPropagation();fn();});return b;}
-function pzKey(e){if(e.repeat)return;if(e.code==='Escape'){closePuz();return;}if(PZ.open==='closet'||PZ.open==='sec'||PZ.open==='lift'){const m=/^(Digit|Numpad)([0-9])$/.exec(e.code);if(m){pzDigit(m[2]);return;}if(e.code==='Backspace'){PZ.code=PZ.code.slice(0,-1);renderPuz();}if(e.code==='Enter')pzEnter();}}
+function pzKey(e){if(e.repeat)return;if(e.code==='Escape'){closePuz();return;}if(PZ.open==='sigil'){if(e.code==='Backspace'){(PZ.sg||[]).pop();renderPuz();}if(e.code==='Enter')sigilEnter();return;}if(PZ.open==='closet'||PZ.open==='sec'||PZ.open==='lift'){const m=/^(Digit|Numpad)([0-9])$/.exec(e.code);if(m){pzDigit(m[2]);return;}if(e.code==='Backspace'){PZ.code=PZ.code.slice(0,-1);renderPuz();}if(e.code==='Enter')pzEnter();}}
 function renderPuz(){const k=PZ.open;if(!k)return;const cv=$('puzCv'),g=cv.getContext('2d'),ctl=$('puzCtl');ctl.innerHTML='';g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,320,200);g.fillStyle='#0b0d0b';g.fillRect(0,0,320,200);
   const t=$('puzTitle');$('puzMsg').textContent=PZ.msg;
+  if(k==='key'){t.textContent='';drawSigilKey(g,320,200,true);return;}
+  if(k==='sigil'){t.textContent='Blast door';drawLockPanel(g);SIGIL_ORDER.forEach(n=>ctl.append(sigBtn(n)));ctl.append(pzBtn('Clear',()=>{PZ.sg=[];PZ.msg='';renderPuz();}));ctl.append(pzBtn('Enter',sigilEnter,'primary'));return;}
   if(k==='closet'||k==='sec'||k==='lift'){t.textContent=k==='closet'?'Keypad, chem closet':k==='lift'?'Keypad, Lift B':'Keypad, Security';g.fillStyle='#1a2a1a';g.fillRect(70,40,180,60);g.strokeStyle='#4a6a4a';g.strokeRect(70.5,40.5,179,59);
     g.fillStyle='#8aff8a';g.font='bold 34px VT323, monospace';g.textAlign='center';g.textBaseline='middle';g.fillText((PZ.code+'____').slice(0,4).split('').join(' '),160,71);
     for(let d=1;d<=10;d++){const n=d%10;ctl.append(pzBtn(String(n),()=>pzDigit(String(n)),'key'));}ctl.append(pzBtn('Clear',()=>{PZ.code='';renderPuz();}));ctl.append(pzBtn('Enter',pzEnter,'primary'));return;}
@@ -4143,9 +4275,10 @@ function playTape(n){if(VHS.on||mode!=='play')return;releaseLock();setMode('cine
     sClank(comp,now()+0.01,0.3);sNoise(comp,now()+0.05,0.5,'lowpass',400,0.7,0.3);setAmb('rumble',0.05,0.5);}
   if(SW.lab.tv)SW.lab.tv.material.color.setHex(0x3050a0);}
 function vhsEnd(){if(!VHS.on)return;const n=VHS.n;VHS.on=false;$('vhs').hidden=true;if(VHS.hiss){try{VHS.hiss.s.stop();VHS.hiss.s.disconnect();}catch(e){}VHS.hiss=null;}if(AC)setAmb('rumble',0.22,1);
-  if(!F.tapesSeen)F.tapesSeen=[];if(!F.tapesSeen.includes(n))F.tapesSeen.push(n);if(n===3){labMark('sec');}if(SW.lab.tv)SW.lab.tv.material.color.setHex(0x101822);
+  if(!F.tapesSeen)F.tapesSeen=[];if(!F.tapesSeen.includes(n))F.tapesSeen.push(n);if(n===3){labMark('sec');}if(SW.lab.tv)SW.lab.tv.material.color.setHex(0x101822);const red=tvStuck()&&!F.tvRed;if(red)F.tvRed=true;tvApply();
   setMode('play');setObjective(ch2Obj());writeSave(makeSave(zoneName()));
-  if(n===3)after(0.8,()=>speak('Marissa','Zero six one nine. Security.',2.6));}
+  if(n===3)after(0.8,()=>speak('Marissa','Zero six one nine. Security.',2.6));
+  if(red){if(AC){const t=now()+0.3;sTone(busFx,t,2.6,'sine',58,58,0.07);sNoise(busFx,t,0.3,'highpass',4000,0.7,0.15);}after(n===3?3.8:0.9,()=>{if(mode==='play')sub('The screen goes red, and stays red.',3.2);});}}
 function vhsTick(dt){const V=VHS;V.t+=dt;const T=TAPES[V.n],t=V.t;if(t>=T.dur){vhsEnd();return;}
   V.acc=(V.acc||0)+dt;const redraw=V.acc>=1/31||!V.drawn;if(redraw){V.acc%=1/30;V.drawn=true;}
   T.lines.forEach((l,i)=>{if(i>V.said&&t>=l[0]){V.said=i;if(l[2]&&AC)speakSyl(l[2],Math.max(3,Math.round(l[3].replace(/[^a-z]/gi,'').length/3.4)));
@@ -4665,7 +4798,7 @@ function junkTick(dt){const L=SW.lab;if(!L||!L.junk)return;
 function resetJunk(){const L=SW.lab;if(!L||!L.junk)return;if(P.junk){camera.remove(P.junk.g);P.junk=null;}
   for(const j of L.junk){if(j.g.parent!==SW.scene){if(j.g.parent)j.g.parent.remove(j.g);SW.scene.add(j.g);}j.state='rest';j.x=j.home[0];j.z=j.home[1];j.y=0;j.g.visible=true;j.g.position.set(j.x,0,j.z);j.g.rotation.set(0,j.i,0);}
   (L.shards||[]).forEach(s=>{SW.scene.remove(s);});L.shards=[];}
-function buildLab2(S){const L=SW.lab;L.picks=[];L.doors={};L.gore=[];L.keys=[];
+function buildLab2(S){const L=SW.lab;L.picks=[];L.doors={};L.gore=[];L.keys=[];buildMarks(S);
   /* notes */
   const paperM=decal(lam({map:T.paper,emissive:0x2e2a1e}));LAB_NOTES.forEach(([id,x,y,z])=>{const pm=new THREE.Mesh(new THREE.PlaneGeometry(.3,.22),paperM);pm.rotation.x=-Math.PI/2;pm.rotation.z=R()*TAU;pm.position.set(x,y+.012,z);S.add(pm);
     SW.inter.push({kind:'note',id,x,z,r:y>0.5?2.2:1.7,label:()=>'Read',act(){openNote(id);}});});
@@ -4701,7 +4834,7 @@ function buildLab2(S){const L=SW.lab;L.picks=[];L.doors={};L.gore=[];L.keys=[];
   [['piece1',257,.02,9],['piece2',263,.02,17],['piece3',265,.02,11]].forEach(([id,x,y,z])=>addPick(S,id,mazePiece(MZ_PIECES[id]),x,y,z,'Take the maze piece',()=>sub(MZ_PIECES[id]==='straight'?'A maze piece. A straight run.':'A maze piece. A corner.',2.4)));
   /* the lounge TV, the couch facing it, junk to throw */
   buildCouch(S);buildJunk(S);
-  SW.inter.push({kind:'tv',x:256.4,z:31,r:2.2,label:()=>tapeAvailable()?'Play the tape':(F.tapesSeen||[]).length?'Watch a tape again':'Examine',act(){const n=tapeAvailable();if(n){dropTape(n);playTape(n);return;}
+  SW.inter.push({kind:'tv',x:256.4,z:31,r:2.2,label:()=>tapeAvailable()?'Play the tape':tvStuck()?'Look at the screen':(F.tapesSeen||[]).length?'Watch a tape again':'Examine',act(){const n=tapeAvailable();if(n){dropTape(n);playTape(n);return;}if(tvStuck()){openPuz('key');return;}
     const seen=(F.tapesSeen||[]).slice().sort();if(seen.length){L.rp=((L.rp==null?-1:L.rp)+1)%seen.length;playTape(seen[L.rp]);}else sub('A TV and a VCR. The VCR is empty.',2.6);}});
   /* security: the coded door and the desk with the dead baton */
   {const g=new THREE.Group();g.position.set(wc(164),0,wc(17));S.add(g);const m=lam({map:T.metal,color:0x6a706c});g.add(at(boxm(1.96,2.45,.12,m),0,1.225,0));g.add(at(boxm(.18,.28,.05,lam({color:0x202422})),.7,1.3,-.08));g.add(at(boxm(.06,.04,.02,basic({color:0xff2a14})),.7,1.4,-.11));L.doors.sec=g;
@@ -4750,7 +4883,7 @@ function useBench(){if(hasItem('injector')){sub('Nothing else to make.',2);retur
   if(need.length){const nm={baton:'the baton',battery:'the battery',syringe:'a syringe',chem:'that chemical'};sub(hasItem('baton')?'Not yet. She still needs '+need.map(k=>nm[k]).join(', ')+'.':'A workbench. Tape, wire, a vise.',3.4);labMark('bench');return;}
   setMode('cine');hidePrompt();['baton','battery','syringe','chem'].forEach(dropItem);if(AC){const t=now()+0.05;sClank(busFx,t,0.4);sClank(busFx,t+0.7,0.3);sNoise(busFx,t+1.2,0.9,'bandpass',1600,3,0.3);sTone(busFx,t+2.1,1.0,'sawtooth',60,120,0.15);sNoise(busFx,t+2.2,0.4,'highpass',3000,0.7,0.4);}
   sub('The battery wired to the baton. The syringe taped to the tip. The chemical in the syringe.',3.6);
-  after(2.6,()=>{takeItem('injector');setMode('play');sub('It hums. The tip glows green.',2.6);setObjective(ch2Obj());writeSave(makeSave(zoneName()));
+  after(2.6,()=>{F.blackout=true;takeItem('injector');setMode('play');sub('It hums. The tip glows green.',2.6);setObjective(ch2Obj());writeSave(makeSave(zoneName()));after(2.2,()=>{if(F.blackout&&!F.bossIn)blackoutStart();});
     if(!F.injTip2){F.injTip2=true;after(2.8,()=>tip((touchMode?'Tap USE':'Press E')+' up close to stab one in a glowing weak point. Crouch and creep up behind it, or catch it when it\'s stunned or off balance after a lunge.',9));}});}
 function canStab(m){if(!hasItem('injector')||!m.active||!m.alive||m.state==='dying'||P.hidden||pCrawl()||mode!=='play')return false;const dx=P.x-m.x,dz=P.z-m.z,d=Math.hypot(dx,dz);if(d>1.9)return false;
   if(m.state==='stun'||m.state==='recover')return true;return (dx*Math.sin(m.yaw)+dz*Math.cos(m.yaw))/(d||1)<0.25;}
@@ -4785,7 +4918,7 @@ function labObj(){if(F.bossIn)return bossObj();if(F.inj>0)return OBJ.cure;if(has
   if(tapeAvailable())return OBJ.watch;if((F.tapes||[]).length)return OBJ.more;return OBJ.lab;}
 function labHint(){if(F.bossIn)return bossHint();if(F.inj>0)return 'Find the cure before the minute is up. Cold storage, at the north end of the main corridor, keeps it in a freezer.';
   if(!F.hasLabMap)return 'There is an evacuation plan on the wall in decon, by the door you came in.';
-  if(hasItem('injector')){if(!(F.cellMack&&F.cellBee))return hasItem('key')?'Holding is off the east corridor. Unlock a cell.':'Two of the mutants carry keys on their belts. Crouch and creep up behind one, or trap it, then stab its glowing weak point.';return 'The trial hall, at the far east end. Something is behind that blast door.';}
+  if(hasItem('injector')){if(!(F.cellMack&&F.cellBee))return hasItem('key')?'Holding is off the east corridor. Unlock a cell.':'Two of the mutants carry keys on their belts. Crouch and creep up behind one, or trap it, then stab its glowing weak point.';return F.sigilOpen?'The trial hall, at the far east end. The blast door is unlocked.':'The blast door takes four of her marks. The red screen in the staff lounge shows which mark is which number. Four of the dead have numbers written on them: two in the trial hall tanks, two on tables in the lab. The dots under each number give its place.';}
   if(hasItem('baton')){const n=['battery','syringe','chem'].filter(k=>!hasItem(k));if(!n.length)return 'Take everything to the workbench in the workshop.';return n.includes('syringe')?'A dead man in the workshop might have a syringe on him.':n.includes('chem')?'The chem lab. Mix the right chemicals.':'You need the battery from the elevator.';}
   if((F.tapesSeen||[]).includes(3))return 'The Security office is off the east corridor. The code was on the last tape: 0619.';
   if(tapeAvailable())return 'Take the tape to the TV in the staff lounge.';
@@ -4811,7 +4944,12 @@ const LIFT_CODE='0302';
 const BZ={x:401,z:26,r:4};                      /* the floor she keeps to */
 Object.assign(OBJ,{boss:'Kill Delilah.',bossCode:'Search what is left of her.',bossLift:'Take the elevator down.'});
 Object.assign(NOTES,{
- L10:{verb:'Read',title:'',cls:'hand',html:`<p>If you found this you know how to hide. Good.</p><p>The key to the floor grate is on Ray. He's the first one, by the showers. He won't mind.</p><p>The grate is in the long hall. It's too small for the big one. It runs under the floor to the cells and the shop.</p><div class="margin">don't let them see you go down</div>`}});
+ L10:{verb:'Read',title:'',cls:'hand',html:`<p>If you're reading this, you hide in lockers too. Good. Keep doing it.</p><p>Ray has the key to the floor grate. He's the one by the showers. He won't mind anymore.</p><p>The grate is in the long red hall. The big one can't fit down there. It runs under the floor to the cells and the workshop.</p><div class="margin">don't let them watch you go down</div>`}});
+Object.assign(NOTES,{
+ S1:{verb:'Look closer',title:'',cls:'skin',html:`<div class="mk">8</div><div class="mkd">&bull;</div>`},
+ S2:{verb:'Look closer',title:'',cls:'skin',html:`<div class="mk">3</div><div class="mkd">&bull;&bull;</div>`},
+ S3:{verb:'Read',title:'',cls:'tag',html:`<div class="tagh">SUBJECT</div><div class="mk">10</div><div class="mkd">&bull;&bull;&bull;</div><div class="tagl">DATE ________</div>`},
+ S4:{verb:'Read',title:'',cls:'tag',html:`<div class="tagh">SUBJECT</div><div class="mk">6</div><div class="mkd">&bull;&bull;&bull;&bull;</div><div class="tagl">DATE ________</div>`}});
 Object.assign(NOTES,{
  L8:{verb:'Read',title:'',cls:'hand',html:`<p>She lets us hear her now. The ones who drank hear her best.</p><p>Red is pretty. The skin is bad. We take the skin off so she can see us.</p><p>We feed her and she makes the water sing.</p><div class="margin">she isn't dead. she's only down there</div>`},
  L9:{verb:'Read',title:'',cls:'hand',html:`<p>LIFT B &middot; OLD TOWN</p><p style="font-size:2.2em;letter-spacing:.25em;margin:.2em 0">0 3 0 2</p><p>Don't let her have it. Don't let her</p>`}});
@@ -4903,7 +5041,7 @@ function buildBoss(S){const rr=mulberry(6161);const D=SW.boss={x:403,z:26,yaw:-M
   {const pm=new THREE.Mesh(new THREE.PlaneGeometry(.3,.22),decal(lam({map:T.paper,emissive:0x2e2a1e})));pm.rotation.set(-Math.PI/2,0,0.7);pm.position.set(379.2,.032,29.4);S.add(pm);
     SW.inter.push({kind:'note',id:'L8',x:379.2,z:29.4,r:1.7,label:()=>'Read',act(){openNote('L8');}});}
   /* blood sigils on every wall */
-  const sm=decal(lam({map:sigilTex(),transparent:true,depthWrite:false}));
+  const sm=decal(lam({map:sigilTex(7),transparent:true,depthWrite:false}));
   [[384.02,3.4,14,Math.PI/2],[384.02,3.6,38,Math.PI/2],[415.98,3.5,14,-Math.PI/2],[415.98,3.3,38,-Math.PI/2],[392,3.5,8.02,0],[408,3.7,8.02,0],[392,3.4,43.98,Math.PI],[408,3.6,43.98,Math.PI]].forEach(([x,y,z,ry])=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(4.4,2.2),sm);m.position.set(x,y,z);m.rotation.y=ry;S.add(m);});
   /* the old town shows through: a lamp post and a street sign bricked into the pit wall */
   {const pm=lam({color:0x26302a});const post=cylm(.1,.13,6.2,8,pm);post.position.set(393.6,3.1,8.3);S.add(post);S.add(at(boxm(.5,.35,.5,pm),393.6,6.25,8.55));S.add(at(boxm(.34,.08,.34,basic({color:0x3a3420})),393.6,6.05,8.55));
@@ -5058,7 +5196,8 @@ function beaconOn(i){const D=SW.boss,b=D.bl&&D.bl[i];if(!b)return;b.o.base=b.bas
 /* ---------- the door, the intro ---------- */
 function blastLabel(){if(!hasItem('injector'))return 'Examine';return F.blastWarn&&!(F.cellMack&&F.cellBee)?'Open it anyway':'Open the blast door';}
 function blastAct(){F.blastSeen=true;labMark('blast');
-  if(!hasItem('injector')){sub('Sealed. Something huge is breathing on the other side.',3.2);return;}
+  if(!F.sigilOpen){openSigilLock();return;}
+  if(!hasItem('injector')){sub('The lock is open. Something huge is breathing on the other side.',3.2);return;}
   if(F.inj>0){speak('Marissa','Not with this in me. The cure first.',2.6);return;}
   if(!F.blastWarn){F.blastWarn=true;const left=[!F.cellMack&&'Mack',!F.cellBee&&'Bee'].filter(Boolean);if(AC)sClank(busFx,now()+0.01,0.25);
     sub("Once this opens, there's no coming back this way."+(left.length?' '+left.join(' and ')+(left.length>1?' are':' is')+' still locked in holding.':''),4.4);return;}
@@ -5215,7 +5354,6 @@ function endCh2(){if(mode==='end')return;setMode('end');releaseLock();setChase(f
   const n=(F.cellMack?1:0)+(F.cellBee?1:0),both=n===2;$('mHurt').hidden=true;
   $('endKick').textContent='End of Chapter Two';$('endTitle').textContent='The Lab';
   $('sumList').innerHTML=[['Tapes',(F.tapesSeen||[]).length+' of 3'],['Freed from holding',n+' of 2'],['Delilah','Dead']].map(([a,b])=>`<li><b>${a}</b><span>${b}</span></li>`).join('');
-  $('endLine').textContent=both?'Mack and Bee got out. Somewhere below, under the water, a church bell is ringing.':'Somebody is still locked up back there. Somewhere below, under the water, a church bell is ringing.';
   $('ch2Btn').hidden=true;$('againBtn').classList.add('primary');try{localStorage.setItem('abandoned.ch2done','1');}catch(e){}
   $('end').hidden=false;$('fade').style.opacity='0';setTimeout(()=>$('againBtn').focus({preventScroll:true}),40);}
 
@@ -5276,7 +5414,7 @@ setScene(ST.scene);resize();placeIdleJoy();
 try{K.m.root.visible=true;[AP.scene,SW.scene,ST.scene].forEach(sc=>{sc.add(camera);renderer.compile(sc,camera);});}catch(e){}K.m.root.visible=false;setScene(ST.scene);
 requestAnimationFrame(t=>{last=t;frame(t);});
 initStore();
-window.__abandoned={get mode(){return mode;},get level(){return level;},P,get K(){return K;},F:()=>F,
+window.__abandoned={get mode(){return mode;},blackout(){F.blackout=true;blackoutStart();},blackoutApply:()=>blackoutApply(),tvApply:()=>tvApply(),openNote:id=>openNote(id),closeNote:()=>closeNote(),endChapter:()=>endChapter(),newGame:()=>startGame(),inters:()=>SW.inter,SW:()=>SW,get level(){return level;},P,get K(){return K;},F:()=>F,
   skipToSewer(){initAudio();$('title').hidden=true;F=freshFlags();P.onPlat=false;enterSewer(true);},ventIntro:()=>ventIntro(),climbPipe:(u,i)=>climbPipe(u,CLIMBS[i||0]),steams:()=>[SW.steam,...(SW.steams||[])],cell:(x,z)=>cellAt(Math.floor(x/CELL),Math.floor(z/CELL)),duct:e=>ductMove(e),takeTrap:i=>takeTrap(i),setTrap:()=>setTrap(),climb:up=>climb(up),openLock:()=>openLock(),LOCK,killer:()=>K,throwBiter:()=>throwBiter(),hurt:a=>hurtPlayer(a),enterHide:i=>enterHide(SW.hides[i]),hides:()=>SW.hides,street:()=>{initAudio();$('title').hidden=true;enterStreet();},teleport(cx,cz,yaw){P.x=wc(cx);P.z=wc(cz);if(yaw!=null)P.yaw=yaw;},
   hunt(){pickValve();},emerge:w=>emerge(w==='e'?VENT_E:VENT_W),canSee:()=>canSee(),kWord:w=>kWord(K.pan,w,1),kVox:w=>({hum:kHum,whimper:kWhimper,giggle:kGiggle,moan:kMoan,clicks:kClicks})[w](K.pan,1),cineScore:()=>cineScore(),scoreStop:(S,f)=>scoreStop(S,f),setMode:m=>setMode(m),hintNow:()=>hintNow(),openMap:()=>openMap(),closeMap:()=>closeMap(),release:w=>releaseSpider(w),npcs:()=>NPCS,remains:()=>SW.remains,spawnK:(cx,cz,wp)=>spawnKiller(cx,cz,wp||0),openGate,startGame,AP,trap:()=>trapSpider(),takeGlass:()=>takeGlass(),openCab:i=>openCab(AP.cabs[i]),takeCan:()=>takeCan(),useOpener:()=>useOpener(),feed:()=>feedPip(),news:()=>startNews(),spider:()=>spiderAppear(),release:()=>releaseSpider(),rats:()=>SW.rats,grabRat:r=>grabRat(r),throwRat:()=>throwRat(),litter:i=>pickLitter(i),burn:i=>burnSave(SW.fires[i||0]),save:()=>lastSave,load:sv=>loadGame(sv),ch2:()=>ch2FromTitle(),startCh2:()=>startChapter2(),ch2Wake:()=>ch2Wake(),vents:()=>VENTS2,ventHunt:()=>ventHunt(true),ventRoam:()=>ventRoam(),takeBattery:()=>takeBattery(),liftExamine:()=>liftExamine(),liftDown:()=>liftDown(),liftDead:()=>liftDead(),liftGate:()=>tryLiftGate(),endBuild:()=>endBuild(),pCrawl:()=>pCrawl(),c2:()=>SW.c2,ch2Lights:()=>SW.ch2L,lab:()=>SW.lab,muts:()=>MUTS,openLabDoor:()=>openLabDoor(),infect:i=>infect(MUTS[i||0]),cure:()=>useCure(),labWake:()=>labWake(),takeLabMap:()=>takeLabMap(),openLabMap:()=>openLabMap(),mSolid:(x,z)=>mSolid(x,z),mBfs:(a,b,c,d)=>mBfs(a,b,c,d),bfs:(a,b,c,d)=>bfs(a,b,c,d),patrol:()=>PATROL,openPuz:k=>openPuz(k),closePuz:()=>closePuz(),PZ,renderPuz:()=>renderPuz(),pzDigit:d=>pzDigit(d),pzEnter:()=>pzEnter(),cryoCheck:()=>cryoCheck(),chemMix:()=>chemMix(),mazeRun:()=>mazeRun(),mzPath:()=>mzPath(),playTape:n=>playTape(n),VHS,vhsEnd:()=>vhsEnd(),stab:i=>stab(MUTS[i]),canStab:i=>canStab(MUTS[i]),cellDoor:w=>cellDoor(w),useBench:()=>useBench(),applyLab2:()=>applyLab2(),labObj:()=>labObj(),labHint:()=>labHint(),inter:()=>SW.inter,give:k=>F.inv.push(k),boss:()=>SW.boss,bossIntro:()=>bossIntro(),bGo:x=>bGo(x),bossStab:()=>bossStab(),bossTarget:()=>bossTarget(),bossHurt:x=>bossHurt(x||'test',0,0,0),applyBoss:()=>applyBoss(),liftGo:()=>liftGo(),endCh2:()=>endCh2(),bmOn:()=>BM.on,blastAct:()=>blastAct(),bossLos:()=>bossLos()};
 })();
