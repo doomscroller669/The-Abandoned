@@ -889,7 +889,7 @@ function floorOf(c){return c==='~'?CH:(c==='='||c==='C')?PLAT:0;}
 function ceilAt(cx,cz){if(cx>=C3X)return c3CeilAt(cx,cz);if(cx>=70)return ceil2(cx,cz);if(cx>=56)return 2.6;if(cx>=34&&cz>=3&&cz<=19)return 6.4;if(cx>=49&&cx<=53&&cz>=15&&cz<=17)return 3.8;if(cx>=21&&cz<=5)return 5.6;if(cx>=8&&cx<=33&&cz>=8&&cz<=14)return 5.4;return WALL_H;}
 
 let F;
-function freshFlags(){return {ch3:false,c3Rita:false,c3Mayo:false,c3Eggs:false,c3Bread:false,c3Sand:false,c3Fed:false,c3Ended:false,crocsDead:false,mktScare:false,coopsOpen:false,cowDead:false,slDoor:false,bakOpen:false,aptDoor:'shut',yoliOut:false,yoliDead:false,rstOpen:false,c3DinIn:false,c3Barred:false,kitBroke:false,kitShut:false,mayorStun:false,mayorSoaked:false,mayorDead:false,cook:null,pills:0,pillsTaken:[],rifle:false,hp3:null,swimTip:false,sporeTip:false,pillTip:false,hurtTip:false,dumpTip:false,yoliTip:false,moldSaid:false,bangSaid:false,throwTip3:false,c3BreadAgain:false,sigilOpen:false,tvRed:false,lockSeen:false,blackout:false,called911:false,metDolores:false,askedWho:false,askedCops:false,askedGate:false,askedAny:false,doloresSafe:false,
+function freshFlags(){return {l2Read:false,ch3:false,c3Rita:false,c3Mayo:false,c3Eggs:false,c3Bread:false,c3Sand:false,c3Fed:false,c3Ended:false,crocsDead:false,mktScare:false,coopsOpen:false,cowDead:false,slDoor:false,bakOpen:false,aptDoor:'shut',yoliOut:false,yoliDead:false,rstOpen:false,c3DinIn:false,c3Barred:false,kitBroke:false,kitShut:false,mayorStun:false,mayorSoaked:false,mayorDead:false,cook:null,pills:0,pillsTaken:[],rifle:false,hp3:null,swimTip:false,sporeTip:false,pillTip:false,hurtTip:false,dumpTip:false,yoliTip:false,moldSaid:false,bangSaid:false,throwTip3:false,c3BreadAgain:false,sigilOpen:false,tvRed:false,lockSeen:false,blackout:false,called911:false,metDolores:false,askedWho:false,askedCops:false,askedGate:false,askedAny:false,doloresSafe:false,
   hasValve:false,hunt:false,gateOpen:false,notes:new Set(),seen:0,teased:false,inCamp:false,waterTip:false,seenTip:false,gateCk:false,gateLooked:false,cageOpen:false,lockTried:false,glassTip:false,litter:0,litterTaken:new Set(),ratsEaten:new Set(),litterTip:false,throwTip:false,doloresYaw:null,doloresSeen:false,inv:[],trapsTaken:new Set(),trapTip:false,steamTip:false,fenceTip:false,emergeDue:false,emerged:false,valveT:0,doloresDead:false,hasMap:false,mapSeen:new Set(),emergeVent:null,ch2:false,ch2Woke:false,elevSeen:false,hasBattery:false,elevDown:false,elevDead:false,liftGate:false,gateTried:false,trashTip:false,crawlTip:false,labOpen:false,labIn:false,labT:0,labWoke:false,inj:0,cureT:0,injTip:false,mutTip:false,hasLabMap:false,labNotes:[],cureSeen:false,blastSeen:false,bossSeen:false,bossIn:false,blastOpen:false,blastWarn:false,bossDead:false,bossTip:false,bossTipArm:false,bossTipTail:false,bossTipBite:false,hasCode:false,liftOpen:false,bossHand:null,bossAt:null,tapes:[],tapesSeen:[],picked:[],cryoDone:false,chemDone:false,closetOpen:false,secOpen:false,mazeDone:false,maze:null,mutDead:[],keyDrops:[],keysTaken:[],cellMack:false,cellBee:false,noteVent:false,ventOpen:false,vent_hold:false,vent_shop:false,ventTip:false,injTip2:false,fireTip:false,benchTip:false};}
 F=freshFlags();
 function solidCell(cx,cz){if(cx>=C3X)return c3Solid(cx,cz);const c=cellAt(cx,cz);if(c==='G')return !F.gateOpen;if(c==='E')return !!(SW.c2&&SW.c2.topShut);if(c==='J'||c==='j'||c==='b'||c==='q'||c==='h')return labDoorShut(c,cx,cz);return c==='#'||c==='='||c==='C'||PROP_SOLID.includes(c);}
@@ -2899,7 +2899,7 @@ const NOTES={
  '7':{verb:'Examine',title:'',cls:'card',html:`<p>Mack don't trust numbers.<br>Numbers never cried for nobody.</p><p>The ones who went under<br>are still here. The wall says so,<br>red as the night we painted them.</p><p>Take from each name its first mark,<br>in the order they were written,<br>and my door will open.</p><p>&mdash; M.</p>`}
 };
 let noteOpen=null;
-function openNote(id){const n=NOTES[id];if(!n)return;noteOpen=id;if('1234'.includes(id))F.notes.add(id);sPaper();releaseLock();setMode('ui');
+function openNote(id){const n=NOTES[id];if(!n)return;noteOpen=id;if(id==='L2')F.l2Read=true;if('1234'.includes(id))F.notes.add(id);sPaper();releaseLock();setMode('ui');
   const p=$('paper');p.className='paper '+n.cls;$('noteTitle').textContent='';$('noteTitle').hidden=true;$('noteBody').innerHTML=n.html;$('note').hidden=false;setTimeout(()=>$('noteClose').focus({preventScroll:true}),30);}
 function closeNote(){if(!noteOpen)return;noteOpen=null;$('note').hidden=true;sPaper();setMode('play');}
 $('noteClose').addEventListener('click',closeNote);
@@ -4418,7 +4418,7 @@ function labSetup(){if(F.elevDown){labLights();PATROL=PATROL3;PAUSES=PAUSES3;}SW
 function openLabDoor(){if(F.labOpen)return;F.labOpen=true;if(AC){const t=now()+0.01;sClank(busFx,t,0.55);sNoise(busFx,t+0.15,1.6,'highpass',2400,0.7,0.2,0.2);sTone(busFx,t+0.2,1.4,'sawtooth',70,52,0.12,0.3);}
   const L=SW.c2.leaves;if(L)tween(1.4,k=>{const e=k*k*(3-2*k);L.forEach((h,i)=>{h.rotation.y=(i?-1.35:1.35)*e;});});noise(P.x,P.z,8);
   labMutantsStart();setObjective(OBJ.lab);after(1.8,()=>{if(mode==='play')speak('Marissa','Hello...? Is anyone...',2.6);});}
-function labTick(dt){if(!F.ch2||!SW.lab)return;for(const h of SW.hides)if(h.grp)h.grp.visible=P.hidden!==h;lockerLook();junkTick(dt);rankMutVox();if(SW.c2&&SW.c2.glow)SW.c2.glow.opacity=0.42+0.14*Math.sin(time*3.1)+(R()<0.02?-0.2:0);p2Tick(dt);mzTick(dt);hallTick(dt);bossTick(dt);SW.lab.dspike=Math.max(0,SW.lab.dspike-dt*0.8);
+function labTick(dt){if(!F.ch2||!SW.lab)return;{const d=SW.lab.drip;if(d){d.y-=dt*3.2;if(d.y<0.02){d.y=2.0;if(AC&&Math.hypot(P.x-263.7,P.z-41)<9)oneShotAt(263.7,0.05,40.9,(p,t)=>sTone(p,t,0.05,'sine',1700+R()*500,900,0.05),1,1,true);}d.m.position.set(263.7,d.y,40.5);}}for(const h of SW.hides)if(h.grp)h.grp.visible=P.hidden!==h;lockerLook();junkTick(dt);rankMutVox();if(SW.c2&&SW.c2.glow)SW.c2.glow.opacity=0.42+0.14*Math.sin(time*3.1)+(R()<0.02?-0.2:0);p2Tick(dt);mzTick(dt);hallTick(dt);bossTick(dt);SW.lab.dspike=Math.max(0,SW.lab.dspike-dt*0.8);
   for(const tk of SW.lab.tanks){const b=tk.userData.body;if(b){b.position.y+=Math.sin(time*0.6+tk.position.x)*dt*0.05;if(!b.userData.still)b.rotation.y+=dt*0.05;}}
   if(mode!=='play'){return;}
   for(const m of MUTS)mutUpdate(m,dt);
@@ -4445,7 +4445,7 @@ Object.assign(OBJ,{lab:'Find out what happened here.',watch:'Watch the tape. The
 const ITEM_NAMES={trap:'Trap',battery:'Battery',syringe:'Syringe',chem:'Chemical',baton:'Stun baton',injector:'Injector stick',key:'Key',ventkey:'Vent key'};
 const LIMBS={limb1:'R. leg',limb2:'L. arm',limb3:'L. leg',limb4:'R. arm'};
 const LIMB_ORDER=['limb1','limb2','limb3','limb4'];
-const CHEMS=[{id:'eye',col:'#c0302a',name:'red, marked with an eye'},{id:'spiral',col:'#3a9a4a',name:'green, marked with a spiral'},{id:'tri',col:'#3a5ac0',name:'blue, marked with a triangle'},{id:'rat',col:'#c8a828',name:'yellow, marked with a rat'},{id:'moon',col:'#8a4ab0',name:'violet, marked with a moon'}];
+const CHEMS=[{id:'eye',col:'#c0302a',name:'red, marked with an eye',lab:'Red · eye'},{id:'spiral',col:'#3a9a4a',name:'green, marked with a spiral',lab:'Green · spiral'},{id:'tri',col:'#3a5ac0',name:'blue, marked with a triangle',lab:'Blue · triangle'},{id:'rat',col:'#c8a828',name:'yellow, marked with a rat',lab:'Yellow · rat'},{id:'moon',col:'#8a4ab0',name:'violet, marked with a moon',lab:'Violet · moon'}];
 const CHEM_RECIPE=['spiral','rat','eye','tri'],CLOSET_CODE='3174',SEC_CODE='0619';
 /* the rat maze: 6 x 4 tiles, N1 E2 S4 W8; three slots take the pieces you find */
 const MZ_W=6,MZ_H=4,MZ_FIXED={'0,0':2,'1,0':10,'3,1':5,'3,2':3,'4,2':10,'5,3':1,'0,1':4,'0,2':5,'0,3':3,'1,1':6,'1,2':9,'2,1':12,'2,2':5,'2,3':3,'1,3':8,'4,0':6,'5,0':12,'4,1':5,'5,1':1,'3,3':2,'4,3':12},
@@ -4459,7 +4459,7 @@ function mzPath(){const path=[MZ_START.slice()];let [x,y]=MZ_START,from=-1;for(l
 /* ---------- lore ---------- */
 Object.assign(NOTES,{
  L1:{verb:'Read',title:'',cls:'type',html:`<div class="mast">OFFICE OF THE MAYOR &middot; INTERNAL</div><div class="hl">Re: Water Quality Program (Delilah)</div><p>Per our call: the Mayor has signed off on another year. It runs under Reservoir Maintenance again, so nobody's name goes on anything.</p><p>He'd like the trial results kept inside the wing. Not in email. Not in a binder. If the council asks, it's pipes.</p><div class="margin">he's been down here. he's seen her</div>`},
- L2:{verb:'Read',title:'',cls:'hand',html:`<p>Mixing order, since SOMEBODY keeps getting it wrong:</p><p>Feed her before you open her eye.</p><p>The rat goes in right after the spiral. Right after.</p><p>The one that points up goes in last.</p><p>Don't touch the moon. I mean it.</p>`},
+ L2:{verb:'Read',title:'',cls:'hand',html:`<p>Mixing order, since SOMEBODY keeps getting it wrong:</p><p>The rat goes in right after the spiral. Right after.</p><p>The one that points up goes in last.</p><p>Her eye goes in right before that one.</p><p>Don't touch the moon. I mean it.</p>`},
  L3:{verb:'Examine',title:'',cls:'type',html:`<div class="mast">SPECIMEN 7 &middot; ASSEMBLY SEQUENCE</div><svg viewBox="0 0 200 180" width="100%" style="max-width:300px;display:block;margin:6px auto" aria-label="An outline of an infant, front view, with numbered limbs"><g fill="none" stroke="#2a2a24" stroke-width="2.2"><circle cx="100" cy="34" r="20"/><rect x="78" y="56" width="44" height="58" rx="18"/><path d="M78 66 L48 98"/><path d="M122 66 L152 98"/><path d="M88 112 L76 162"/><path d="M112 112 L124 162"/></g><g font-family="Courier New,monospace" font-size="20" font-weight="bold" fill="#8a1a10"><text x="34" y="96">4</text><text x="156" y="96">2</text><text x="60" y="160">1</text><text x="130" y="160">3</text></g></svg><p>Front view. Load drawers in numbered order for later assembly.</p><div class="margin">left and right are HIS</div>`},
  L4:{verb:'Read',title:'',cls:'type',html:`<div class="mast">HOLDING &middot; PROTOCOL 3</div><p>Subjects are kept in the dark for 72 hours before injection. Lights off. Staff do not speak to them, answer them, or use their names.</p><p>The quiet ones hear her sooner.</p>`},
  L5:{verb:'Read',title:'',cls:'hand',html:`<p>Somebody put it in the water cooler. Six of us drank it before we knew.</p><p>Henderson started first. He kept touching his face like it didn't fit.</p>`},
@@ -4501,8 +4501,8 @@ function renderPuz(){const k=PZ.open;if(!k)return;const cv=$('puzCv'),g=cv.getCo
     if(!held.length&&!PZ.slots.length)PZ.msg=PZ.msg||'Four empty drawers, frosted inside. You need what goes in them.';$('puzMsg').textContent=PZ.msg;return;}
   if(k==='chem'){t.textContent='Mixing station';CHEMS.forEach((c,i)=>{const x=20+i*58;g.fillStyle=c.col;g.fillRect(x+12,70,26,56);g.fillRect(x+19,56,12,16);g.fillStyle='#0b0d0b';g.fillRect(x+14,88,22,22);drawSigil(g,c.id,x+25,99,9,'#e8e0d0');});
     g.strokeStyle='#cfd8d0';g.lineWidth=2;g.beginPath();g.arc(160,165,22,0,TAU);g.stroke();PZ.seq.forEach((id,i)=>{const c=CHEMS.find(c=>c.id===id);g.fillStyle=c.col;g.fillRect(146,178-i*9,28,8);});
-    g.fillStyle='#e8e0d0';g.font='16px VT323, monospace';g.textAlign='left';g.fillText(PZ.seq.length?PZ.seq.length+' in the flask':'Empty flask',196,170,118);
-    if(PZ.seq.length<4)CHEMS.forEach(c=>ctl.append(pzBtn('Add '+c.name.split(',')[0],()=>{PZ.seq.push(c.id);if(AC)sNoise(busFx,now()+0.01,0.25,'bandpass',900,2,0.2);renderPuz();})));
+    g.fillStyle='#e8e0d0';g.font='16px VT323, monospace';g.textAlign='left';g.fillText(PZ.seq.length?PZ.seq.length+' in the flask':'Empty flask',196,160,118);PZ.seq.forEach((id,i)=>{drawSigil(g,id,204+i*26,182,7,CHEMS.find(c=>c.id===id).col);});if(!PZ.msg&&F.l2Read)$('puzMsg').textContent='The note: the rat right after the spiral. The one that points up last. Her eye right before it. Not the moon.';
+    if(PZ.seq.length<4)CHEMS.forEach(c=>ctl.append(pzBtn(c.lab,()=>{PZ.seq.push(c.id);PZ.msg='';if(AC)sNoise(busFx,now()+0.01,0.25,'bandpass',900,2,0.2);renderPuz();})));
     if(PZ.seq.length)ctl.append(pzBtn('Mix',chemMix,'primary'));if(PZ.seq.length)ctl.append(pzBtn('Empty it',()=>{PZ.seq=[];PZ.msg='';renderPuz();}));return;}
   if(k==='maze'){t.textContent='The rat maze';drawMaze(g,0,0,320,200,PZ.ratAt);const pcs=(F.picked||[]).filter(p=>p.startsWith('piece'));
     MZ_SLOTS.forEach((s,i)=>{const sl=(F.maze||[])[i],free=pcs.filter(p=>!(F.maze||[]).some(q=>q&&q.p===p));
@@ -4517,7 +4517,7 @@ function drawSigil(g,id,x,y,r,col){g.strokeStyle=col;g.fillStyle=col;g.lineWidth
   if(id==='eye'){g.ellipse(x,y,r,r*0.55,0,0,TAU);g.stroke();g.beginPath();g.arc(x,y,r*0.3,0,TAU);g.fill();}
   else if(id==='spiral'){for(let a=0;a<TAU*2.2;a+=0.2){const rr=a/(TAU*2.2)*r;const px=x+Math.cos(a)*rr,py=y+Math.sin(a)*rr;a?g.lineTo(px,py):g.moveTo(px,py);}g.stroke();}
   else if(id==='tri'){g.moveTo(x,y-r);g.lineTo(x+r,y+r*0.8);g.lineTo(x-r,y+r*0.8);g.closePath();g.stroke();}
-  else if(id==='rat'){g.ellipse(x,y,r*0.75,r*0.45,0,0,TAU);g.stroke();g.beginPath();g.moveTo(x+r*0.7,y);g.lineTo(x+r*1.1,y-r*0.3);g.moveTo(x-r*0.75,y);g.quadraticCurveTo(x-r*1.3,y+r*0.6,x-r*0.9,y+r);g.stroke();}
+  else if(id==='rat'){g.ellipse(x-r*0.15,y+r*0.1,r*0.62,r*0.42,0,0,TAU);g.fill();g.beginPath();g.moveTo(x+r*0.3,y-r*0.2);g.lineTo(x+r*1.05,y+r*0.12);g.lineTo(x+r*0.32,y+r*0.42);g.closePath();g.fill();g.beginPath();g.arc(x+r*0.38,y-r*0.3,r*0.24,0,TAU);g.fill();g.fillStyle='#0b0d0b';g.beginPath();g.arc(x+r*0.62,y+r*0.02,r*0.09+0.4,0,TAU);g.fill();g.fillStyle=col;g.fillRect(x-r*0.5,y+r*0.45,r*0.16,r*0.25);g.fillRect(x+r*0.1,y+r*0.45,r*0.16,r*0.25);g.lineWidth=1.5;g.beginPath();g.moveTo(x-r*0.75,y+r*0.15);g.quadraticCurveTo(x-r*1.35,y-r*0.1,x-r*1.15,y-r*0.7);g.quadraticCurveTo(x-r*1.0,y-r*1.05,x-r*0.7,y-r*0.85);g.stroke();g.lineWidth=2;}
   else{g.arc(x,y,r,Math.PI*0.3,Math.PI*1.7);g.stroke();g.beginPath();g.arc(x+r*0.4,y,r*0.8,Math.PI*0.4,Math.PI*1.6);g.stroke();}}
 function drawMaze(g,ox,oy,w,h,rat){const cs=Math.min((w-20)/MZ_W,(h-20)/MZ_H),x0=ox+(w-cs*MZ_W)/2,y0=oy+(h-cs*MZ_H)/2;g.fillStyle='#d8d0b8';g.fillRect(x0-4,y0-4,cs*MZ_W+8,cs*MZ_H+8);
   for(let y=0;y<MZ_H;y++)for(let x=0;x<MZ_W;x++){const b=mzTile(x,y),px=x0+x*cs,py=y0+y*cs,slot=MZ_SLOTS.some(s=>s[0]===x&&s[1]===y);g.fillStyle=slot?'#3a4a5a':'#5a4a32';g.fillRect(px,py,cs,cs);
@@ -4532,7 +4532,7 @@ function cryoCheck(){const ok=PZ.slots.every((p,i)=>p===LIMB_ORDER[i]);
   F.cryoDone=true;closePuz();if(AC){const t=now()+0.01;sClank(busFx,t,0.4);sNoise(busFx,t+0.3,1.6,'highpass',1800,0.7,0.3,0.1);}sub('The drawers lock. Somewhere behind her, glass lifts with a hiss.',3.4);
   const pod=SW.lab.pod;if(pod)tween(1.6,k=>{pod.position.y=pod.userData.y0+k*2.0;});setObjective(ch2Obj());}
 function chemMix(){const ok=PZ.seq.length===4&&PZ.seq.every((id,i)=>id===CHEM_RECIPE[i]);
-  if(!ok){PZ.msg='It fizzes black and stinks. You pour it out.';PZ.seq=[];if(AC)sNoise(busFx,now()+0.01,1.0,'bandpass',600,2,0.35,0.05,2400);renderPuz();return;}
+  if(!ok){let n=0;while(n<PZ.seq.length&&PZ.seq[n]===CHEM_RECIPE[n])n++;PZ.msg=PZ.seq.includes('moon')?'The moon. It goes black at once and the fumes sting her eyes. She pours it out.':n===0?'It fizzes black the moment the first one hits the flask. She pours it out.':n>=PZ.seq.length?'It stays clear, but it needs all four. She pours it out.':'It stays clear for '+['','the first pour','two pours','three pours'][n]+', then fizzes black. She pours it out.';PZ.seq=[];if(AC)sNoise(busFx,now()+0.01,1.0,'bandpass',600,2,0.35,0.05,2400);renderPuz();return;}
   F.chemDone=true;takeItem('chem');closePuz();if(AC){const t=now()+0.01;sNoise(busFx,t,1.2,'bandpass',800,3,0.3,0.1,300);sTone(busFx,t+0.4,1.4,'sine',220,440,0.08);}
   sub('It turns a sick, glowing green. Across the lab a monitor flickers on.',3.4);drawChemScreen();setObjective(ch2Obj());}
 function mazeRun(){const r=mzPath();PZ.msg='';let i=0;PZ.ratAt=MZ_START;const st=()=>{if(!PZ.open)return;i++;if(i<r.path.length){PZ.ratAt=r.path[i];if(AC)sTone(comp,now()+0.005,0.02,'square',2600,0,0.02);renderPuz();after(0.22,st);}
@@ -4773,6 +4773,21 @@ function cassette(){const g=new THREE.Group();g.add(at(boxm(.19,.025,.105,lam({c
 function mazePiece(type){const g=new THREE.Group();g.add(at(boxm(.18,.02,.18,lam({color:0x6a7a8a})),0,0,0));const m=lam({color:0xd8d0b8});if(type==='straight')g.add(at(boxm(.18,.024,.05,m),0,.002,0));else{g.add(at(boxm(.1,.024,.05,m),.04,.002,0));g.add(at(boxm(.05,.024,.1,m),0,.002,.04));}return g;}
 function addPick(S,id,mesh,x,y,z,label,onTake,rad){mesh.position.set(x,y,z);S.add(mesh);const p={id,mesh,cond:null};SW.lab.picks.push(p);
   SW.inter.push({kind:'pick',x,z,r:rad||1.8,label:()=>label,can:()=>!(F.picked||[]).includes(id)&&(!p.cond||p.cond()),act(){if(!F.picked)F.picked=[];if(F.picked.includes(id))return;F.picked.push(id);mesh.visible=false;sClick();onTake&&onTake();setObjective(ch2Obj());}});return p;}
+/* v8.0.1: the decon showers the vent note talks about, on the north wall above Ray */
+function buildShowers(S){const g=new THREE.Group();S.add(g);const pipe=lam({color:0x9aa09a,map:T.metal}),dk=lam({color:0x1a1c1a}),chrome=lam({color:0xc8ccc4,emissive:0x101210}),wet=decal(new THREE.MeshLambertMaterial({color:0x0a100c,transparent:true,opacity:0.55}),-3,-10);
+  const z=40.18,xs=[262.2,263.7,265.2];const run=cylm(.035,.035,4.2,6,pipe);run.rotation.z=Math.PI/2;run.position.set(263.7,2.45,z);g.add(run);
+  xs.forEach((x,i)=>{const drop=cylm(.03,.03,.3,6,pipe);drop.position.set(x,2.3,z);g.add(drop);const arm=cylm(.025,.025,.3,6,pipe);arm.rotation.x=Math.PI/2;arm.position.set(x,2.16,z+.14);g.add(arm);
+    const head=new THREE.Mesh(new THREE.CylinderGeometry(.19,.06,.14,12),chrome);head.position.set(x,2.06,z+.3);head.rotation.x=0.35;g.add(head);const face=new THREE.Mesh(new THREE.CircleGeometry(.17,12),dk);face.rotation.x=Math.PI/2+0.35;face.position.set(x,1.99,z+.33);g.add(face);
+    const chain=cylm(.006,.006,.7,3,chrome);chain.position.set(x+.22,1.85,z+.1);g.add(chain);const pull=new THREE.Mesh(new THREE.TorusGeometry(.04,.01,4,8),chrome);pull.position.set(x+.22,1.48,z+.1);g.add(pull);
+    const dr=new THREE.Mesh(new THREE.CircleGeometry(.13,10),decal(lam({color:0x2a2c2a,map:T.metal}),-2,-6));dr.rotation.x=-Math.PI/2;dr.position.set(x,.012,z+.85);g.add(dr);
+    const st=new THREE.Mesh(new THREE.CircleGeometry(.55,12),wet);st.rotation.x=-Math.PI/2;st.position.set(x,.01,z+.85);g.add(st);});
+  /* a drip from the middle head */
+  const drip=ball(.012,lam({color:0x9ab8a8,emissive:0x203028}),4,3);g.add(drip);SW.lab.drip={m:drip,y:2.0};
+  /* the sign over them */
+  const cv=document.createElement('canvas');cv.width=256;cv.height=64;const c=cv.getContext('2d');c.fillStyle='#a8b4b8';c.fillRect(0,0,256,64);c.fillStyle='#1a4a7a';c.fillRect(0,0,256,14);c.fillStyle='#1a1a1a';c.font='bold 22px "Special Elite",monospace';c.textAlign='center';
+  c.fillText('DECON SHOWERS',128,38);c.font='14px "Special Elite",monospace';c.fillText('RINSE 60 SEC BEFORE ENTRY',128,56);const tx=new THREE.CanvasTexture(cv);tx.magFilter=tx.minFilter=THREE.NearestFilter;
+  const sg=new THREE.Mesh(new THREE.PlaneGeometry(1.7,.43),decal(lam({map:tx,color:0x9a9a96}),-2,-6));sg.position.set(263.7,2.75,40.03);g.add(sg);
+  SW.inter.push({kind:'misc',x:264.6,z:41.4,r:1.5,label:()=>'Examine',can:()=>!F.noteVent,act(){sub('The decon showers. Bone dry. A man is lying under them.',3);}});}
 /* ---------- v6.8: the rat maze is a real maze ----------
    The table top is the maze floor (nothing coplanar sits on it to flicker through under the vertex snap),
    and the maze has standing walls, rebuilt whenever a piece goes in or turns. An empty slot is an open, dark hole. */
@@ -5130,7 +5145,7 @@ function buildLab2(S){const L=SW.lab;L.picks=[];L.doors={};L.gore=[];L.keys=[];b
     g.add(at(boxm(.2,.15,.2,m),-.6,1.02,0));g.add(at(boxm(1.6,.9,.05,lam({map:T.wood,color:0x8a7a6a})),0,1.5,-.38));for(let i=0;i<5;i++)g.add(at(boxm(.04,.25,.02,m),-.6+i*.3,1.55,-.34));
     SW.inter.push({kind:'bench',x:316,z:39,r:2.0,label:()=>hasItem('injector')?'Examine':'Use the workbench',act:useBench});}
   /* v6.9: the red hall, the crawlway under it, the note in the decon locker and the key on the body by the showers */
-  buildHall(S);buildVent(S);
+  buildHall(S);buildVent(S);buildShowers(S);
   {const h=SW.hides.find(h=>h.cx===132&&h.cz===23);if(h)h.note='L10';}
   {const kp=addPick(S,'ventkey',new THREE.Group(),263,0.1,41,'Search the body',()=>{takeItem('ventkey');sub('A small brass key on a shoelace, in his shirt pocket.',3.2);},1.7);kp.cond=()=>!!F.noteVent;}
   /* the captives */
@@ -5204,7 +5219,7 @@ function labHint(){if(F.bossIn)return bossHint();if(F.inj>0)return 'Find the cur
   if((F.tapesSeen||[]).includes(3))return 'The Security office is off the east corridor. The code was on the last tape: 0619.';
   if(tapeAvailable())return 'Take the tape to the TV in the staff lounge.';
   const t=F.tapes||[];if(!t.includes(1))return (F.picked||[]).filter(p=>p.startsWith('limb')).length<4?'Cryo storage. Find all four specimen jars, then load them into the rack. The chart on the wall shows the order.':'Load the jars into the cryo rack in the order on the chart. Left and right are the baby\'s, not yours.';
-  if(!t.includes(2))return F.chemDone?'The code on the chem lab monitor opens the closet.':'The chem lab. A scrawled note on a bench gives the order of the chemicals.';
+  if(!t.includes(2))return F.chemDone?'The code on the chem lab monitor opens the closet.':F.l2Read?'Four bottles, one order. The rat follows the spiral, the triangle is last, the eye is just before it. Leave the moon.':'The chem lab. A scrawled note on a bench gives the order of the chemicals.';
   if(!t.includes(3))return (F.picked||[]).filter(p=>p.startsWith('piece')).length<3?'The behavior lab. Find the three missing maze pieces lying around the room.':'Put the pieces in the maze and turn them so the rat can reach the cheese.';
   return 'Watch the tapes in the staff lounge.';}
 
