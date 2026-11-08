@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{box-sizing:border-box}body{margin:0}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body><title>The Abandoned</title>
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><style>:root{box-sizing:border-box}body{margin:0}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body><title>The Abandoned</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,6 +30,7 @@
   --sb:env(safe-area-inset-bottom, 0px);
   color-scheme:dark;
 }
+*{touch-action:manipulation}
 html,body{height:100%}
 body{margin:0;overflow:hidden;background:var(--void);color:var(--bone);font-family:var(--f-ui);font-size:20px;
   padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
@@ -196,6 +197,12 @@ button{font:inherit;color:inherit}
 .lockmsg{font-size:20px;color:var(--ash);margin:0;min-height:1.2em}
 #puz{position:fixed;inset:0;z-index:35;display:flex;align-items:center;justify-content:center;padding:calc(var(--st) + 20px) var(--gr) calc(var(--sb) + 20px) var(--gl);background:rgba(3,4,3,.88);overflow-y:auto}
 .puzbox{display:flex;flex-direction:column;gap:10px;max-width:560px;width:100%}
+#puz,#lock{align-items:flex-start}#puz>.puzbox,#lock>.lockbox{margin:auto}
+#note,#mapUI{justify-content:flex-start}#note>:first-child,#mapUI>:first-child{margin-top:auto}#note>:last-child,#mapUI>:last-child{margin-bottom:auto}
+@media (max-height:560px) and (min-aspect-ratio:4/3){
+  .puzbox{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);grid-template-areas:"t t" "cv ctl" "cv msg" "cv row";column-gap:18px;row-gap:8px;align-items:start;max-width:min(100%,920px)}
+  .puzbox>.puzt{grid-area:t}#puzCv{grid-area:cv;max-width:100%;width:100%}#puzCtl{grid-area:ctl}.puzbox>#puzMsg{grid-area:msg}.puzbox>.row{grid-area:row}
+  .lockbox{gap:8px}}
 .puzt{font-size:18px;letter-spacing:.16em;text-transform:uppercase;color:var(--ash);margin:0}
 #puzCv{width:100%;max-width:480px;aspect-ratio:320/200;image-rendering:pixelated;border:1px solid rgba(220,213,192,.25);background:#0b0d0b}
 #puzCtl{display:flex;flex-wrap:wrap;gap:6px}#puzCtl .btn{font-size:18px;padding:6px 12px 4px}#puzCtl .btn.key{min-width:46px}
@@ -829,7 +836,7 @@ function ceilAt(cx,cz){if(cx>=70)return ceil2(cx,cz);if(cx>=56)return 2.6;if(cx>
 
 let F;
 function freshFlags(){return {sigilOpen:false,tvRed:false,lockSeen:false,blackout:false,called911:false,metDolores:false,askedWho:false,askedCops:false,askedGate:false,askedAny:false,doloresSafe:false,
-  hasValve:false,hunt:false,gateOpen:false,notes:new Set(),seen:0,teased:false,inCamp:false,waterTip:false,seenTip:false,gateCk:false,gateLooked:false,cageOpen:false,lockTried:false,glassTip:false,litter:0,litterTaken:new Set(),ratsEaten:new Set(),litterTip:false,throwTip:false,doloresYaw:null,doloresSeen:false,inv:[],trapsTaken:new Set(),trapTip:false,steamTip:false,fenceTip:false,emergeDue:false,emerged:false,valveT:0,doloresDead:false,hasMap:false,mapSeen:new Set(),emergeVent:null,ch2:false,ch2Woke:false,elevSeen:false,hasBattery:false,elevDown:false,elevDead:false,liftGate:false,gateTried:false,trashTip:false,crawlTip:false,labOpen:false,labIn:false,labT:0,labWoke:false,inj:0,cureT:0,injTip:false,mutTip:false,hasLabMap:false,labNotes:[],cureSeen:false,blastSeen:false,bossSeen:false,bossIn:false,blastOpen:false,blastWarn:false,bossDead:false,bossTip:false,bossTipArm:false,bossTipTail:false,bossTipBite:false,hasCode:false,liftOpen:false,bossHand:null,bossAt:null,tapes:[],tapesSeen:[],picked:[],cryoDone:false,chemDone:false,closetOpen:false,secOpen:false,mazeDone:false,maze:null,mutDead:[],keyDrops:[],keysTaken:[],cellMack:false,cellBee:false,noteVent:false,ventOpen:false,vent_hold:false,vent_shop:false,ventTip:false,injTip2:false};}
+  hasValve:false,hunt:false,gateOpen:false,notes:new Set(),seen:0,teased:false,inCamp:false,waterTip:false,seenTip:false,gateCk:false,gateLooked:false,cageOpen:false,lockTried:false,glassTip:false,litter:0,litterTaken:new Set(),ratsEaten:new Set(),litterTip:false,throwTip:false,doloresYaw:null,doloresSeen:false,inv:[],trapsTaken:new Set(),trapTip:false,steamTip:false,fenceTip:false,emergeDue:false,emerged:false,valveT:0,doloresDead:false,hasMap:false,mapSeen:new Set(),emergeVent:null,ch2:false,ch2Woke:false,elevSeen:false,hasBattery:false,elevDown:false,elevDead:false,liftGate:false,gateTried:false,trashTip:false,crawlTip:false,labOpen:false,labIn:false,labT:0,labWoke:false,inj:0,cureT:0,injTip:false,mutTip:false,hasLabMap:false,labNotes:[],cureSeen:false,blastSeen:false,bossSeen:false,bossIn:false,blastOpen:false,blastWarn:false,bossDead:false,bossTip:false,bossTipArm:false,bossTipTail:false,bossTipBite:false,hasCode:false,liftOpen:false,bossHand:null,bossAt:null,tapes:[],tapesSeen:[],picked:[],cryoDone:false,chemDone:false,closetOpen:false,secOpen:false,mazeDone:false,maze:null,mutDead:[],keyDrops:[],keysTaken:[],cellMack:false,cellBee:false,noteVent:false,ventOpen:false,vent_hold:false,vent_shop:false,ventTip:false,injTip2:false,fireTip:false,benchTip:false};}
 F=freshFlags();
 function solidCell(cx,cz){const c=cellAt(cx,cz);if(c==='G')return !F.gateOpen;if(c==='E')return !!(SW.c2&&SW.c2.topShut);if(c==='J'||c==='j'||c==='b'||c==='q'||c==='h')return labDoorShut(c,cx,cz);return c==='#'||c==='='||c==='C'||PROP_SOLID.includes(c);}
 function pSolid(cx,cz){if(P.inVent)return false;const c=cellAt(cx,cz);if(cx===116&&cz===22&&F.ch2&&!F.liftGate)return true;if(c==='J'||c==='j'||c==='b'||c==='q'||c==='h')return labDoorShut(c,cx,cz);if(P.onPlat&&P.highKind==='pipe')return false;if(c==='K')return true;if(c==='#'||PROP_SOLID.includes(c))return true;if(c==='G')return !F.gateOpen;if(c==='C'&&!F.cageOpen)return true;return (c==='='||c==='C')!==!!P.onPlat;}
@@ -1728,7 +1735,7 @@ function buildSewer(){
     else if(c==='F'){S.add(at(cylm(.38,.36,.95,9,rust),x,.475,z));
       const fl=[];for(let i=0;i<3;i++){const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:T.flame,blending:THREE.AdditiveBlending,transparent:true,depthWrite:false,color:0xffffff}));sp.position.set(x+(i-1)*.12,1.15,z+(i%2)*.1);sp.scale.set(.6,.8,1);S.add(sp);fl.push(sp);}
       const L=addLight(S,0xff8a38,2.0,12,x,1.6,z,'fire');const fire={x,z,fl,L,flare:0};SW.fires.push(fire);
-      SW.inter.push({kind:'fire',x,z,r:2.15,label:()=>'Burn',can:()=>F.litter>0,act(){burnSave(fire);}});}
+      SW.inter.push({kind:'fire',x,z,r:2.15,label:()=>F.litter>0?'Burn':'Examine',act(){if(F.litter>0){burnSave(fire);return;}fireExamine();}});}
     else if('12347'.includes(c)){const isCard=c==='7';const pm=new THREE.Mesh(new THREE.PlaneGeometry(isCard?.46:.34,isCard?.34:.25),isCard?cardM:paperM);pm.rotation.x=-Math.PI/2;pm.rotation.z=rr()*TAU;pm.position.set(x+(rr()-0.5)*.6,.015,z+(rr()-0.5)*.6);
       if(isCard){pm.rotation.set(-1.15,0,0.1);pm.position.set(x-.4,.17,z-.55);}S.add(pm);
       const id=c;SW.inter.push({kind:'note',id,x:pm.position.x,z:pm.position.z,r:1.7,label:()=>'Examine',act(){openNote(id);}});
@@ -2420,6 +2427,8 @@ function pickLitter(id){if(F.litterTaken.has(id))return;F.litterTaken.add(id);F.
   sub(F.ch2?['A crumpled wrapper.','A crushed soda can.','A wad of wet newspaper.'][id%3]:['A greasy burger wrapper. It will burn.','A crumpled receipt. Dry enough to burn.','A soda can stuffed with paper. Good kindling.'][id%3],2.6);
   if(F.ch2){if(!F.trashTip){F.trashTip=true;after(2.6,()=>tip('Trash is scarce. Throw a piece in a trash can to save your progress.',6));}}
   else if(!F.litterTip){F.litterTip=true;after(2.6,()=>tip('Litter is scarce. Burn a piece in a fire can to save your progress.',6));}}
+function fireExamine(){sub(F.fireTip?'Burn a piece of litter here to save.':'A fire can. Still burning.',2.6);
+  if(!F.fireTip){F.fireTip=true;after(1.2,()=>tip('Fire cans save your progress. Pick up a piece of litter (it glints), then burn it here.',7));}}
 function burnSave(fire){if(F.litter<=0)return;
   F.litter--;fire.flare=1.3;sWhoosh(busFx);writeSave(makeSave(zoneName()));sub('Progress saved.',2.4);}
 const SAVE_KEY='abandoned.save.v1';
@@ -2916,7 +2925,7 @@ function runTimers(dt){if(!timers.length)return;const due=[];timers=timers.filte
 const sleep=s=>new Promise(r=>after(s,r));
 let subT=null,tipT=null;
 function sub(text,dur=3){const el=$('sub');el.textContent=text;el.hidden=false;clearTimeout(subT);subT=setTimeout(()=>{el.hidden=true;},dur*1000);}
-function tip(text,dur=6){/* v7.0: pop-up tips are off; the controls are in the pause menu */}
+function tip(text,dur=6){const el=$('tip');el.textContent=text;el.hidden=false;clearTimeout(tipT);tipT=setTimeout(()=>{el.hidden=true;},dur*1000);}
 let objDone=[];
 function setObjective(t){const cur=$('objText').textContent;if(cur===t)return;if(cur&&!objDone.includes(cur))objDone.push(cur);objDone=objDone.filter(x=>x!==t);$('objText').textContent=t;const o=$('obj');o.classList.remove('flash');void o.offsetWidth;o.classList.add('flash');}
 function showPrompt(text,hold){$('prompt').hidden=false;$('pKey').textContent=(hold?'Hold ':'')+(touchMode?'USE':'E');$('pText').textContent=text;$('bUse').classList.add('ready');}
@@ -3132,6 +3141,16 @@ const tbtn=(id,down,up)=>{const b=$(id);b.addEventListener('pointerdown',e=>{e.p
 tbtn('bUse',()=>{P.useHeld=true;tryInteract();},()=>{P.useHeld=false;});
 tbtn('bDuck',toggleCrouch);tbtn('bTrap',setTrap);tbtn('bDive',toggleDive);tbtn('bLight',toggleFlash);tbtn('bThrow',throwRat);
 $('pauseBtn').addEventListener('click',()=>pauseGame());
+/* iOS Safari: a quick double tap (the lock dials, the sigil buttons) or a two-finger touch (holding USE while steering) could zoom
+   the whole page and push the HUD and the buttons off the screen. Block the zoom gestures, and if the page ends up zoomed anyway, snap it back. */
+['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>{if(e.touches&&e.touches.length>1)e.preventDefault();},{passive:false});
+function unzoom(){const vv=window.visualViewport;if(!vv||vv.scale<=1.01)return;let m=document.querySelector('meta[name=viewport]');
+  if(!m){m=document.createElement('meta');m.name='viewport';m.content='width=device-width,initial-scale=1,viewport-fit=cover';document.head.append(m);}
+  const c=m.getAttribute('content')||'',base=c.replace(/,?\s*(maximum-scale|user-scalable|minimum-scale)=[^,]*/g,'');m.setAttribute('content',base+',maximum-scale=1.0001');setTimeout(()=>m.setAttribute('content',base+',maximum-scale=1,user-scalable=no'),60);
+  if(window.scrollX||window.scrollY)window.scrollTo(0,0);}
+if(window.visualViewport)visualViewport.addEventListener('resize',()=>setTimeout(unzoom,200));
+let hudFix=0;function hudGuard(dt){hudFix-=dt;if(hudFix>0)return;hudFix=0.5;if(mode!=='play')return;const tl=$('touch'),hd=$('hud');if(touchMode&&tl.hidden)tl.hidden=false;if(hd.hidden)hd.hidden=false;unzoom();}
 
 /* ---------- menus ---------- */
 function pauseGame(){if(mode!=='play')return;setMode('paused');$('pauseCtl').innerHTML=ctlHTML();$('pauseCtl').hidden=true;$('pCtlBtn').setAttribute('aria-expanded','false');$('sens').value=String(sens);
@@ -3305,7 +3324,7 @@ function step(dt){
   if(AC)updateListener();
 }
 function render(){postU.uTime.value=time;renderer.setRenderTarget(rt);renderer.render(activeScene,camera);renderer.setRenderTarget(null);renderer.render(postScene,postCam);}
-function frame(t){requestAnimationFrame(frame);runAud();let dt=(t-last)/1000;last=t;if(!(dt>0))dt=0;if(dt>0.1)dt=0.1;if(mode!=='paused')step(dt);render();}
+function frame(t){requestAnimationFrame(frame);runAud();let dt=(t-last)/1000;last=t;if(!(dt>0))dt=0;if(dt>0.1)dt=0.1;if(mode!=='paused')step(dt);hudGuard(dt);render();}
 
 /* ============================================================
    CHAPTER TWO, PART ONE: the crawlways, the service elevator, the lower landing
@@ -5076,7 +5095,8 @@ function dropTape(n){}
 
 /* ---------- the workbench and the injector stick ---------- */
 function useBench(){if(hasItem('injector')){sub('Nothing else to make.',2);return;}const need=['baton','battery','syringe','chem'].filter(k=>!hasItem(k));
-  if(need.length){const nm={baton:'the baton',battery:'the battery',syringe:'a syringe',chem:'that chemical'};sub(hasItem('baton')?'Not yet. She still needs '+need.map(k=>nm[k]).join(', ')+'.':'A workbench. Tape, wire, a vise.',3.4);labMark('bench');return;}
+  if(need.length){const nm={baton:'the baton',battery:'the battery',syringe:'a syringe',chem:'that chemical'};sub(hasItem('baton')?'Not yet. She still needs '+need.map(k=>nm[k]).join(', ')+'.':'A workbench. Tape, wire, a vise.',3.4);labMark('bench');
+    if(!F.benchTip){F.benchTip=true;after(1.0,()=>tip('The workbench builds the injector stick. Bring the baton, the battery, a syringe and the chemical here, then '+(touchMode?'tap USE':'press E')+'.',8));}return;}
   setMode('cine');hidePrompt();['baton','battery','syringe','chem'].forEach(dropItem);if(AC){const t=now()+0.05;sClank(busFx,t,0.4);sClank(busFx,t+0.7,0.3);sNoise(busFx,t+1.2,0.9,'bandpass',1600,3,0.3);sTone(busFx,t+2.1,1.0,'sawtooth',60,120,0.15);sNoise(busFx,t+2.2,0.4,'highpass',3000,0.7,0.4);}
   sub('The battery wired to the baton. The syringe taped to the tip. The chemical in the syringe.',3.6);
   after(2.6,()=>{F.blackout=true;takeItem('injector');setMode('play');sub('It hums. The tip glows green.',2.6);setObjective(ch2Obj());writeSave(makeSave(zoneName()));after(2.2,()=>{if(F.blackout&&!F.bossIn)blackoutStart();});
