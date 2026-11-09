@@ -6396,9 +6396,9 @@ function c3DeathScreen(id,line){const L={croc:['IT TOOK YOU UNDER.','The water c
 
 /* ---------- what Marissa is after, and what she tells herself ---------- */
 const OBJ3={find:'Find Pip.',mayo:'Get mayonnaise from the market.',eggs:'Get eggs from the slaughterhouse.',bread:'Find bread that isn\'t moldy at the bakery.',cook:'Make the sandwich in Bellini\'s kitchen.',
-  bar:'Keep him out of the kitchen.',burn:'Kill him before he gets up.',toy:'Find Pip in the toy store, past the alley.'};
+  bar:'Keep him out of the kitchen.',burn:'Kill him before he gets up.',ready:'He\'s coming through. Get something to burn him with.',toy:'Find Pip in the toy store, past the alley.'};
 const ITEM3={mayo:'Mayonnaise',eggs:'Eggs ×6',bread:'Bread',knife:'Knife',bowl:'Bowl',sandwich:'Egg salad sandwich',rifle:'Rifle',bottle:'Bottle of rum',rag:'Rag'};
-function c3Obj(){if(F.c3Fed)return OBJ3.toy;if(F.c3Sand)return F.mayorDead?OBJ3.toy:(F.mayorStun?OBJ3.burn:OBJ3.cook);if(F.c3Bread)return F.c3Barred?OBJ3.cook:(F.c3DinIn?OBJ3.bar:OBJ3.cook);if(F.c3Eggs)return OBJ3.bread;if(F.c3Mayo)return OBJ3.eggs;if(F.c3Rita)return OBJ3.mayo;return OBJ3.find;}
+function c3Obj(){if(F.c3Fed)return OBJ3.toy;if(F.c3Sand)return F.mayorDead?OBJ3.toy:(F.mayorStun?OBJ3.burn:C3.siege?OBJ3.ready:OBJ3.cook);if(F.c3Bread)return F.c3Barred?OBJ3.cook:(F.c3DinIn?OBJ3.bar:OBJ3.cook);if(F.c3Eggs)return OBJ3.bread;if(F.c3Mayo)return OBJ3.eggs;if(F.c3Rita)return OBJ3.mayo;return OBJ3.find;}
 /* the next thing on the list, said at a door she isn't ready for */
 function c3Need(){if(!F.c3Rita)return '';if(!F.c3Mayo)return 'Mayo first. The market.';if(!F.c3Eggs)return 'Eggs next. Rita said the slaughterhouse.';if(!F.c3Bread)return 'I still need bread. The bakery.';if(!F.c3Fed)return 'The sandwich first. Then Rita tells me where she is.';return '';}
 function c3Hint(){const u=Math.floor(P.x/CELL)-C3X,v=Math.floor(P.z/CELL);
@@ -7444,12 +7444,15 @@ function buildMayor(){const g=new THREE.Group(),skin=lam({map:c3MayorTex(),color
   const limbs=[];[[.68,1.0,1],[-.68,1.0,1],[.6,-.95,0],[-.6,-.95,0]].forEach(([a,b,front],i)=>{const up=new THREE.Group();up.position.set(a,-.05,b);root.add(up);const u=limb(.62,front?.17:.2,front?.13:.15,front?skin:suit,8);up.add(u);
     const lo=new THREE.Group();lo.position.y=-.62;u.add(lo);const l=limb(.52,front?.13:.15,front?.1:.12,skin,7);lo.add(l);if(front)hand(lo,a>0?1:-1);else{const ft=ball(.13,skin,6,5);ft.scale.set(1,.5,1.6);ft.position.set(0,-.52,-.08);lo.add(ft);}limbs.push({up,u,lo,front:!!front});});
   const shadow=blob(2.6,3.6,0.6);g.add(shadow);bakeShade(g,0);g.scale.setScalar(MAYOR_S);return {g,root,head,jaw,eyes,glow,limbs,S:MAYOR_S};}
-function c3MayorAnim(m,dt){const r=m.rig;const ts=C3.slow?0.25:1;dt*=ts;r.g.position.set(m.x,(m.y||0),m.z);r.g.rotation.y=m.yaw;const mv=m.spd>0.15;m.ph+=dt*(mv?m.spd*1.9:0.7);const q=Math.sin(m.ph);
+function c3MayorAnim(m,dt){const r=m.rig;const rdt=dt,ts=C3.slow?0.25:1;dt*=ts;r.g.position.set(m.x,(m.y||0),m.z);r.g.rotation.y=m.yaw;
+  /* v9.1: the stride follows how fast he really moves (scripted or not), so his feet don't slide */
+  {const v=m.ax==null?0:Math.min(6,Math.hypot(m.x-m.ax,m.z-m.az)/Math.max(rdt,1e-3));m.ax=m.x;m.az=m.z;m.vs=damp(m.vs||0,v,10,rdt);if(!m.dead)m.spd=m.vs;}
+  const mv=m.vs>0.12;m.ph+=mv?rdt*(0.5+m.vs*2.5):dt*0.7;const q=Math.sin(m.ph),amp=mv?Math.min(1.25,0.75+m.vs*0.2):1;
   {const S=r.S||MAYOR_S;m.sq=damp(m.sq||0,c3MayorSqueeze(m),6,dt);r.g.scale.set(S*(1-0.38*m.sq),S*(1-0.28*m.sq),S*(1+0.06*m.sq));}
   if(!m.dead)c3Stride(m,m.ph,()=>{const dd=Math.hypot(P.x-m.x,P.z-m.z);c3Step(m,'mayorThud',{amp:m.state==='chase'||m.burn>0?1:0.7,dishes:R()<0.35});if(dd<12&&mode==='play')shake(0.1*(1-dd/12));});
   const burn=m.burn||0,stun=m.state==='trapped'||burn>0;
-  r.limbs.forEach((l,i)=>{const ph=(i===0||i===3)?0:Math.PI;const sw=mv?Math.sin(m.ph+ph):0;l.up.rotation.x=damp(l.up.rotation.x,(l.front?-0.5:0.6)+sw*0.5+(stun?Math.sin(time*ts*6+i)*0.4:0),8,dt);l.lo.rotation.x=damp(l.lo.rotation.x,(l.front?0.8:-1.0)+Math.max(0,sw)*0.4,8,dt);});
-  r.root.position.y=0.95+(mv?Math.abs(q)*0.06:Math.sin(time*0.9)*0.03)-(stun?0.35:0)-(m.dead?0.6:0);r.root.rotation.z=damp(r.root.rotation.z,stun?Math.sin(time*ts*3)*0.25:(m.dead?1.2:q*0.05),5,dt);
+  r.limbs.forEach((l,i)=>{const ph=(i===0||i===3)?0:Math.PI;const sw=mv?Math.sin(m.ph+ph):0;l.up.rotation.x=damp(l.up.rotation.x,(l.front?-0.5:0.6)+sw*0.62*amp+(stun?Math.sin(time*ts*6+i)*0.4:0),12,rdt);l.lo.rotation.x=damp(l.lo.rotation.x,(l.front?0.8:-1.0)+Math.max(0,sw)*0.55*amp,12,rdt);});
+  r.root.position.y=0.95+(mv?Math.abs(q)*0.1*amp:Math.sin(time*0.9)*0.03)-(stun?0.35:0)-(m.dead?0.6:0);r.root.rotation.z=damp(r.root.rotation.z,stun?Math.sin(time*ts*3)*0.25:(m.dead?1.2:q*0.05),5,dt);
   const lung=m.state==='wind';r.root.rotation.x=damp(r.root.rotation.x,lung?-0.35:stun?0.2:0,6,dt);
   r.head.rotation.y=damp(r.head.rotation.y,clamp(angDiff(m.yaw,Math.atan2(P.x-m.x,P.z-m.z)),-0.9,0.9),3,dt);r.jaw.rotation.x=damp(r.jaw.rotation.x,lung||m.state==='chase'||stun||burn?0.7:0.1+Math.max(0,Math.sin(time*0.6))*0.15,8,dt);
   r.glow.material.opacity=m.dead?0:(m.state==='chase'||lung?0.85:0.45+0.1*Math.sin(time*2));r.eyes.forEach(e=>{e.visible=!m.dead;});}
@@ -7509,6 +7512,26 @@ function c3BuildRest(S){const wood=lam({map:T.wood,color:0x7a5a40}),cloth=lam({c
       sand:mk(new THREE.BoxGeometry(.3,.09,.22),lam({color:0xd8c090}),ix-0.6,y+0.08,iz-0.3)};
     C3.pot=new THREE.Group();C3.pot.add(at(cylm(.2,.18,.25,12,steel),0,.12,0));const wat=cylm(.18,.18,.02,12,lam({color:0x4a6a5a,transparent:true,opacity:0.8}));wat.position.y=.2;wat.visible=false;C3.pot.add(wat);C3.potWater=wat;C3.pot.position.set(L3x(80)+0.6,1.9,2*CELL+0.2);S.add(C3.pot);
     C3.steam=new THREE.Sprite(new THREE.SpriteMaterial({map:c3SporeTex(),color:0xc8d0c8,transparent:true,opacity:0,depthWrite:false}));C3.steam.scale.set(.6,.9,1);S.add(C3.steam);
+    /* v9.1: the cooking, shown. A wall cupboard for the pot, a loaf, three eggs to peel, the chopped pile, the mayo jar, a spoon, a knife in hand, the pot in her hand */
+    C3.isl=[ix,iz];
+    {const cw=lam({map:T.wood,color:0x8a6a4a}),cx0=L3x(80)+0.6,cz0=2*CELL;S.add(at(boxm(.9,.7,.02,lam({color:0x1e1610})),cx0,1.9,cz0+0.02));[-0.465,0.465].forEach(o=>S.add(at(boxm(.03,.72,.43,cw),cx0+o,1.9,cz0+0.215)));
+      S.add(at(boxm(.96,.03,.43,cw),cx0,2.25,cz0+0.215));S.add(at(boxm(.96,.03,.43,cw),cx0,1.555,cz0+0.215));
+      const dr=new THREE.Group();dr.position.set(cx0-0.48,1.9,cz0+0.445);S.add(dr);dr.add(at(boxm(.96,.72,.025,cw),.48,0,0));dr.add(at(boxm(.03,.08,.03,lam({color:0x8a8a82})),.86,0,.025));C3.potCab=dr;}
+    {const K={};C3.ck2=K;const E=[ix-0.1,y+0.06,iz-0.3],B=[ix-0.6,y+0.06,iz-0.3],hid=o=>{o.visible=false;S.add(o);return o;};
+      K.loaf=hid(at(boxm(.34,.13,.18,lam({color:0xb8864a,emissive:0x0a0604})),B[0],y+0.1,B[2]));
+      {const g=new THREE.Group();g.add(at(boxm(.24,.012,.05,lam({color:0xd0d4d0,emissive:0x202420})),.12,0,0));g.add(at(boxm(.11,.03,.032,lam({color:0x2a1a10})),-.055,0,0));K.knife=hid(g);}
+      K.mS=lam({color:0xd8c4a0});K.mP=lam({color:0xf6f2e6,emissive:0x16140e});
+      const EO=[[-0.07,0,0],[0.02,0,0.06],[0.08,0,-0.04]];K.eggs=EO.map(([a,b,c])=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.045,8,6),K.mS);e.scale.y=1.3;e.position.set(E[0]+a,E[1],E[2]+c);return hid(e);});
+      {const g=new THREE.Group();K.shells=hid(g);const sm=lam({color:0xd8c4a0,side:THREE.DoubleSide}),rr=mulberry(311);EO.forEach(([a,b,c],i)=>{for(let k=0;k<5;k++){const s=new THREE.Mesh(new THREE.PlaneGeometry(.028,.022),sm);const an=rr()*TAU,rd=0.08+rr()*0.06;
+        s.userData={egg:i,d:k*0.1,a:[E[0]+a+Math.cos(an)*0.04,E[1]+0.02,E[2]+c+Math.sin(an)*0.04],b:[E[0]+a+Math.cos(an)*rd,y+0.045,E[2]+c+Math.sin(an)*rd]};s.position.set(...s.userData.b);s.rotation.x=-Math.PI/2;g.add(s);}});}
+      {const g=new THREE.Group();g.position.set(E[0],E[1]-0.02,E[2]);const wm=lam({color:0xf4f0e4,emissive:0x141410}),ym=lam({color:0xe8c040,emissive:0x1a1404}),rr=mulberry(312);for(let k=0;k<16;k++){const c=boxm(.02+rr()*.015,.015,.02+rr()*.015,k%3?wm:ym);c.position.set((rr()-0.5)*0.16,rr()*0.03,(rr()-0.5)*0.12);c.rotation.y=rr()*3;g.add(c);}K.chop=hid(g);}
+      {const g=new THREE.Group();g.add(at(cylm(.05,.05,.11,10,lam({color:0xeeeee4})),0,0,0));g.add(at(cylm(.052,.052,.025,10,lam({color:0x2a4a8a})),0,.065,0));g.add(at(boxm(.07,.04,.002,lam({color:0xd8b040})),0,0,.051));K.jar=hid(g);}
+      K.blob=hid(ball(.045,lam({color:0xf0ece0,emissive:0x141410}),8,6));K.spoon=hid(boxm(.015,.012,.2,steel));
+      K.layer=hid(boxm(.3,.03,.22,lam({color:0xe8d890,emissive:0x14120a})));K.top=hid(boxm(.35,.03,.25,lam({color:0xd8c8a0})));
+      C3.potEggs=[[-.07,.03],[.06,.04],[0,-.07]].map(([a,c])=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.045,8,6),K.mS);e.scale.y=1.3;e.position.set(a,.1,c);e.userData.y=.1;e.visible=false;C3.pot.add(e);return e;});}
+    {const H=new THREE.Group();H.add(at(cylm(.2,.18,.25,12,steel),0,.12,0));const hw=cylm(.18,.18,.02,12,lam({color:0x4a6a5a}));hw.position.y=.2;H.add(hw);H.userData.w=hw;H.scale.setScalar(0.55);H.visible=false;camera.add(H);C3.potHand=H;}
+    C3.tap=at(cylm(.012,.012,.26,5,lam({color:0x9ab0b0,transparent:true,opacity:0.7})),L3x(77.6),1.1,north[2]+0.28);C3.tap.visible=false;S.add(C3.tap);
+    C3.steam2=new THREE.Sprite(new THREE.SpriteMaterial({map:c3SporeTex(),color:0xd8e0d8,transparent:true,opacity:0,depthWrite:false}));C3.steam2.scale.set(.8,1.1,1);S.add(C3.steam2);
     /* cabinets on the south wall: one has a bowl */
     C3.cabs=[];[78,79,80].forEach((u,i)=>{const x=L3x(u)+1,z=wc(7)+0.6;S.add(at(boxm(1.8,.9,.6,wood),x,.45,z));C3.boxes.push([x-0.9,x+0.9,z-0.3,z+0.4,0]);const dr=new THREE.Group();dr.position.set(x-0.85,.45,z-0.31);S.add(dr);dr.add(at(boxm(.85,.8,.03,lam({map:T.wood,color:0x9a7a5a})),.42,0,0));C3.cabs.push(dr);
       c3Inter({kind:'cab',x,z:z-1.0,y:0,r:1.6,label:()=>'Open the cabinet',can:()=>!(F.cook&&F.cook['cab'+i]),act(){(F.cook=F.cook||{})['cab'+i]=true;tween(0.4,k=>{dr.rotation.y=-1.6*k;});sCab(P.x);
@@ -7521,9 +7544,11 @@ function c3BuildRest(S){const wood=lam({map:T.wood,color:0x7a5a40}),cloth=lam({c
     c3Inter({kind:'cook',x:ix-0.4,z:iz-1.0,y:0,r:1.7,label:()=>c3BoardLabel(),can:()=>!!c3BoardLabel()&&!F.c3Sand,act(){c3BoardAct();}});
     c3Inter({kind:'cook',x:L3x(77.6),z:2*CELL+1.2,y:0,r:1.6,label:()=>c3SinkLabel(),can:()=>!!c3SinkLabel(),act(){c3SinkAct();}});
     c3Inter({kind:'cook',x:east[0]-0.6,z:wc(5.5),y:0,r:1.7,label:()=>c3StoveLabel(),can:()=>!!c3StoveLabel(),act(){c3StoveAct();}});
-    c3Inter({kind:'cook',x:L3x(80)+0.6,z:2*CELL+1.2,y:0,r:1.5,label:()=>'Take the pot',can:()=>!(F.cook&&F.cook.pot)&&!F.c3Sand,act(){(F.cook=F.cook||{}).pot=true;C3.potHeld=true;c3PotPlace();sClank(busFx,now()+0.01,0.2);}});
-    c3Inter({kind:'take',x:L3x(78.8),z:wc(7)-0.4,y:0,r:1.6,label:()=>'Take a bottle',can:()=>F.mayorStun&&!F.mayorDead&&!P.junk&&C3.bottles.some(b=>b.visible),act(){const b=C3.bottles.find(b=>b.visible);b.visible=false;c3Hold('bottle');}});
-    c3Inter({kind:'take',x:L3x(78.5),z:2*CELL+1.3,y:0,r:1.6,label:()=>'Take a rag',can:()=>F.mayorStun&&!F.mayorDead&&!P.junk&&C3.rags.some(b=>b.visible),act(){const r=C3.rags.find(b=>b.visible);r.visible=false;c3Hold('rag');}});}
+    c3Inter({kind:'cook',x:L3x(80)+0.6,z:2*CELL+1.2,y:0,r:1.5,label:()=>'Take the pot',can:()=>!(F.cook&&F.cook.pot)&&!F.c3Sand,async act(){if(mode!=='play')return;(F.cook=F.cook||{}).pot=true;const p=C3.pot,cab=C3.potCab,p0=p.position.clone();p.visible=true;sCab(p0.x);
+      await c3Act([p0.x,p0.y+0.15,p0.z],1.3,t=>{const a=Math.min(1,t/0.35);cab.rotation.y=-1.7*a*(2-a);const k=clamp((t-0.4)/0.6,0,1);p.position.set(p0.x,p0.y+0.12*Math.sin(k*Math.PI),p0.z+0.85*k);});
+      C3.potHeld=true;c3PotPlace();sClank(busFx,now()+0.01,0.2);}});
+    c3Inter({kind:'take',x:L3x(78.8),z:wc(7)-0.4,y:0,r:1.6,label:()=>'Take a bottle',can:()=>(F.mayorStun||C3.siege)&&!F.mayorDead&&!P.junk&&C3.bottles.some(b=>b.visible),act(){const b=C3.bottles.find(b=>b.visible);b.visible=false;c3Hold('bottle');}});
+    c3Inter({kind:'take',x:L3x(78.5),z:2*CELL+1.3,y:0,r:1.6,label:()=>'Take a rag',can:()=>(F.mayorStun||C3.siege)&&!F.mayorDead&&!P.junk&&C3.rags.some(b=>b.visible),act(){const r=C3.rags.find(b=>b.visible);r.visible=false;c3Hold('rag');}});}
   /* him */
   const okD=(cx,cz)=>{const c=c3c(cx,cz);return c==='.'&&cx>=RST.din[0]&&cx<=RST.din[1]&&cz>=RST.din[2]&&cz<=RST.din[3];};
   const okA=(cx,cz)=>{const c=c3c(cx,cz);if(cx<RST.all[0]||cx>RST.all[1]||cz<RST.all[2]||cz>RST.all[3])return false;if(c3DoorShut(cx,cz))return false;return c==='.';};
@@ -7533,12 +7558,12 @@ function c3BuildRest(S){const wood=lam({map:T.wood,color:0x7a5a40}),cloth=lam({c
     anim:c3MayorAnim});
   m.rig=buildMayor();S.add(m.rig.g);m.rig.g.visible=false;m.okD=okD;m.okA=okA;C3.mayor=m;
   C3.areaTick.push(c3RestTick);C3.areaApply.push(()=>{const m=C3.mayor;m.active=false;m.rig.g.visible=false;m.burn=0;m.dead=false;m.br2=false;m.bFrom=null;
-    C3.rTables.forEach(T0=>{T0.flipped=false;T0.tg.quaternion.identity();T0.tg.position.set(0,0,0);T0.chairs.forEach(([c,rx,rz])=>{c.rotation.x=rx;c.rotation.z=rz;});});C3.flipT=0;C3.slow=null;C3.boilT=null;C3.potHeld=false;if(P.junk&&P.junk.c3){camera.remove(P.junk.g);P.junk=null;}
+    C3.rTables.forEach(T0=>{T0.flipped=false;T0.tg.quaternion.identity();T0.tg.position.set(0,0,0);T0.chairs.forEach(([c,rx,rz])=>{c.rotation.x=rx;c.rotation.z=rz;});});C3.flipT=0;C3.slow=null;C3.boilT=null;C3.potHeld=false;C3.bursting=false;C3.siege=false;C3.burstTok=null;m.bPts=null;m.hy=null;m.ax=null;if(P.junk&&P.junk.c3){camera.remove(P.junk.g);P.junk=null;}
     (C3.fires||[]).forEach(f=>{SW.scene.remove(f);});C3.fires=[];$('mSlow')&&($('mSlow').hidden=true);
     if(F.c3Sand&&!F.mayorDead){F.kitBroke=false;F.mayorStun=false;}
     const ck=F.cook||{};C3.knifeM.visible=!ck.knife;C3.cabs.forEach((d,i)=>{d.rotation.y=ck['cab'+i]?-1.6:0;});C3.bottles.forEach(b=>b.visible=true);C3.rags.forEach(r=>r.visible=true);
     if(ck.boiled&&!ck.off){ck.off=true;}c3PotPlace();c3BoardShow();
-    if(F.mayorDead){m.state='dead';m.dead=true;m.alive=false;m.active=true;m.rig.g.visible=true;const [x,z]=MAYOR_FALL;m.x=x;m.z=z;m.yaw=Math.PI/2+0.3;if(C3.mayorRem)C3.mayorRem.visible=true;}
+    if(F.mayorDead){m.state='dead';m.dead=true;m.alive=false;m.active=true;m.rig.g.visible=true;const [x,z]=MAYOR_FALL;m.x=x;m.z=z;m.yaw=MAYOR_FALL_YAW;if(C3.mayorRem)C3.mayorRem.visible=true;}
     else if(F.c3DinIn){m.rig.g.visible=true;m.active=true;m.alive=true;const [x,z]=F.c3Barred?L3(74.5,4):L3(72,4);cStart(m,x,z,F.c3Barred?Math.PI/2:0);m.ok=F.c3Barred?okD:okA;if(F.c3Barred){m.state='script';m.bangT=3;}}
     else{m.state='idle';}if(C3.ratTrap)C3.ratTrap.bail.rotation.x=F.kitBroke?-2.6:0;
     if(C3.kitPose)C3.kitPose();
@@ -7547,28 +7572,66 @@ function c3BuildRest(S){const wood=lam({map:T.wood,color:0x7a5a40}),cloth=lam({c
 /* the cooking, one station at a time */
 function c3BoardLabel(){const ck=F.cook||{};if(!ck.knife)return 'Take a knife';if(!ck.cut&&hasItem('bread'))return 'Slice the bread';if(ck.drained&&!ck.peeled)return 'Peel the eggs';if(ck.peeled&&!ck.chopped)return 'Chop the eggs';
   if(ck.chopped&&!ck.mixed)return ck.bowl?'Mix the eggs and the mayo':'Examine';if(ck.mixed&&ck.cut)return 'Make the sandwich';return null;}
-function c3BoardAct(){const ck=F.cook=F.cook||{};const L=c3BoardLabel();const chop=()=>{if(AC){const t=now()+0.01;for(let i=0;i<5;i++)sNoise(busFx,t+i*0.14,0.04,'bandpass',2600,2,0.35);}noise(P.x,P.z,5);};
-  if(L==='Take a knife'){ck.knife=true;C3.knifeM.visible=false;sClick();sub('A chef\'s knife. Still sharp.',2);}
-  else if(L==='Slice the bread'){ck.cut=true;chop();sub('Four thick slices.',2);}
-  else if(L==='Peel the eggs'){ck.peeled=true;if(AC)sNoise(busFx,now()+0.01,0.8,'highpass',3000,0.7,0.12);sub('The shells come away in wet flakes.',2.4);}
-  else if(L==='Chop the eggs'){ck.chopped=true;chop();sub('Chopped.',1.6);}
+/* v9.1: each cooking step is a short look at her hands */
+async function c3Act(look,dur,fn){setMode('cine');hidePrompt();P.lookT=look;await tween(dur,k=>{try{fn(k);}catch(e){if(!c3Act.err){c3Act.err=1;console.error('c3Act',e&&e.stack);}}});await sleep(0.12);P.lookT=null;if(mode==='cine')setMode('play');}
+const c3Arc=(a,b,k,h)=>[lerp(a[0],b[0],k),lerp(a[1],b[1],k)+Math.sin(k*Math.PI)*h,lerp(a[2],b[2],k)];
+async function c3BoardAct(){const ck=F.cook=F.cook||{};const L=c3BoardLabel();if(!L||mode!=='play')return;const o=C3.ck,K=C3.ck2,[ix,iz]=C3.isl,y=0.92,look=[ix-0.25,y+0.05,iz-0.3],E=[ix-0.1,y+0.06,iz-0.3],B=[ix-0.6,y+0.06,iz-0.3],W=[ix+0.4,y+0.1,iz-0.2];
+  const chop=()=>{if(AC)sNoise(busFx,now()+0.01,0.04,'bandpass',2600,2,0.35);noise(P.x,P.z,5);};
+  if(L==='Take a knife'){const k=C3.knifeM,p0=k.position.clone(),r0=k.rotation.x;sClick();await c3Act([p0.x,p0.y,p0.z],0.6,t=>{k.position.set(p0.x-0.2*t,p0.y+0.3*Math.sin(t*Math.PI*0.5),p0.z-0.25*t);k.rotation.x=r0*(1-t);});
+    k.visible=false;k.position.copy(p0);k.rotation.x=r0;ck.knife=true;sub('A chef\'s knife. Still sharp.',2);}
+  else if(L==='Slice the bread'){K.loaf.visible=true;K.knife.visible=true;let st=-1;
+    await c3Act(look,1.5,t=>{const s=Math.floor(t*9);if(s!==st){st=s;if(AC)sNoise(busFx,now()+0.01,0.12,'bandpass',1800+R()*600,1.2,0.22);}K.knife.position.set(B[0]+Math.sin(t*Math.PI*9)*0.1,y+0.24-0.13*Math.min(1,t*1.3),B[2]);K.knife.rotation.set(0,0,0);});
+    K.loaf.visible=false;K.knife.visible=false;ck.cut=true;noise(P.x,P.z,5);sub('Four thick slices.',2);}
+  else if(L==='Peel the eggs'){K.eggs.forEach(e=>{e.material=K.mS;e.visible=true;});K.shells.visible=true;K.shells.children.forEach(s=>s.visible=false);let done=-1;
+    await c3Act(look,2.1,t=>{const i=Math.min(2,Math.floor(t*3)),f=t*3-i,e=K.eggs[i],e0=E[1];e.rotation.set(f*2,f*5,0);e.position.y=e0+0.06*Math.sin(Math.min(1,f*1.2)*Math.PI);
+      K.shells.children.forEach(s=>{if(s.userData.egg>i)return;s.visible=true;const u=s.userData.egg<i?1:clamp((f-s.userData.d)/0.35,0,1),A=s.userData.a,Bq=s.userData.b;s.position.set(lerp(A[0],Bq[0],u),lerp(A[1],Bq[1],u)+Math.sin(u*Math.PI)*0.05,lerp(A[2],Bq[2],u));s.rotation.set(-Math.PI/2+u*6,u*3,0);});
+      if(i!==done&&f>0.85){done=i;e.material=K.mP;if(AC){const tt=now()+0.01;for(let k=0;k<3;k++)sNoise(busFx,tt+k*0.05,0.03,'highpass',3200,0.7,0.12);}}});
+    K.eggs.forEach(e=>{e.material=K.mP;e.rotation.set(0,0,0);e.position.y=E[1];});ck.peeled=true;sub('The shells come away in wet flakes.',2.4);}
+  else if(L==='Chop the eggs'){K.knife.visible=true;K.chop.visible=true;let st=-1;
+    await c3Act(look,1.4,t=>{const s=Math.floor(t*7);if(s!==st){st=s;chop();}K.knife.position.set(E[0]-0.08+0.16*t,y+0.07+Math.abs(Math.sin(t*Math.PI*7))*0.13,E[2]);K.knife.rotation.set(0,Math.PI/2,0);
+      K.eggs.forEach(e=>e.scale.set(1-0.7*t,(1-0.7*t)*1.3,1-0.7*t));K.chop.scale.setScalar(0.2+0.8*t);});
+    K.knife.visible=false;K.eggs.forEach(e=>e.scale.set(1,1.3,1));K.chop.scale.setScalar(1);ck.chopped=true;sub('Chopped.',1.6);}
   else if(L==='Examine'){sub('You need something to mix it in.',2.2);}
-  else if(L==='Mix the eggs and the mayo'){ck.mixed=true;dropItem('mayo');if(AC)sNoise(busFx,now()+0.01,1.0,'bandpass',800,1,0.12);sub('Eggs, mayo. Egg salad. In a dead man\'s kitchen.',3);}
-  else if(L==='Make the sandwich'){ck.done=true;F.c3Sand=true;dropItem('bread');dropItem('eggs');takeItem('sandwich');sub('An egg salad sandwich.',2.4);setObjective(c3Obj());c3BoardShow();F.hp3=P.hp;writeSave(makeSave('Bellini\'s kitchen'));after(2.6,()=>c3BurstIn());}
+  else if(L==='Mix the eggs and the mayo'){const C0=K.chop.position.clone();let glop=false;
+    await c3Act([W[0]-0.2,W[1],W[2]],2.4,t=>{
+      const a=clamp(t/0.35,0,1);K.chop.position.set(lerp(C0.x,W[0],a),lerp(C0.y,W[1]+0.02,a)+Math.sin(a*Math.PI)*0.12,lerp(C0.z,W[2],a));K.chop.visible=a<1;
+      const b=clamp((t-0.35)/0.5,0,1);K.jar.visible=t>0.3&&t<1.0;K.jar.position.set(W[0]+0.12,W[1]+0.32,W[2]);K.jar.rotation.z=2.3*b;
+      const c=clamp((t-0.75)/0.25,0,1);K.blob.visible=t>0.75&&t<1.3;K.blob.position.set(W[0]+0.02,lerp(W[1]+0.28,W[1]+0.02,c*c),W[2]);if(c>=1&&!glop){glop=true;if(AC)sNoise(busFx,now()+0.01,0.25,'lowpass',500,1,0.3);}
+      const d=clamp((t-1.05)/1.35,0,1),w=d*Math.PI*6;K.spoon.visible=t>1.0;K.spoon.position.set(W[0]+Math.cos(w)*0.07,W[1]+0.1,W[2]+Math.sin(w)*0.07);K.spoon.rotation.set(0.5,w,0.3);
+      o.bowl.visible=true;o.salad.visible=t>1.1;o.salad.scale.set(1,0.4+0.6*d,1);});
+    K.chop.position.copy(C0);K.spoon.visible=false;K.blob.visible=false;K.jar.visible=false;K.jar.rotation.z=0;o.salad.scale.set(1,1,1);ck.mixed=true;dropItem('mayo');if(AC)sNoise(busFx,now()+0.01,1.0,'bandpass',800,1,0.12);sub('Eggs, mayo. Egg salad. In a dead man\'s kitchen.',3);}
+  else if(L==='Make the sandwich'){K.layer.visible=true;
+    await c3Act(look,1.3,t=>{const a=clamp(t/0.5,0,1);K.layer.position.set(...c3Arc(W,[B[0],B[1]+0.03,B[2]],a,0.15));const b=clamp((t-0.55)/0.35,0,1);K.top.visible=t>0.5;K.top.position.set(B[0],lerp(B[1]+0.3,B[1]+0.06,b*b),B[2]);});
+    K.layer.visible=false;K.top.visible=false;ck.done=true;F.c3Sand=true;dropItem('bread');dropItem('eggs');takeItem('sandwich');sub('An egg salad sandwich.',2.4);setObjective(c3Obj());c3BoardShow();F.hp3=P.hp;writeSave(makeSave('Bellini\'s kitchen'));after(1.6,()=>c3BurstIn());}
   c3BoardShow();}
-function c3BoardShow(){const ck=F.cook||{},o=C3.ck;if(!o)return;const done=!!ck.done;o.slices.visible=!!ck.cut&&!done;o.eggs.visible=!!ck.drained&&!ck.chopped;o.bowl.visible=!!ck.bowl&&!done;o.salad.visible=!!ck.mixed&&!done;o.sand.visible=done&&!F.c3Fed;}
+function c3BoardShow(){const ck=F.cook||{},o=C3.ck,K=C3.ck2;if(!o)return;const done=!!ck.done;o.slices.visible=!!ck.cut&&!done;o.eggs.visible=false;o.bowl.visible=!!ck.bowl&&!done;o.salad.visible=!!ck.mixed&&!done;o.sand.visible=done&&!F.c3Fed;
+  if(K){const eg=!!ck.drained&&!ck.chopped;K.eggs.forEach(e=>{e.visible=eg;e.material=ck.peeled?K.mP:K.mS;});K.shells.visible=!!ck.peeled&&!done;K.shells.children.forEach(s=>{s.visible=true;s.position.set(...s.userData.b);});K.chop.visible=!!ck.chopped&&!ck.mixed;}}
 function c3SinkLabel(){const ck=F.cook||{};if(ck.pot&&!ck.filled&&C3.potHeld)return 'Fill the pot';if(ck.off&&!ck.drained)return 'Drain the eggs';return null;}
-function c3SinkAct(){const ck=F.cook=F.cook||{};if(c3SinkLabel()==='Fill the pot'){ck.filled=true;C3.potWater.visible=true;if(AC)sNoise(busFx,now()+0.01,2.0,'bandpass',1400,0.8,0.18,0.1);sub('The tap coughs, then runs brown, then clear enough.',3);}
-  else{ck.drained=true;C3.potHeld=false;if(AC)sNoise(busFx,now()+0.01,1.4,'bandpass',900,0.8,0.25,0.05);sub('Steam rolls up off the sink.',2.2);c3BoardShow();}c3PotPlace();}
+async function c3SinkAct(){const ck=F.cook=F.cook||{},L=c3SinkLabel(),p=C3.pot,SK=[L3x(77.6),0.8,2*CELL+0.38];if(!L||mode!=='play')return;C3.potHeld=false;if(C3.potHand)C3.potHand.visible=false;p.visible=true;p.position.set(...SK);p.rotation.set(0,0,0);
+  if(L==='Fill the pot'){const w=C3.potWater;w.visible=true;C3.tap.visible=true;if(AC)sNoise(busFx,now()+0.01,2.0,'bandpass',1400,0.8,0.18,0.1);
+    await c3Act([SK[0],SK[1]+0.2,SK[2]],1.8,t=>{w.position.y=0.03+0.17*t;C3.tap.scale.x=C3.tap.scale.z=0.8+0.3*Math.sin(t*90);});
+    C3.tap.visible=false;ck.filled=true;C3.potHeld=true;sub('The tap coughs, then runs brown, then clear enough.',3);}
+  else{const st=C3.steam2;C3.potWater.visible=true;if(AC)sNoise(busFx,now()+0.01,1.4,'bandpass',900,0.8,0.25,0.05);
+    await c3Act([SK[0],SK[1]+0.2,SK[2]],1.6,t=>{const a=t<1.1?Math.sin(Math.min(1,t/0.8)*Math.PI*0.5):Math.max(0,1-(t-1.1)/0.4);p.rotation.z=-1.0*a;C3.potWater.visible=t<0.8;st.position.set(SK[0],SK[1]+0.5+t*0.3,SK[2]);st.material.opacity=0.65*Math.sin(t/1.6*Math.PI);});
+    st.material.opacity=0;p.rotation.z=0;ck.drained=true;sub('Steam rolls up off the sink.',2.2);c3BoardShow();}
+  c3PotPlace();}
 function c3StoveLabel(){const ck=F.cook||{};if(P.junk&&P.junk.kind==='rag'&&!P.junk.lit)return 'Light the rag';if(ck.filled&&!ck.onStove&&hasItem('eggs'))return 'Put the eggs on to boil';if(ck.onStove&&!ck.boiled)return 'Wait';if(ck.boiled&&!ck.off)return 'Take the pot off';return null;}
-function c3StoveAct(){const ck=F.cook=F.cook||{},L=c3StoveLabel();
-  if(L==='Light the rag'){P.junk.lit=true;const fl=new THREE.Sprite(new THREE.SpriteMaterial({map:T.flame,blending:THREE.AdditiveBlending,transparent:true,depthWrite:false}));fl.position.set(0,.18,0);fl.scale.set(.35,.5,1);P.junk.g.add(fl);P.junk.flame=fl;if(AC)sWhoosh(busFx);sub('It catches.',1.6);}
-  else if(L==='Put the eggs on to boil'){ck.onStove=true;C3.potHeld=false;C3.boilT=15;c3PotPlace();if(AC){const t=now()+0.01;sClank(busFx,t,0.2);sNoise(busFx,t+0.2,0.6,'highpass',2000,0.7,0.1);}sub('The gas still works. Six eggs, in the pot.',2.6);}
-  else if(L==='Wait'){sub('Not yet.',1.2);}
-  else if(L==='Take the pot off'){ck.off=true;C3.potHeld=true;c3PotPlace();sClank(busFx,now()+0.01,0.2);}}
-function c3PotPlace(){const ck=F.cook||{},p=C3.pot;if(!p)return;C3.potWater.visible=!!ck.filled&&!ck.drained;
+async function c3StoveAct(){const ck=F.cook=F.cook||{},L=c3StoveLabel(),p=C3.pot,BN=[L3x(81)-0.38,0.95,wc(5.5)-0.6];if(!L)return;
+  if(L==='Light the rag'){P.junk.lit=true;const fl=new THREE.Sprite(new THREE.SpriteMaterial({map:T.flame,blending:THREE.AdditiveBlending,transparent:true,depthWrite:false}));fl.position.set(0,.18,0);fl.scale.set(.35,.5,1);P.junk.g.add(fl);P.junk.flame=fl;if(AC)sWhoosh(busFx);sub('It catches.',1.6);return;}
+  if(L==='Wait'){sub('Not yet.',1.2);return;}
+  if(mode!=='play')return;
+  if(L==='Put the eggs on to boil'){C3.potHeld=false;if(C3.potHand)C3.potHand.visible=false;p.visible=true;const A0=[BN[0]-0.7,1.25,BN[2]];C3.potEggs.forEach(e=>{e.visible=false;e.userData.sp=0;});let cl=false;
+    await c3Act([BN[0],BN[1]+0.1,BN[2]],1.5,t=>{const a=clamp(t/0.4,0,1);p.position.set(lerp(A0[0],BN[0],a),lerp(A0[1],BN[1],a),BN[2]);if(a>=1&&!cl){cl=true;sClank(busFx,now()+0.01,0.2);}
+      C3.potEggs.forEach((e,i)=>{const b=clamp((t-0.5-i*0.25)/0.25,0,1);e.visible=t>0.5+i*0.25;e.position.y=lerp(0.6,e.userData.y,b*b);if(b>=1&&!e.userData.sp){e.userData.sp=1;if(AC)sNoise(busFx,now()+0.01,0.15,'bandpass',1200,1,0.18);}});});
+    ck.onStove=true;C3.boilT=15;if(AC)sNoise(busFx,now()+0.2,0.6,'highpass',2000,0.7,0.1);sub('The gas still works. Six eggs, in the pot.',2.6);}
+  else if(L==='Take the pot off'){const B0=p.position.clone();sClank(busFx,now()+0.01,0.2);
+    await c3Act([BN[0],BN[1]+0.1,BN[2]],0.6,t=>{p.position.set(lerp(B0.x,BN[0]-0.8,t),B0.y+0.35*Math.sin(t*Math.PI*0.5),B0.z);});ck.off=true;C3.potHeld=true;}
+  c3PotPlace();}
+function c3PotPlace(){const ck=F.cook||{},p=C3.pot;if(!p)return;C3.potWater.visible=!!ck.filled&&!ck.drained;C3.potWater.position.y=.2;p.rotation.set(0,0,0);if(C3.potCab)C3.potCab.rotation.y=ck.pot?-1.7:0;
+  (C3.potEggs||[]).forEach(e=>{e.visible=!!ck.onStove&&!ck.drained;e.position.y=e.userData.y;});
+  const H=C3.potHand;if(H){H.visible=!!C3.potHeld&&C3.on;if(H.visible){heldSide(H,.26,-.36,-.62,0.15,0,0);H.userData.w.visible=!!ck.filled&&!ck.drained;}}
   if(ck.drained){p.position.set(L3x(77.6),0.92,2*CELL+0.35);p.visible=true;return;}
-  if(C3.potHeld){p.visible=false;return;}p.visible=true;if(ck.onStove&&!ck.off){p.position.set(L3x(81)-0.38,0.95,wc(5.5)-0.6);return;}if(!ck.pot)p.position.set(L3x(80)+0.6,1.9,2*CELL+0.2);}
+  if(C3.potHeld){p.visible=false;return;}p.visible=true;if(ck.onStove&&!ck.off){p.position.set(L3x(81)-0.38,0.95,wc(5.5)-0.6);return;}if(!ck.pot)p.position.set(L3x(80)+0.6,1.57,2*CELL+0.21);}
 /* holding something to throw */
 function c3Hold(kind){const g=new THREE.Group();if(kind==='bottle'){g.add(at(cylm(.04,.045,.24,8,lam({color:0x6a3a10,transparent:true,opacity:0.85})),0,0,0));}else g.add(at(boxm(.2,.04,.2,lam({color:0xc8c0a8})),0,0,0));
   camera.add(g);heldSide(g,.22,-.25,-.45,.3,0,-.2);P.junk={c3:true,kind,g,state:'held',x:0,y:0,z:0,vx:0,vy:0,vz:0,spin:0};sClick();
@@ -7593,22 +7656,25 @@ function c3RestTick(dt){const m=C3.mayor;if(!m)return;const u=Math.floor(P.x/CEL
     if(C3.boilT<=0){C3.boilT=null;(F.cook=F.cook||{}).boiled=true;sub('The eggs are done.',2);}}else C3.steam.material.opacity=0;
   if(!F.c3DinIn&&F.rstOpen&&u>=66&&u<=75&&v>=2&&P.z<11.5&&mode==='play'){F.c3DinIn=true;c3MayorFront();}
   /* barred: he finds the door and throws himself at it */
-  if(F.c3Barred&&!F.kitBroke&&m.active&&m.alive){if(m.state!=='script'){m.state='script';m.bangT=2;}const [tx,tz]=L3(75,4);const d=Math.hypot(tx-m.x,tz-m.z);
+  if(F.c3Barred&&!F.kitBroke&&m.active&&m.alive&&!C3.bursting){if(m.state!=='script'){m.state='script';m.bangT=2;}const [tx,tz]=L3(75,4);const d=Math.hypot(tx-m.x,tz-m.z);
     if(d>0.4){m.ok=m.okD;cMove(m,tx,tz,1.4,dt);}else{m.spd=0;m.yaw+=angDiff(m.yaw,Math.PI/2)*Math.min(1,dt*3);m.bangT-=dt;if(m.bangT<=0){m.bangT=(C3.boilT!=null?2.2:4.5)+R()*3;c3Bang();}}}
-  if(C3.slow){C3.slow.t-=dt;const el=$('mSlow');if(el){el.hidden=false;el.querySelector('b').style.width=Math.max(0,C3.slow.t/30*100).toFixed(0)+'%';}postU.uTint.value.setRGB(1.0,0.55,0.45);postU.uTintAmt.value=0.45;
+  if(C3.slow){C3.slow.t-=dt;const el=$('mSlow');if(el){el.hidden=false;el.querySelector('b').style.width=Math.max(0,C3.slow.t/40*100).toFixed(0)+'%';}postU.uTint.value.setRGB(1.0,0.55,0.45);postU.uTintAmt.value=0.45;
     if(AC&&time>(C3.slow.hb||0)){C3.slow.hb=time+0.9;heartbeat(0.55);}if(C3.slow.t<=0&&!F.mayorDead&&mode==='play'){c3SlowEnd();c3MayorRise();}}
-  if(m.burn>0&&!m.dead){m.burn+=dt;if(!m.bFrom)m.bFrom=[m.x,m.z,m.yaw];{const [fx,fz,fy]=m.bFrom,k=clamp((m.burn-0.4)/3.2,0,1),e=k*k*(3-2*k);m.x=lerp(fx,MAYOR_FALL[0],e);m.z=lerp(fz,MAYOR_FALL[1],e);
-      m.yaw=fy+angDiff(fy,Math.PI/2+0.3)*e+Math.sin(m.burn*4.5)*0.6*(1-k);m.spd=k<1?1.8:0;if(m.burn>2.1&&!m.br2){m.br2=true;c3Voice(m,'mayorRoar',{burn:true,force:true});}}
+  if(m.burn>0&&!m.dead){m.burn+=dt;if(!m.bFrom)m.bFrom=[m.x,m.z,m.yaw];{if(!m.bPts){const pts=[[m.x,m.z]],kx=L3x(77)+1.2,z4=wc(4),wx=L3x(75)+0.6;if(m.x>kx)pts.push([kx,z4]);if(m.x>wx+0.3){pts.push([L3x(76)+1,z4]);pts.push([wx,z4]);}pts.push(MAYOR_FALL);
+      let L=0;for(let i=1;i<pts.length;i++)L+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);m.bPts=pts;m.bLen=L;m.bDur=clamp(L/2.0,2.4,6);}
+    const fy=m.bFrom[2],k=clamp((m.burn-0.4)/m.bDur,0,1),e=k*k*(3-2*k);{let s=e*m.bLen;const pts=m.bPts;for(let i=1;i<pts.length;i++){const sx=pts[i][0]-pts[i-1][0],sz=pts[i][1]-pts[i-1][1],sl=Math.hypot(sx,sz);
+      if(s<=sl||i===pts.length-1){const f=sl?Math.min(1,s/sl):1;m.x=pts[i-1][0]+sx*f;m.z=pts[i-1][1]+sz*f;if(sl>0.01)m.hy=Math.atan2(sx,sz);break;}s-=sl;}}
+      {const hy=m.hy==null?fy:m.hy,w=clamp((k-0.75)/0.25,0,1);m.yaw=hy+angDiff(hy,MAYOR_FALL_YAW)*w+Math.sin(m.burn*4.5)*0.5*(1-k);}if(m.burn>2.1&&!m.br2){m.br2=true;c3Voice(m,'mayorRoar',{burn:true,force:true});}}
     (C3.fires||[]).forEach((f,i)=>{f.position.set(m.x+Math.sin(i*1.7)*1.5,1.0+(i%3)*0.9+Math.sin(time*6+i)*0.15,m.z+Math.cos(i*1.7)*1.7);const k=0.8+0.3*Math.sin(time*11+i);f.scale.set(1.4*k,2.1*k,1);});
-    if(m.burn>4.5){{const S=C3.mScore;if(S){scoreHit(S,0.9);C3.mScore=null;setTimeout(()=>scoreStop(S,3.5),250);}}c3Voice(m,'mayorGroan',{force:true,tag:'death'});m.dead=true;m.alive=false;m.state='dead';m.spd=0;F.mayorDead=true;c3SlowEnd();after(1.9,()=>{if(m.dead)c3Voice(m,'mayorGurgle',{force:true,tag:'death',dur:2.2});});setObjective(c3Obj());after(2.2,()=>c3RitaFeed());}}}
-function c3Bang(){const d=C3.kDoor;if(AC){const t=now()+0.01;sNoise(comp,t,0.3,'lowpass',280,0.7,0.8);sTone(comp,t,0.35,'sine',65,38,0.6);sTone(busFx,t+0.05,0.5,'sawtooth',180,140,0.06);}shake(0.12);
-  tween(0.15,k=>{d.rotation.y=-0.06*Math.sin(k*Math.PI);});if(C3.broomBar)C3.broomBar.rotation.y=(R()-0.5)*0.06;if(!F.bangSaid){F.bangSaid=true;after(0.6,()=>{if(mode==='play')speak('Marissa','Hold. Please hold...',2);});}}
+    if(m.burn>(m.bDur||3.2)+1.3){{const S=C3.mScore;if(S){scoreHit(S,0.9);C3.mScore=null;setTimeout(()=>scoreStop(S,3.5),250);}}c3Voice(m,'mayorGroan',{force:true,tag:'death'});m.dead=true;m.alive=false;m.state='dead';m.spd=0;F.mayorDead=true;c3SlowEnd();after(1.9,()=>{if(m.dead)c3Voice(m,'mayorGurgle',{force:true,tag:'death',dur:2.2});});setObjective(c3Obj());after(2.2,()=>c3RitaFeed());}}}
+function c3Bang(s){s=s||0;const d=C3.kDoor;if(AC){const t=now()+0.01;sNoise(comp,t,0.3,'lowpass',280,0.7,0.8+0.2*s);sTone(comp,t,0.35,'sine',65,38,0.6+0.3*s);sTone(busFx,t+0.05,0.5,'sawtooth',180,140,0.06);if(s>0.3)for(let i=0;i<3;i++)sNoise(busFx,t+0.04+i*0.05,0.05,'bandpass',1200+R()*1800,2,0.3*s);}shake(0.12+0.2*s);
+  {const j=0.06+0.12*s;tween(0.18,k=>{d.rotation.y=-j*Math.sin(k*Math.PI);});}if(C3.broomBar){C3.broomBar.rotation.y=(R()-0.5)*(0.06+0.2*s);C3.broomBar.rotation.z=(R()-0.5)*0.12*s;}if(!F.bangSaid){F.bangSaid=true;after(0.6,()=>{if(mode==='play')speak('Marissa','Hold. Please hold...',2);});}}
 /* v9.0: she's a few steps in when he comes through the front door behind her. The camera turns to it; the door and the wall over it go */
 async function c3MayorFront(){const m=C3.mayor;setMode('cine');hidePrompt();mScoreStart();mScoreSet(0.5,false);const dx=L3x(70)+1,dz=9*CELL-0.15;P.lookT=[dx,1.7,dz];cStart(m,dx,dz+2.8,Math.PI);m.state='script';m.ok=m.okA;m.box=RST.all;m.rig.g.visible=false;
   c3Voice(m,'mayorGurgle',{force:true,dur:1.2});await sleep(0.7);
   for(let i=0;i<2;i++){if(AC){const t=now()+0.01;sNoise(comp,t,0.35,'lowpass',260,0.7,0.9);sTone(comp,t,0.4,'sine',60,34,0.7);}shake(0.18+i*0.1);if(C3.rstLeaf)tween(0.15,k=>{C3.rstLeaf.rotation.y=-1.3+0.12*Math.sin(k*Math.PI);});await sleep(0.65);}
   m.rig.g.visible=true;c3RstBurst();mScoreSet(1,false);scoreHit(C3.mScore,0.9);c3Voice(m,'mayorRoar',{force:true});shake(0.5);postU.uFlash.value=0.25;
-  await tween(1.1,k=>{const e=k*(2-k);m.x=dx;m.z=lerp(dz+2.8,dz-2.0,e);m.spd=2.6;P.lookT=[m.x,2.3,m.z];});m.spd=0;
+  await tween(1.6,k=>{const e=k*(2-k);m.x=dx;m.z=lerp(dz+2.8,dz-2.0,e);P.lookT=[m.x,2.3,m.z];});
   await sleep(0.9);c3Voice(m,'mayorRoar',{force:true});await sleep(0.5);
   P.lookT=null;setMode('play');setObjective(c3Obj());after(0.4,()=>{if(mode==='play')speak('Marissa','The kitchen. I need the kitchen.',2.4);});
   /* a beat to turn and run before he comes */
@@ -7650,17 +7716,24 @@ function c3BarDoor(){const m=C3.mayor;const mc=Math.floor(m.x/CELL)-C3X;if(m.act
   const dc=(C3X+76)+',4';const [dx,dz]=L3(76,4);if(Math.hypot(m.x-dx,m.z-dz)<3.2){const [x,z]=L3(74.5,4);m.x=x;m.z=z;}
   m.ok=m.okD;m.state='script';m.bangT=2.5;setObjective(c3Obj());F.hp3=P.hp;writeSave(makeSave('Bellini\'s kitchen'));}
 /* the sandwich is made: the broom goes, and he comes through, right onto the trap */
-async function c3BurstIn(){const m=C3.mayor;if(F.mayorStun||F.mayorDead||!m.alive||C3.bursting)return;C3.bursting=true;setMode('cine');hidePrompt();const d=C3.kDoor;
-  if(!m.active||!m.rig.g.visible){F.c3DinIn=true;m.rig.g.visible=true;const [x,z]=L3(74.5,4);cStart(m,x,z,Math.PI/2);}m.state='script';{const [x,z]=L3(75,4);m.x=x;m.z=z;m.yaw=Math.PI/2;}
-  for(let i=0;i<2;i++){c3Bang();await sleep(0.5);}
+async function c3BurstIn(){const m=C3.mayor;if(F.mayorStun||F.mayorDead||!m.alive||C3.bursting)return;C3.bursting=true;const tok=C3.burstTok={};const live=()=>C3.burstTok===tok&&C3.on&&m.alive&&!F.mayorDead;
+  if(!m.active||!m.rig.g.visible){F.c3DinIn=true;m.rig.g.visible=true;const [x,z]=L3(74.5,4);cStart(m,x,z,Math.PI/2);}m.state='script';m.ok=m.okD;
+  /* v9.1: not all at once. He backs off and throws himself at the door, harder each time, and she has those seconds to get ready */
+  C3.siege=true;setObjective(c3Obj());mScoreStart();mScoreSet(0.85,false);
+  after(0.6,()=>{if(mode==='play'&&live())speak('Marissa','He\'s coming through. The rum... a rag. Something to burn.',3);});
+  const [bx,bz]=L3(75,4);{const x0=m.x,z0=m.z;await tween(0.8,k=>{m.x=lerp(x0,bx,k);m.z=lerp(z0,bz,k);m.yaw=Math.PI/2;});}
+  for(let i=0;i<6;i++){if(!live())return;await tween(0.8,k=>{m.x=lerp(bx,bx-1.4,k*(2-k));m.yaw=Math.PI/2;});await sleep(0.25);await tween(0.4,k=>{m.x=lerp(bx-1.4,bx,k*k);});if(!live())return;
+    c3Bang(i/5);if(i===2||i===5)c3Voice(m,'mayorRoar',{force:true});await sleep(0.3);}
+  if(!live())return;setMode('cine');hidePrompt();P.lookT=[L3x(76)+1.5,1.6,wc(4)];
+  await tween(0.9,k=>{m.x=lerp(bx,bx-1.8,k*(2-k));});await sleep(0.3);await tween(0.35,k=>{m.x=lerp(bx-1.8,bx,k*k);});if(!live())return;
   if(AC){const t=now()+0.01;sNoise(comp,t,0.4,'highpass',1600,0.7,0.9);sNoise(comp,t,0.6,'lowpass',300,0.7,1.0);}c3Voice(m,'mayorRoar',{force:true});shake(0.45);
-  F.kitBroke=true;C3.broomBar.visible=false;c3KitBreak();mScoreStart();mScoreSet(1,false);scoreHit(C3.mScore,0.8);m.ok=m.okA;
-  const [tx,tz]=MAYOR_TRAP,x0=m.x,z0=m.z;P.lookT=[tx+2.2,2.0,tz];await tween(0.25,k=>{m.x=lerp(x0,x0-0.8,k);m.spd=1;});await tween(0.45,k=>{const e=k*k;m.x=lerp(x0-0.8,tx,e);m.z=lerp(z0,tz,e);m.yaw=Math.PI/2;m.spd=3;});m.spd=0;
-  /* the trap */
+  F.kitBroke=true;C3.broomBar.visible=false;c3KitBreak();mScoreSet(1,false);scoreHit(C3.mScore,0.8);m.ok=m.okA;
+  /* he comes through at a stumble, straight onto the trap */
+  {const [tx,tz]=MAYOR_TRAP,x0=m.x,z0=m.z;P.lookT=[tx+2.2,2.0,tz];await sleep(0.3);await tween(1.1,k=>{m.x=lerp(x0,tx,k);m.z=lerp(z0,tz,k);m.yaw=Math.PI/2;});}
   const tr=C3.ratTrap;tween(0.08,k=>{tr.bail.rotation.x=-2.6*k;});if(AC){const t=now()+0.01;sNoise(comp,t,0.06,'highpass',3000,0.7,1.0);sTone(comp,t,0.05,'square',1800,900,0.5);}c3Voice(m,'mayorRoar',{force:true,burn:true,delay:0.05});
-  postU.uFlash.value=0.4;shake(0.3);m.state='trapped';F.mayorStun=true;F.mayorSoaked=false;setObjective(c3Obj());
-  await sleep(0.8);P.lookT=null;C3.slow={t:30};mScoreSet(0.8,true);C3.bursting=false;setMode('play');setMuffle(1800);
-  after(0.3,()=>{if(mode==='play')sub('His hand is caught. He\'s down. Not for long.',2.6);});after(3,()=>{if(mode==='play'&&!F.mayorSoaked&&!F.mayorDead)speak('Marissa','Something to burn... the rum. The stove.',2.6);});}
+  postU.uFlash.value=0.4;shake(0.3);m.state='trapped';F.mayorStun=true;C3.siege=false;F.mayorSoaked=false;setObjective(c3Obj());
+  await sleep(0.8);P.lookT=null;C3.slow={t:40};mScoreSet(0.8,true);C3.bursting=false;setMode('play');setMuffle(1800);
+  after(0.3,()=>{if(mode==='play')sub('His hand is caught. He\'s down. Not for long.',2.6);});after(3,()=>{if(mode==='play'&&!F.mayorSoaked&&!F.mayorDead&&!(P.junk&&P.junk.c3))speak('Marissa','Something to burn... the rum. The stove.',2.6);});}
 function c3SlowEnd(){C3.slow=null;C3.bursting=false;$('mSlow')&&($('mSlow').hidden=true);postU.uTintAmt.value=0;setMuffle(18000);}
 function c3MayorRise(){const m=C3.mayor;F.mayorStun=false;mScoreStart();mScoreSet(1,false);scoreHit(C3.mScore,0.7);m.state='chase';m.lx=P.x;m.lz=P.z;m.lost=0;m.cool=0;m.ok=m.okA;m.box=RST.all;c3Voice(m,'mayorRoar',{force:true});}
 function c3MayorIgnite(){const m=C3.mayor;m.burn=0.01;m.state='script';if(AC){const t=now()+0.01;sWhoosh(busFx);sNoise(comp,t,2.5,'bandpass',600,0.6,0.5,0.1);}c3Voice(m,'mayorRoar',{burn:true,force:true,delay:0.1});
@@ -7669,7 +7742,7 @@ function c3MayorIgnite(){const m=C3.mayor;m.burn=0.01;m.state='script';if(AC){co
   sub('He goes up.',1.6);}
 function c3MayorEat(m){C3.lastHit='mayor';mScoreStop(1.5);const v=new THREE.Vector3();m.rig.head.getWorldPosition(v);c3KilledBy(m,null,[v.x,v.y,v.z],()=>{if(AC){const t=now()+0.4;for(let i=0;i<6;i++)sNoise(comp,t+i*0.18,0.15,'lowpass',500,0.8,0.6);}c3Voice(m,'mayorBelch',{force:true,delay:1.5});});}
 /* where the trap catches him (his centre, wedged in the doorway) and where he falls when he burns */
-const MAYOR_TRAP=[L3x(76)+1,wc(4)],MAYOR_FALL=[L3x(75)-2,wc(6)+0.8];
+const MAYOR_TRAP=[L3x(76)+1,wc(4)],MAYOR_FALL=[L3x(71)+1,wc(4)+0.5],MAYOR_FALL_YAW=-Math.PI/2;/* v9.1: the middle of the dining room, where all of him fits between the walls */
 /* he doesn't go round the tables, he goes through them. Not the one she's under; and he leaves her two */
 function c3MayorTables(m,dt){if(!C3.rTables||!(m.state==='chase'||m.burn>0)||m.dead)return;C3.flipT=Math.max(0,(C3.flipT||0)-dt);if(C3.flipT>0)return;if(C3.rTables.filter(t=>t.flipped).length>=C3.rTables.length-2)return;
   const hx=Math.sin(m.yaw),hz=Math.cos(m.yaw);for(const T0 of C3.rTables){if(T0.flipped||(P.hidden&&P.hidden===T0.h))continue;const px=T0.x-m.x,pz=T0.z-m.z,t=clamp(px*hx+pz*hz,-2.0,2.8);if(Math.hypot(px-hx*t,pz-hz*t)>2.4)continue;
