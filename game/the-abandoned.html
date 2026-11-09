@@ -2153,7 +2153,7 @@ function startChase(){if(K.state==='chase')return;const was=K.state;K.state='cha
 function beginSearch(){K.state='search';K.searchT=12;K.sPhase=0;K.predicted=false;K.sTarget=[K.lx,K.lz];setChase(false);
   K.checks=SW.hides.filter(h=>Math.hypot(h.x-K.lx,h.z-K.lz)<7.5).sort((a,b)=>Math.hypot(a.x-K.lx,a.z-K.lz)-Math.hypot(b.x-K.lx,b.z-K.lz)).slice(0,2);K.checking=null;K.checkWait=0;if(K.pan&&R()<0.55)after(0.9,()=>{if(K.active&&K.pan&&K.state==='search')kWord(K.pan,R()<0.6?'bad':'mama',1.0);});}
 function nearestWp(){let b=0,bd=1e9;PATROL.forEach(([cx,cz],i)=>{const d=Math.hypot(wc(cx)-K.x,wc(cz)-K.z);if(d<bd){bd=d;b=i;}});return b;}
-function noise(x,z,r,fast){if(F.ch2&&F.labOpen)mutNoise(x,z,r);if(C3.on)cNoise(x,z,r);if(!K||!K.active||K.frozen)return;if(K.state==='chase'||K.state==='seek'||K.state==='kill'||K.state==='throw'||K.state==='npckill'||K.state==='stunned'||K.state==='intro'||K.state==='prey')return;const d=Math.hypot(x-K.x,z-K.z);
+function noise(x,z,r,fast){if(F.ch2&&F.labOpen)mutNoise(x,z,r);if(C3.on)cNoise(x,z,r);if(!K||!K.active||K.frozen)return;if(K.state==='chase'||K.state==='seek'||K.state==='kill'||K.state==='throw'||K.state==='npckill'||K.state==='stunned'||K.state==='intro'||K.state==='prey'||K.state==='lure')return;const d=Math.hypot(x-K.x,z-K.z);
   if(d<r){const calm=K.state!=='investigate';K.state='investigate';K.inv=[x,z];K.wait=0;K.sus=Math.max(K.sus,0.3);K.agit=1;if(fast)K.invFast=true;
     if(calm&&fast&&K.pan){kAlert();K.cryNext=time+1.6;}else if(calm||time>K.cryNext-0.6)K.cryNext=time;}}
 function updateKiller(dt){
@@ -2172,7 +2172,7 @@ function updateKiller(dt){
   if(K.state==='vent'){ventStep(dt);return;}
   K.feed=damp(K.feed||0,0,3,dt);
   K.agit=Math.max(0,K.agit-dt/7);
-  const visible=(mode==='play')&&canSee();const dP=Math.hypot(P.x-K.x,P.z-K.z);
+  const visible=(mode==='play')&&canSee()&&!(K.state==='lure'&&Math.hypot(P.x-K.x,P.z-K.z)>4.5);const dP=Math.hypot(P.x-K.x,P.z-K.z);
   const aware=K.state==='chase'||K.state==='seek'||K.state==='throw';
   if(!aware){
     if(visible){const range=P.light?16:11;let rate=(1.0+3.0*Math.max(0,1-dP/range))*(P.light?1.4:1)*(1+K.agit*0.6);if(dP<3)rate*=3;if(P.onPlat)rate*=P.highKind==='pipe'?0.35:1.3;K.sus+=dt*rate;}else K.sus=Math.max(0,K.sus-dt*0.3);
@@ -2181,9 +2181,11 @@ function updateKiller(dt){
     if(visible&&dP<2.4)K.sus=1;
     if(K.sus>=1)startChase();
     else if(K.sus>0.3&&visible&&!P.onPlat&&(K.state==='patrol'||K.state==='search'||K.state==='ambush')){K.state='investigate';K.inv=[P.x,P.z];K.wait=0;}}
-  if(F.ch2&&mode==='play'&&!aware)maybeVent(visible,dP);
+  if(F.ch2&&mode==='play'&&!aware&&K.state!=='lure')maybeVent(visible,dP);
   switch(K.state){
     case 'prey':{const v=K.prey;if(!v||!v.alive){K.state='patrol';K.wp=nearestWp();K.prey=null;break;}const vx=v.rig.g.position.x,vz=v.rig.g.position.z;const d=kMove(vx,vz,2.7,dt);if(d<1.7)killNPC(v);break;}
+    case 'lure':{const sh=SW.lab&&SW.lab.shower;if(!sh||sh.t<=0){K.state='patrol';K.wp=nearestWp();break;}
+      const d=kMove(SH_K[0],SH_K[1],2.3,dt);if(d<0.7||(K.moveSpeed===0&&d<2.4)){K.moveSpeed=0;K.yaw+=angDiff(K.yaw,Math.atan2(SH_K[0]-K.x,40.45-K.z))*Math.min(1,dt*3);}break;}
     case 'patrol':{if(K.prey&&K.prey.alive){K.state='prey';break;}const [cx,cz]=PATROL[K.wp];if(K.wait>0){K.wait-=dt;K.moveSpeed=0;K.yaw+=Math.sin(time*1.1)*dt*1.3;break;}
       const d=kMove(wc(cx),wc(cz),1.7,dt);if(d<0.6){if(PAUSES.has(K.wp))K.wait=1.8+R()*2;else if(R()<0.2)K.wait=0.6+R()*1.0;if(R()<0.15)K.dir=-K.dir;K.wp=(K.wp+K.dir+PATROL.length)%PATROL.length;}break;}
     case 'investigate':{if(K.wait>0){K.wait-=dt;K.moveSpeed=0;K.yaw+=Math.sin(time*1.7)*dt*2.4;if(K.wait<=0){K.state='patrol';K.wp=nearestWp();}break;}
@@ -4252,7 +4254,14 @@ function buildLab(S){SW.lab={tanks:[],dv:0,dspike:0,dNext:0,mapNew:false};const 
   MUT_DEF.forEach((d,i)=>{const m=makeMutant(d,i);S.add(m.rig.g);MUTS.push(m);});buildLab2(S);buildBoss(S);buildProps(S);}
 
 /* ---------- the mutants ---------- */
-function buildMutantRig(kind,seed){const g=new THREE.Group();const sci=kind==='sci';
+/* v8.9: each mutant is bent its own way. lean: extra forward bend at the waist; side/twist: a crooked spine; crouch: bent knees;
+   hump: [x,y,z,r,sx,sy,sz] a lump on the upper back; head: lifts the head so it still looks ahead; sink/shrug: head down between raised shoulders; fwd: neck thrust out; arm: arms hang lower */
+const MUT_HUNCH=[
+  {lean:0.42,side:0,twist:0,crouch:0.08,hump:[0,.69,-.07,.12,1.25,.95,1.05],head:-0.38,fwd:.06,arm:0.2},      /* a great hump between the shoulders, head thrust out like a vulture */
+  {lean:0.16,side:0.27,twist:0.24,crouch:0.04,hump:[.08,.65,-.07,.09,1,1.1,1],head:-0.1,tilt:-0.32,arm:0.1}, /* bent sideways, one shoulder up by its ear */
+  {lean:0.58,side:0,twist:0,crouch:0.36,hump:[0,.63,-.06,.085,1.4,.8,1],head:-0.6,arm:0.5},                   /* low, knees bent, knuckles near the floor */
+  {lean:0.24,side:-0.07,twist:0,crouch:0.12,hump:[0,.67,-.05,.1,1.8,.7,1],head:-0.12,sink:-.065,shrug:.05,arm:0.15}]; /* chest caved in, head sunk between its shoulders */
+function buildMutantRig(kind,seed,hn){const g=new THREE.Group();const sci=kind==='sci';
   const cloth=lam({map:sci?T.labCoat:T.coverall}),pants=lam({map:sci?T.pants:T.coverall}),raw=lam({map:T.rawFlesh}),headM=lam({map:mutFaceTex(seed)}),boot=lam({color:0x1a1814}),
     glow=basic({color:0xc8ff5a}),glass=lam({color:0xb8d8e0,transparent:true,opacity:0.7}),steel=lam({color:0xc8ccc8});
   const hips=new THREE.Group();hips.position.y=.94;g.add(hips);
@@ -4261,7 +4270,7 @@ function buildMutantRig(kind,seed){const g=new THREE.Group();const sci=kind==='s
   const body=new THREE.Group();hips.add(body);
   const prof=[[0.0,0.0],[0.15,0.02],[0.155,0.2],[0.14,0.4],[0.175,0.56],[0.16,0.64],[0.09,0.7],[0.0,0.72]].map(([r,y])=>new THREE.Vector2(r,y));
   const tm=new THREE.Mesh(new THREE.LatheGeometry(prof,14),cloth);tm.scale.set(1.0,1,.68);body.add(tm);
-  if(sci){const skirt=new THREE.Mesh(new THREE.CylinderGeometry(.17,.21,.42,12,1,true),lam({map:T.labCoat,side:THREE.DoubleSide}));skirt.position.y=-.16;body.add(skirt);}
+  if(sci){const skirt=new THREE.Mesh(new THREE.CylinderGeometry(.17,.21,.42,12,1,true),lam({map:T.labCoat,side:THREE.DoubleSide}));skirt.position.y=-.16;hips.add(skirt);}/* v8.9: on the hips, so the coat hangs down when it bends over */
   const arm=sd=>{const a=limb(.34,.055,.045,cloth,8);a.position.set(sd*.2,.63,0);a.rotation.z=sd*0.1;body.add(a);const f=limb(.32,.045,.036,cloth,7);f.position.y=-.34;f.rotation.x=-0.3;a.add(f);
     const hd=new THREE.Group();hd.position.y=-.32;f.add(hd);const palm=ball(.042,raw,7,5);palm.scale.set(.8,1.1,.55);hd.add(palm);for(let k=0;k<3;k++){const fg=limb(.11,.011,.007,raw,4);fg.position.set((k-1)*.022,-.03,.01);fg.rotation.x=0.25;hd.add(fg);}return {a,f,hd};};
   const L=arm(1),Rr=arm(-1);
@@ -4269,6 +4278,8 @@ function buildMutantRig(kind,seed){const g=new THREE.Group();const sci=kind==='s
   const syr=new THREE.Group();syr.position.set(0,-.05,.04);syr.rotation.x=Math.PI/2;Rr.hd.add(syr);syr.add(at(cylm(.025,.025,.16,7,glass),0,0,0));syr.add(at(cylm(.008,.003,.12,4,steel),0,.14,0));syr.add(at(cylm(.012,.012,.08,5,steel),0,-.11,0));
   body.add(at(cylm(.042,.05,.14,8,raw),0,.77,0));
   const head=new THREE.Group();head.position.set(0,.92,.03);body.add(head);head.add(new THREE.Mesh(headGeo(.11),headM));
+  if(hn){const [hx,hy,hz,r,sx,sy,sz]=hn.hump;const hu=new THREE.Mesh(lumpify(new THREE.SphereGeometry(r,10,8),0.12,seed*7+3),cloth);hu.scale.set(sx,sy,sz);hu.position.set(hx,hy,hz);body.add(hu);
+    head.position.y+=(hn.sink||0);head.position.z+=(hn.fwd||0);if(hn.shrug){L.a.position.y+=hn.shrug;Rr.a.position.y+=hn.shrug;L.a.position.x-=.02;Rr.a.position.x+=.02;}}
   /* a lipless mouth: a dark gullet, a row of top teeth, and a jaw that drops when it snarls */
   const tooth=lam({color:0xe0d6bc,emissive:0x2a2418}),gum=lam({color:0x5a0c08}),rr=mulberry(seed*13+5);
   {const gul=new THREE.Mesh(new THREE.CircleGeometry(.032,10),basic({color:0x0a0202}));gul.position.set(0,-.05,.097);gul.scale.set(1.25,.7,1);head.add(gul);}
@@ -4280,7 +4291,7 @@ function buildMutantRig(kind,seed){const g=new THREE.Group();const sci=kind==='s
   const wp=[ball(.07,glow,8,6),ball(.05,glow,7,5)];wp[0].position.set(0,.5,-.13);wp[1].position.set(.06,.76,-.04);wp.forEach(w=>body.add(w));
   const shadow=blob(.8,.7,0.55);g.add(shadow);bakeShade(g,0);
   return {g,hips,body,legs,L,R:Rr,head,syr,wp,jaw};}
-function makeMutant(d,i){const rig=buildMutantRig(d.kind,d.seed);rig.g.visible=false;rig.g.scale.setScalar(0.92+((Math.abs(d.seed|0)*7919)%17)/100);/* v8.8: 0.92 to 1.08 */
+function makeMutant(d,i){const hn=MUT_HUNCH[i%MUT_HUNCH.length],rig=buildMutantRig(d.kind,d.seed,hn);rig.hn=hn;rig.g.visible=false;rig.g.scale.setScalar(0.92+((Math.abs(d.seed|0)*7919)%17)/100);/* v8.8: 0.92 to 1.08 */
   return {i,d,rig,kind:d.kind,x:wc(d.start[0]),z:wc(d.start[1]),yaw:0,state:'patrol',wp:0,path:[],goal:-1,repath:0,sus:0,lx:0,lz:0,lost:0,inv:null,wait:0,cool:0,atkT:0,recT:0,stunT:0,saw:null,
     alive:true,active:false,ph:R()*10,spd:0,breathT:R()*2,stepT:0,twT:0,tw:0,pan:null};}
 function mSolid(cx,cz){return solidCell(cx,cz)||cellAt(cx,cz)==='c';}
@@ -4301,7 +4312,7 @@ function mCanSee(m){if(!m.alive||P.hidden||P.sub||P.inVent||mode!=='play')return
   if(d>1.8||(P.crouch&&!aware)){const dot=(dx*Math.sin(m.yaw)+dz*Math.cos(m.yaw))/(d||1);if(dot<(aware?-0.2:m.state==='investigate'?0.2:0.3))return false;}return losClear(m.x,m.z,P.x,P.z,playerLow());}
 function mutSpot(m){if(m.state==='chase')return;m.state='chase';m.lost=0;m.lx=P.x;m.lz=P.z;m.lvx=P.vx||0;m.lvz=P.vz||0;m.pred=false;m.chk=null;m.stare=0;m.alertT=0;m.snapT=0.2;F.seen++;mutAlert(m);if(AC&&m.pan){const t=now()+0.02;voice(m.pan,t,1.1,190+R()*40,1.2,{contour:[0.9,1.3,1.1,0.8,0.6],drive:28,wobble:0.2,sub:0.4,breath:0.5,F1:640,wet:0.8,tract:0.9});m.snarlT=1.1+sSnarl(m.pan,t+1.0,1.0,true);m.voxT=2.6;}
   if(!F.mutTip){F.mutTip=true;after(1.0,()=>tip('They can\'t follow you into the vents. Lockers and tables hide you, if they don\'t see you get in.',8));}}
-function mutNoise(x,z,r){for(const m of MUTS){if(!m.active||!m.alive||m.state==='chase'||m.state==='wind'||m.state==='stun'||m.state==='dying')continue;if(Math.hypot(x-m.x,z-m.z)<r*1.05){if(m.state!=='investigate'){m.hops=1;m.alertT=0.25+R()*0.35;m.snapT=0.2;}m.state='investigate';m.inv=[x,z];m.wait=0;m.chk=null;m.goT=0;m.stare=0;}}}
+function mutNoise(x,z,r){for(const m of MUTS){if(!m.active||!m.alive||m.state==='chase'||m.state==='wind'||m.state==='stun'||m.state==='dying'||m.state==='lure')continue;if(Math.hypot(x-m.x,z-m.z)<r*1.05){if(m.state!=='investigate'){m.hops=1;m.alertT=0.25+R()*0.35;m.snapT=0.2;}m.state='investigate';m.inv=[x,z];m.wait=0;m.chk=null;m.goT=0;m.stare=0;}}}
 function mutSawHide(spot){for(const m of MUTS){if(!m.active||!m.alive||m.state==='dying')continue;if(mCanSee(m)||(m.state==='chase'&&losClear(m.x,m.z,P.x,P.z,false))){m.saw=spot;m.state='chase';m.lx=spot.x;m.lz=spot.z;}}}
 function mutDanger(){let d=0;for(const m of MUTS){if(!m.active||!m.alive)continue;const dd=Math.hypot(P.x-m.x,P.z-m.z);d=Math.max(d,m.state==='chase'||m.state==='wind'?0.85:Math.max(m.sus*0.6,dd<8?(1-dd/8)*0.45:0));}return d;}
 /* ---------- v6.8: the mutants hunt a little smarter and move wrong ---------- */
@@ -4358,6 +4369,10 @@ function mutUpdate(m,dt){if(m.state==='dying'){mutDie(m,dt);return;}if(!m.active
       if(see&&d<1.6&&m.cool<=0){m.state='wind';m.atkT=0;m.frz=0;if(AC&&m.pan){sNoise(m.pan,now()+0.01,0.5,'bandpass',900,3,0.6,0.05,2400);m.snarlT=sSnarl(m.pan,now()+0.01,1.2,false);m.voxT=1.6;}}break;}
     case 'wind':{m.atkT+=dt;m.spd=0;m.yaw+=angDiff(m.yaw,Math.atan2(dx,dz))*Math.min(1,dt*10);
       if(m.atkT>0.45){if(d<1.95&&!P.hidden&&!pCrawl()&&mode==='play')infect(m);m.state='recover';m.recT=1.4;m.cool=2.2;}break;}
+    case 'lure':{const sh=SW.lab.shower;if(!sh||sh.t<=0){m.state='patrol';break;}
+      if(see&&d<4.5){m.sus+=dt*4;if(m.sus>=1){mutSpot(m);break;}}else m.sus=Math.max(0,m.sus-dt*0.5);
+      const sl=SH_SLOTS[m.i%SH_SLOTS.length],r=go(sl[0],sl[1],2.4);
+      if(r<0.45||r===99){m.spd=0;const hx=SH_HEADS.reduce((a,b)=>Math.abs(b-m.x)<Math.abs(a-m.x)?b:a);m.yaw+=angDiff(m.yaw,Math.atan2(hx-m.x,40.45-m.z))*Math.min(1,dt*3);if(R()<dt*0.4)m.sniff=0.8;}break;}
     case 'recover':{m.recT-=dt;const bx=m.x-dx/(d||1)*1.5,bz=m.z-dz/(d||1)*1.5;mMove(m,bx,bz,0.8,dt);m.yaw+=angDiff(m.yaw,Math.atan2(dx,dz))*Math.min(1,dt*6);if(m.recT<=0){if(see)m.state='chase';else{m.state='investigate';m.inv=[P.x,P.z];m.wait=0;m.hops=1;m.chk=null;m.goT=0;}}break;}}
   if(m.pan)setPan(m.pan,m.x,1.5,m.z);
   /* wet breathing, so you know which one is near */
@@ -4372,17 +4387,18 @@ function animMut(m,dt){const r=m.rig,dying=m.state==='dying';
   /* a lurching walk that won't hold its line, the hips dropping onto the bad leg */
   const sway=hs*(ch?0.07:0.05)*k;r.g.position.set(m.x+Math.cos(m.yaw)*sway,0,m.z-Math.sin(m.yaw)*sway);r.g.rotation.y=m.yaw+hs*0.09*k;
   if(r.jaw){const jt=m.state==='wind'?0.8:(m.snarlT||0)>0?0.55+0.12*Math.sin(time*31):(m.chatT||0)>0?0.1+0.16*Math.abs(Math.sin(time*44)):m.state==='chase'?0.3:0.06;r.jaw.rotation.x=(m.chatT||0)>0&&!(m.snarlT>0)?jt:damp(r.jaw.rotation.x,jt,12,dt);}
-  r.legs.forEach((l,i)=>{const bad=(i?1:-1)===lame,q=i?-s:s;l.th.rotation.x=q*(bad?0.3:0.62)*k*(ch?1.15:1);l.sh.rotation.x=Math.max(0,-q)*(bad?0.3:0.8)*k+(bad?0.18:0.05);});
-  r.hips.position.y=.94-Math.abs(Math.cos(m.ph))*0.04*k;r.hips.rotation.z=damp(r.hips.rotation.z,lame*0.07*k*(0.6+0.4*s),8,dt);
+  const hn=r.hn||{lean:0,crouch:0,head:0,arm:0},cr=hn.crouch||0;
+  r.legs.forEach((l,i)=>{const bad=(i?1:-1)===lame,q=i?-s:s;l.th.rotation.x=q*(bad?0.3:0.62)*k*(ch?1.15:1)-cr;l.sh.rotation.x=Math.max(0,-q)*(bad?0.3:0.8)*k+(bad?0.18:0.05)+cr*2;});
+  r.hips.position.y=.94*Math.cos(cr)-Math.abs(Math.cos(m.ph))*0.04*k;r.hips.rotation.z=damp(r.hips.rotation.z,lame*0.07*k*(0.6+0.4*s),8,dt);
   /* the shoulders jerk, one way, then back */
   m.jerkT=(m.jerkT==null?R()*3:m.jerkT)-dt;if(m.jerkT<=0){m.jerkT=0.8+R()*3;m.jerkY=(R()-0.5)*0.7;m.jerkH=0.12;}if(m.jerkH>0){m.jerkH-=dt;if(m.jerkH<=0)m.jerkY=0;}
-  r.body.rotation.x=damp(r.body.rotation.x,0.34+0.3*ch+(m.state==='wind'?-0.22:0)+sn*0.5,6,dt);r.body.rotation.y=damp(r.body.rotation.y,m.jerkY||0,22,dt);
-  if(!dying)r.body.rotation.z=damp(r.body.rotation.z,-lame*0.06+hs*0.05*k,6,dt);
+  r.body.rotation.x=damp(r.body.rotation.x,0.34+hn.lean+0.3*ch*(1-hn.lean)+(m.state==='wind'?-0.22:0)+sn*0.5*(1-hn.lean*0.6),6,dt);r.body.rotation.y=damp(r.body.rotation.y,(m.jerkY||0)+(hn.twist||0),22,dt);
+  if(!dying)r.body.rotation.z=damp(r.body.rotation.z,-lame*0.06+hs*0.05*k+(hn.side||0),6,dt);
   const wind=m.state==='wind'?clamp(m.atkT/0.4,0,1):0,rec=m.state==='recover'?clamp(m.recT/1.4,0,1):0,claw=Math.sin(time*(ch?10:3)+m.i*2);
   /* chasing, it reaches for her with both hands, clawing; otherwise the arms hang and swing loose */
-  r.L.a.rotation.x=damp(r.L.a.rotation.x,ch?-1.25+claw*0.35:-s*0.3*k+0.1+sn*0.3,9,dt);r.L.a.rotation.z=damp(r.L.a.rotation.z,ch?0.32:0.1,6,dt);
+  r.L.a.rotation.x=damp(r.L.a.rotation.x,ch?-1.25+claw*0.35:-s*0.3*k+0.1+sn*0.3+hn.arm,9,dt);r.L.a.rotation.z=damp(r.L.a.rotation.z,ch?0.32:0.1,6,dt);
   r.L.f.rotation.x=damp(r.L.f.rotation.x,ch?-0.7+claw*0.3:-0.3+Math.sin(m.ph+1)*0.18*k,10,dt);
-  r.R.a.rotation.x=damp(r.R.a.rotation.x,m.state==='wind'?lerp(-0.6,-2.7,wind):rec>0.7?-0.9:(ch?-1.0-claw*0.3:s*0.3*k+0.05),m.state==='wind'?16:9,dt);r.R.a.rotation.z=damp(r.R.a.rotation.z,ch?-0.28:-0.1,6,dt);
+  r.R.a.rotation.x=damp(r.R.a.rotation.x,m.state==='wind'?lerp(-0.6,-2.7,wind):rec>0.7?-0.9:(ch?-1.0-claw*0.3:s*0.3*k+0.05+hn.arm),m.state==='wind'?16:9,dt);r.R.a.rotation.z=damp(r.R.a.rotation.z,ch?-0.28:-0.1,6,dt);
   m.handT=(m.handT||0)-dt;if(m.handT<=0){m.handT=0.1+R()*0.9;m.handZ=(R()-0.5)*1.1;}r.L.hd.rotation.z=damp(r.L.hd.rotation.z,m.handZ||0,25,dt);
   if(!dying){const pd=Math.hypot(P.x-m.x,P.z-m.z);
     /* the head: it snaps toward her the moment it notices, further round than a neck should go; otherwise it glances about */
@@ -4392,10 +4408,29 @@ function animMut(m,dt){const r=m.rig,dying=m.state==='dying';
     r.head.rotation.y=damp(r.head.rotation.y,clamp(hy,-1.75,1.75),(m.snapT||0)>0?30:4.5,dt);
     /* the neck twitches, and now and then it lolls over to one side and stays there */
     m.twT-=dt;if(m.twT<=0){if(m.tiltH){m.tiltH=0;m.twT=1+R()*3;}else if(R()<0.18){m.tiltH=1;m.tiltV=(R()<0.5?-1:1)*(0.7+R()*0.45);m.twT=0.6+R()*1.6;m.snapT=Math.max(m.snapT||0,0.12);mCrack(m,pd);}else{m.tw=(R()-0.5)*1.6;m.twT=0.15+R()*1.2;}}
-    const tz=(m.state==='wind'?lame*0.55:m.tiltH?m.tiltV:m.tw*0.5)+(R()-0.5)*(ch?0.12:0.05);r.head.rotation.z=damp(r.head.rotation.z,tz,m.tiltH?20:12,dt);
-    r.head.rotation.x=damp(r.head.rotation.x,ch?-0.45:sn?0.45+Math.sin(time*16)*0.08:0.15,6,dt);}
+    const tz=(m.state==='wind'?lame*0.55:m.tiltH?m.tiltV:m.tw*0.5)+(R()-0.5)*(ch?0.12:0.05)+(hn.tilt||0);r.head.rotation.z=damp(r.head.rotation.z,tz,m.tiltH?20:12,dt);
+    r.head.rotation.x=damp(r.head.rotation.x,(ch?-0.45:sn?0.45+Math.sin(time*16)*0.08:0.15)+hn.head,6,dt);}
   const pg=1+Math.sin(time*5+m.i)*0.18;r.wp.forEach(w=>w.scale.setScalar(pg));}
-function labMutantsStart(){for(const m of MUTS){m.alive=!(F.mutDead||[]).includes(m.i);if(m.rig.body)m.rig.body.rotation.z=0;m.rig.wp.forEach(w=>w.scale.setScalar(1));m.x=wc(m.d.start[0]);m.z=wc(m.d.start[1]);m.state='patrol';m.wp=0;m.sus=0;m.saw=null;m.path=[];m.goal=-1;m.cool=0;m.frz=0;m.frzNext=null;m.chk=null;m.lastChk=null;m.hops=0;m.alertT=0;m.stare=0;m.sniff=0;m.pred=false;m.burstT=0;m.goT=0;m.snapT=0;m.tiltH=0;m.active=F.labOpen&&m.alive;m.rig.g.visible=m.active;
+/* v8.9: the showers as a lure. Anything that drank the water comes to it: every mutant and the Rat Bastard walk to decon and stand under
+   the heads until the water stops (90 s). Seen up close (4.5 m) they still come for her. Reusable once it shuts off. */
+const SHOWER_T=90,SH_HEADS=[262.2,263.7,265.2],SH_SLOTS=[[262.2,41.3],[265.2,41.3],[263.0,42.5],[264.5,42.6]],SH_K=[263.7,41.6];
+function showerOn(){const sh=SW.lab.shower;if(!sh||sh.t>0)return;sh.t=SHOWER_T+1.2;sh.flow=0;F.showerUsed=true;
+  if(sh.wheel)tween(0.9,k=>{sh.wheel.rotation.z=sh.w0-k*Math.PI*1.5;}).then(()=>{sh.w0=sh.wheel.rotation.z;});
+  if(AC){if(!sh.pan)sh.pan=mkPanner(263.7,2.0,41.0,3.5);const t=now()+0.05;for(const [dt0,f] of [[0,240],[0.35,180],[0.62,300],[0.9,150]])sNoise(sh.pan,t+dt0,0.1,'bandpass',f,2.5,0.9,0.005);sTone(sh.pan,t+0.1,1.0,'sawtooth',70,120,0.12);
+    const src=AC.createBufferSource();src.buffer=voxNoise(AC);src.loop=true;const hp=AC.createBiquadFilter();hp.type='bandpass';hp.frequency.value=2400;hp.Q.value=0.35;const lp=AC.createBiquadFilter();lp.type='lowpass';lp.frequency.value=260;
+    const g=AC.createGain(),g2=AC.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.setValueAtTime(0.0001,t+1.1);g.gain.exponentialRampToValueAtTime(0.55,t+1.8);g2.gain.setValueAtTime(0.0001,t);g2.gain.exponentialRampToValueAtTime(0.4,t+1.4);
+    src.connect(hp);hp.connect(g);g.connect(sh.pan);src.connect(lp);lp.connect(g2);g2.connect(sh.pan);src.start(t);sh.snd={src,g,g2};}
+  sub('The pipes bang. Rust, then water, loud as a train.',3);if(!F.showerTip){F.showerTip=true;after(3.2,()=>tip('The showers run for a minute and a half. Everything that drank the water will come to them. Don\'t be here.',7));}}
+function showerOff(quiet){const sh=SW.lab.shower;if(!sh)return;sh.t=0;if(sh.snd&&AC){const t=now();for(const g of [sh.snd.g,sh.snd.g2]){g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(Math.max(0.0001,g.gain.value),t);g.gain.exponentialRampToValueAtTime(0.0001,t+(quiet?0.05:1.5));}
+    const s=sh.snd.src;setTimeout(()=>{try{s.stop();}catch(e){}},quiet?100:1700);if(!quiet)sClank(sh.pan,t+1.2,0.35);}sh.snd=null;if(quiet){sh.flow=0;sh.mat.opacity=0;sh.ws.forEach(w=>w.visible=false);}
+  for(const m of MUTS)if(m.state==='lure'){m.state='patrol';m.wait=0;}if(K&&K.state==='lure'){K.state='patrol';K.wp=nearestWp();}}
+function showerTick(dt){const sh=SW.lab.shower;if(!sh)return;const on=sh.t>0;
+  if(on){sh.t-=dt;if(sh.t<=0)showerOff(false);}
+  sh.flow=damp(sh.flow,on&&sh.t<SHOWER_T?1:0,on?2.5:1.2,dt);sh.mat.opacity=0.65*sh.flow;sh.tex.offset.y+=dt*2.6;sh.ws.forEach((w,i)=>{w.visible=sh.flow>0.02;w.scale.x=w.scale.z=1+Math.sin(time*23+i)*0.04;});
+  if(!(on&&sh.t<SHOWER_T))return;
+  for(const m of MUTS)if(m.active&&m.alive&&(m.state==='patrol'||m.state==='investigate')){m.state='lure';m.sus=0;m.goT=0;m.wait=0;m.chk=null;}
+  if(K&&K.active&&!K.frozen&&(K.state==='patrol'||K.state==='search'||K.state==='ambush'||K.state==='investigate')){K.state='lure';K.sus=0;setChase&&setChase(false);}}
+function labMutantsStart(){if(SW.lab.shower)showerOff(true);for(const m of MUTS){m.alive=!(F.mutDead||[]).includes(m.i);if(m.rig.body)m.rig.body.rotation.z=0;m.rig.wp.forEach(w=>w.scale.setScalar(1));m.x=wc(m.d.start[0]);m.z=wc(m.d.start[1]);m.state='patrol';m.wp=0;m.sus=0;m.saw=null;m.path=[];m.goal=-1;m.cool=0;m.frz=0;m.frzNext=null;m.chk=null;m.lastChk=null;m.hops=0;m.alertT=0;m.stare=0;m.sniff=0;m.pred=false;m.burstT=0;m.goT=0;m.snapT=0;m.tiltH=0;m.active=F.labOpen&&m.alive;m.rig.g.visible=m.active;
     if(AC&&!m.pan){m.pan=mkPanner(m.x,1.5,m.z,2.2);m.pan.rolloffFactor=1.2;}}}
 
 /* ---------- the infection, and Delilah ---------- */
@@ -4475,7 +4510,7 @@ function openLabDoor(){if(F.labOpen)return;F.labOpen=true;if(AC){const t=now()+0
 function labTick(dt){if(!F.ch2||!SW.lab)return;{const d=SW.lab.drip;if(d){d.y-=dt*3.2;if(d.y<0.02){d.y=2.0;if(AC&&Math.hypot(P.x-263.7,P.z-41)<9)oneShotAt(263.7,0.05,40.9,(p,t)=>sTone(p,t,0.05,'sine',1700+R()*500,900,0.05),1,1,true);}d.m.position.set(263.7,d.y,40.5);}}for(const h of SW.hides)if(h.grp)h.grp.visible=P.hidden!==h;lockerLook();junkTick(dt);rankMutVox();if(SW.c2&&SW.c2.glow)SW.c2.glow.opacity=0.42+0.14*Math.sin(time*3.1)+(R()<0.02?-0.2:0);p2Tick(dt);mzTick(dt);hallTick(dt);bossTick(dt);SW.lab.dspike=Math.max(0,SW.lab.dspike-dt*0.8);
   for(const tk of SW.lab.tanks){const b=tk.userData.body;if(b){b.position.y+=Math.sin(time*0.6+tk.position.x)*dt*0.05;if(!b.userData.still)b.rotation.y+=dt*0.05;}}
   if(mode!=='play'){return;}
-  for(const m of MUTS)mutUpdate(m,dt);
+  showerTick(dt);for(const m of MUTS)mutUpdate(m,dt);
   if(F.inj>0){F.cureT-=dt;labHud(false);if(F.cureT<=0){F.cureT=0;dieInfection(false);return;}
     if(time>SW.lab.dNext){SW.lab.dNext=time+5.5+R()*4.5;delilahSay();}}
   if(inLab()){const cx=Math.floor(P.x/CELL),cz=Math.floor(P.z/CELL);
@@ -4841,7 +4876,15 @@ function buildShowers(S){const g=new THREE.Group();S.add(g);const pipe=lam({colo
   const cv=document.createElement('canvas');cv.width=256;cv.height=64;const c=cv.getContext('2d');c.fillStyle='#a8b4b8';c.fillRect(0,0,256,64);c.fillStyle='#1a4a7a';c.fillRect(0,0,256,14);c.fillStyle='#1a1a1a';c.font='bold 22px "Special Elite",monospace';c.textAlign='center';
   c.fillText('DECON SHOWERS',128,38);c.font='14px "Special Elite",monospace';c.fillText('RINSE 60 SEC BEFORE ENTRY',128,56);const tx=new THREE.CanvasTexture(cv);tx.magFilter=tx.minFilter=THREE.NearestFilter;
   const sg=new THREE.Mesh(new THREE.PlaneGeometry(1.7,.43),decal(lam({map:tx,color:0x9a9a96}),-2,-6));sg.position.set(263.7,2.75,40.03);g.add(sg);
-  SW.inter.push({kind:'misc',x:264.6,z:41.4,r:1.5,label:()=>'Examine',can:()=>!F.noteVent,act(){sub('The decon showers. Bone dry. A man is lying under them.',3);}});}
+  SW.inter.push({kind:'misc',x:264.6,z:41.4,r:1.5,label:()=>'Examine',can:()=>!F.noteVent,act(){sub(F.showerUsed?'The decon showers. A man is lying under them.':'The decon showers. Bone dry. A man is lying under them.',3);}});
+  /* v8.9: a valve wheel that turns them on, and the water */
+  const red=lam({color:0x8a1a14,emissive:0x140404});const vp=cylm(.03,.03,1.25,6,pipe);vp.position.set(261.3,1.82,40.12);g.add(vp);const elb=cylm(.03,.03,.75,6,pipe);elb.rotation.z=Math.PI/2;elb.position.set(261.66,2.45,40.12);g.add(elb);
+  const wheel=new THREE.Group();wheel.position.set(261.3,1.2,40.24);g.add(wheel);wheel.add(new THREE.Mesh(new THREE.TorusGeometry(.13,.018,5,12),red));for(let i=0;i<3;i++){const sp=boxm(.25,.02,.02,red);sp.rotation.z=i*Math.PI/3;wheel.add(sp);}{const st=at(cylm(.03,.03,.08,6,pipe),0,0,-.04);st.rotation.x=Math.PI/2;wheel.add(st);}
+  const wt=cvTex(32,64,(c,w,h)=>{c.clearRect(0,0,w,h);for(let i=0;i<46;i++){c.fillStyle='rgba(215,235,240,'+(0.25+Math.random()*0.6).toFixed(2)+')';c.fillRect(Math.random()*w|0,Math.random()*h|0,1,5+Math.random()*14);}});wt.wrapS=wt.wrapT=THREE.RepeatWrapping;wt.repeat.set(3,2);
+  const wm=basic({map:wt,color:0xd0e6ee,transparent:true,opacity:0,depthWrite:false,side:THREE.DoubleSide});
+  const ws=xs.map(x=>{const c=new THREE.Mesh(new THREE.CylinderGeometry(.11,.3,2.05,10,1,true),wm);c.position.set(x,1.0,z+.64);c.rotation.x=-0.3;c.visible=false;g.add(c);return c;});
+  SW.lab.shower={t:0,flow:0,wheel,w0:0,mat:wm,tex:wt,ws,pan:null,snd:null};
+  SW.inter.push({kind:'misc',x:261.4,z:40.9,r:1.25,label:()=>'Turn on the showers',can:()=>F.labIn&&SW.lab.shower&&!(SW.lab.shower.t>0),act(){showerOn();}});}
 /* ---------- v6.8: the rat maze is a real maze ----------
    The table top is the maze floor (nothing coplanar sits on it to flicker through under the vertex snap),
    and the maze has standing walls, rebuilt whenever a piece goes in or turns. An empty slot is an open, dark hole. */
@@ -7925,6 +7968,6 @@ requestAnimationFrame(t=>{last=t;frame(t);});
 initStore();
 window.__abandoned={get mode(){return mode;},pbox:()=>SW.pbox,look:p=>{P.pitch=p;},rend:()=>renderer,qa:()=>({archY,archR,isTube,cellAt,props:SW.propList,MW,MH,K,MUTS,PIPE_YC,PIPE_R}),blackout(){F.blackout=true;blackoutStart();},blackoutApply:()=>blackoutApply(),tvApply:()=>tvApply(),openNote:id=>openNote(id),closeNote:()=>closeNote(),endChapter:()=>endChapter(),newGame:()=>startGame(),inters:()=>SW.inter,SW:()=>SW,get level(){return level;},P,get K(){return K;},F:()=>F,
   skipToSewer(){initAudio();$('title').hidden=true;F=freshFlags();P.onPlat=false;enterSewer(true);},ventIntro:()=>ventIntro(),climbPipe:(u,i)=>climbPipe(u,CLIMBS[i||0]),steams:()=>[SW.steam,...(SW.steams||[])],cell:(x,z)=>cellAt(Math.floor(x/CELL),Math.floor(z/CELL)),duct:e=>ductMove(e),takeTrap:i=>takeTrap(i),setTrap:()=>setTrap(),climb:up=>climb(up),openLock:()=>openLock(),LOCK,killer:()=>K,throwBiter:()=>throwBiter(),hurt:a=>hurtPlayer(a),enterHide:i=>enterHide(SW.hides[i]),hides:()=>SW.hides,street:()=>{initAudio();$('title').hidden=true;enterStreet();},teleport(cx,cz,yaw){P.x=wc(cx);P.z=wc(cz);if(yaw!=null)P.yaw=yaw;},
-  hunt(){pickValve();},emerge:w=>emerge(w==='e'?VENT_E:VENT_W),canSee:()=>canSee(),kWord:w=>kWord(K.pan,w,1),kVox:w=>({hum:kHum,whimper:kWhimper,giggle:kGiggle,moan:kMoan,clicks:kClicks})[w](K.pan,1),cineScore:()=>cineScore(),scoreStop:(S,f)=>scoreStop(S,f),setMode:m=>setMode(m),hintNow:()=>hintNow(),openMap:()=>openMap(),closeMap:()=>closeMap(),release:w=>releaseSpider(w),npcs:()=>NPCS,remains:()=>SW.remains,spawnK:(cx,cz,wp)=>spawnKiller(cx,cz,wp||0),openGate,startGame,AP,trap:()=>trapSpider(),takeGlass:()=>takeGlass(),openCab:i=>openCab(AP.cabs[i]),takeCan:()=>takeCan(),useOpener:()=>useOpener(),feed:()=>feedPip(),news:()=>startNews(),spider:()=>spiderAppear(),release:()=>releaseSpider(),rats:()=>SW.rats,grabRat:r=>grabRat(r),throwRat:()=>throwRat(),litter:i=>pickLitter(i),burn:i=>burnSave(SW.fires[i||0]),save:()=>lastSave,load:sv=>loadGame(sv),ch2:()=>ch2FromTitle(),startCh2:()=>startChapter2(),ch2Wake:()=>ch2Wake(),vents:()=>VENTS2,ventHunt:()=>ventHunt(true),ventRoam:()=>ventRoam(),takeBattery:()=>takeBattery(),liftExamine:()=>liftExamine(),liftDown:()=>liftDown(),liftDead:()=>liftDead(),liftGate:()=>tryLiftGate(),endBuild:()=>endBuild(),pCrawl:()=>pCrawl(),c2:()=>SW.c2,ch2Lights:()=>SW.ch2L,lab:()=>SW.lab,muts:()=>MUTS,openLabDoor:()=>openLabDoor(),infect:i=>infect(MUTS[i||0]),cure:()=>useCure(),labWake:()=>labWake(),takeLabMap:()=>takeLabMap(),openLabMap:()=>openLabMap(),mSolid:(x,z)=>mSolid(x,z),mBfs:(a,b,c,d)=>mBfs(a,b,c,d),bfs:(a,b,c,d)=>bfs(a,b,c,d),patrol:()=>PATROL,openPuz:k=>openPuz(k),closePuz:()=>closePuz(),PZ,renderPuz:()=>renderPuz(),pzDigit:d=>pzDigit(d),pzEnter:()=>pzEnter(),cryoCheck:()=>cryoCheck(),chemMix:()=>chemMix(),mazeRun:()=>mazeRun(),mzPath:()=>mzPath(),playTape:n=>playTape(n),VHS,vhsEnd:()=>vhsEnd(),stab:i=>stab(MUTS[i]),canStab:i=>canStab(MUTS[i]),cellDoor:w=>cellDoor(w),useBench:()=>useBench(),applyLab2:()=>applyLab2(),labObj:()=>labObj(),labHint:()=>labHint(),inter:()=>SW.inter,give:k=>F.inv.push(k),boss:()=>SW.boss,bossIntro:()=>bossIntro(),bGo:x=>bGo(x),bossStab:()=>bossStab(),bossTarget:()=>bossTarget(),bossHurt:x=>bossHurt(x||'test',0,0,0),applyBoss:()=>applyBoss(),liftGo:()=>liftGo(),endCh2:()=>endCh2(),bmOn:()=>BM.on,blastAct:()=>blastAct(),bossLos:()=>bossLos(),ch3:()=>ch3FromTitle(),startCh3:()=>startChapter3(),C3:()=>C3,c3c:(cx,cz)=>c3c(cx,cz),L3:(u,v)=>L3(u,v),c3Tele(u,v,yaw){const x=(C3X+u)*CELL,z=v*CELL;P.x=x;P.z=z;if(yaw!=null)P.yaw=yaw;const cx=Math.floor(x/CELL),cz=Math.floor(z/CELL);P.lvl=c3Nav(cx,cz,x)||0;const c=c3c(cx,cz);P.inWater=c==='~'||c==='w';P.floor=P.inWater?FLOOD_Y-1.25:c3Floor(cx,cz,x);},c3Obj:()=>c3Obj(),c3Hint:()=>c3Hint(),c3Zone:()=>c3Zone(),c3Traverse:L=>c3Traverse(L),links:()=>C3.links,cutWires:()=>c3CutWires(),pullLever:()=>c3PullLever(),takeBread:()=>c3TakeBread(),stabYoli:()=>c3StabYoli(),pushYoli:()=>c3PushYoli(),C3V:()=>C3V,cvSyl:()=>cvSyl,cvNoise:()=>cvNoise,cvTone:()=>cvTone,voxSay:()=>voxSay,VOXT:()=>VOX_TRACKS,c3Voice:(m,k,o)=>c3Voice(m,k,o),sndLog:()=>C3SND.log,cvLive:()=>cvLive,liveShots:()=>liveShots,AC:()=>AC,barDoor:()=>c3BarDoor(),burstIn:()=>c3BurstIn(),ignite:()=>c3MayorIgnite(),ritaFeed:()=>c3RitaFeed(),pill:()=>c3TakePill(),endCh3:()=>c3EndChapter(),hold:k=>c3Hold(k),throw3:()=>c3ThrowHook(),C3SND:()=>C3SND,hushAll:()=>c3HushAll(),emerge:()=>c3MayorEmerge(),yoliBreak:()=>c3YoliBreakIn(),mayorHit:(x,y,z)=>c3MayorHit(C3.mayor,x,y,z),mayorPts:()=>({trap:MAYOR_TRAP,fall:MAYOR_FALL}),liveHq:()=>liveHq,bus:()=>({comp,busFx}),c3Off:()=>c3Off(),yoliSplat:()=>c3YoliSplat(),rpose:m=>{for(let i=0;i<40;i++)ritaPose(0.1,m||'stand');},sfx:()=>({kHum,kWhimper,kGiggle,kMoan,kClicks,cryBurst,sMeow,sPurr,sSqueal,sSnarl,sChatter,sSniff,sGroan,speakSyl,delilahSay}),ambAll:v=>{for(const k in amb)setAmb(k,v,0.05);},c3Map:()=>openC3Map(),yoliEmerge:()=>c3YoliEmerge(),aptLock:()=>c3AptLock(),bakLock:()=>c3BakLock(),yoliSearch:()=>c3YoliSearch(),yoliKill:()=>c3YoliWindowKill(),skyDrop:()=>c3SkyDrop(),stabCow:()=>c3StabCow(),post:()=>postU,cDanger:()=>cDanger(),c3Apply:()=>{c3HushAll();C3.areaApply.forEach(f=>f());},shk:()=>SHK,setMode:k=>setMode(k)};
+  hunt(){pickValve();},emerge:w=>emerge(w==='e'?VENT_E:VENT_W),canSee:()=>canSee(),kWord:w=>kWord(K.pan,w,1),kVox:w=>({hum:kHum,whimper:kWhimper,giggle:kGiggle,moan:kMoan,clicks:kClicks})[w](K.pan,1),cineScore:()=>cineScore(),scoreStop:(S,f)=>scoreStop(S,f),setMode:m=>setMode(m),hintNow:()=>hintNow(),openMap:()=>openMap(),closeMap:()=>closeMap(),release:w=>releaseSpider(w),npcs:()=>NPCS,remains:()=>SW.remains,spawnK:(cx,cz,wp)=>spawnKiller(cx,cz,wp||0),openGate,startGame,AP,trap:()=>trapSpider(),takeGlass:()=>takeGlass(),openCab:i=>openCab(AP.cabs[i]),takeCan:()=>takeCan(),useOpener:()=>useOpener(),feed:()=>feedPip(),news:()=>startNews(),spider:()=>spiderAppear(),release:()=>releaseSpider(),rats:()=>SW.rats,grabRat:r=>grabRat(r),throwRat:()=>throwRat(),litter:i=>pickLitter(i),burn:i=>burnSave(SW.fires[i||0]),save:()=>lastSave,load:sv=>loadGame(sv),ch2:()=>ch2FromTitle(),startCh2:()=>startChapter2(),ch2Wake:()=>ch2Wake(),vents:()=>VENTS2,ventHunt:()=>ventHunt(true),ventRoam:()=>ventRoam(),takeBattery:()=>takeBattery(),liftExamine:()=>liftExamine(),liftDown:()=>liftDown(),liftDead:()=>liftDead(),liftGate:()=>tryLiftGate(),endBuild:()=>endBuild(),pCrawl:()=>pCrawl(),c2:()=>SW.c2,ch2Lights:()=>SW.ch2L,lab:()=>SW.lab,muts:()=>MUTS,openLabDoor:()=>openLabDoor(),infect:i=>infect(MUTS[i||0]),cure:()=>useCure(),labWake:()=>labWake(),takeLabMap:()=>takeLabMap(),openLabMap:()=>openLabMap(),mSolid:(x,z)=>mSolid(x,z),mBfs:(a,b,c,d)=>mBfs(a,b,c,d),bfs:(a,b,c,d)=>bfs(a,b,c,d),patrol:()=>PATROL,openPuz:k=>openPuz(k),closePuz:()=>closePuz(),PZ,renderPuz:()=>renderPuz(),pzDigit:d=>pzDigit(d),pzEnter:()=>pzEnter(),cryoCheck:()=>cryoCheck(),chemMix:()=>chemMix(),mazeRun:()=>mazeRun(),mzPath:()=>mzPath(),playTape:n=>playTape(n),VHS,vhsEnd:()=>vhsEnd(),stab:i=>stab(MUTS[i]),canStab:i=>canStab(MUTS[i]),cellDoor:w=>cellDoor(w),useBench:()=>useBench(),applyLab2:()=>applyLab2(),labObj:()=>labObj(),labHint:()=>labHint(),inter:()=>SW.inter,give:k=>F.inv.push(k),boss:()=>SW.boss,bossIntro:()=>bossIntro(),bGo:x=>bGo(x),bossStab:()=>bossStab(),bossTarget:()=>bossTarget(),bossHurt:x=>bossHurt(x||'test',0,0,0),applyBoss:()=>applyBoss(),liftGo:()=>liftGo(),endCh2:()=>endCh2(),bmOn:()=>BM.on,blastAct:()=>blastAct(),bossLos:()=>bossLos(),ch3:()=>ch3FromTitle(),startCh3:()=>startChapter3(),C3:()=>C3,c3c:(cx,cz)=>c3c(cx,cz),L3:(u,v)=>L3(u,v),c3Tele(u,v,yaw){const x=(C3X+u)*CELL,z=v*CELL;P.x=x;P.z=z;if(yaw!=null)P.yaw=yaw;const cx=Math.floor(x/CELL),cz=Math.floor(z/CELL);P.lvl=c3Nav(cx,cz,x)||0;const c=c3c(cx,cz);P.inWater=c==='~'||c==='w';P.floor=P.inWater?FLOOD_Y-1.25:c3Floor(cx,cz,x);},c3Obj:()=>c3Obj(),c3Hint:()=>c3Hint(),c3Zone:()=>c3Zone(),c3Traverse:L=>c3Traverse(L),links:()=>C3.links,cutWires:()=>c3CutWires(),pullLever:()=>c3PullLever(),takeBread:()=>c3TakeBread(),stabYoli:()=>c3StabYoli(),pushYoli:()=>c3PushYoli(),C3V:()=>C3V,cvSyl:()=>cvSyl,cvNoise:()=>cvNoise,cvTone:()=>cvTone,voxSay:()=>voxSay,VOXT:()=>VOX_TRACKS,c3Voice:(m,k,o)=>c3Voice(m,k,o),sndLog:()=>C3SND.log,cvLive:()=>cvLive,liveShots:()=>liveShots,AC:()=>AC,barDoor:()=>c3BarDoor(),burstIn:()=>c3BurstIn(),ignite:()=>c3MayorIgnite(),ritaFeed:()=>c3RitaFeed(),pill:()=>c3TakePill(),endCh3:()=>c3EndChapter(),hold:k=>c3Hold(k),throw3:()=>c3ThrowHook(),C3SND:()=>C3SND,hushAll:()=>c3HushAll(),emerge:()=>c3MayorEmerge(),yoliBreak:()=>c3YoliBreakIn(),mayorHit:(x,y,z)=>c3MayorHit(C3.mayor,x,y,z),mayorPts:()=>({trap:MAYOR_TRAP,fall:MAYOR_FALL}),liveHq:()=>liveHq,bus:()=>({comp,busFx}),c3Off:()=>c3Off(),yoliSplat:()=>c3YoliSplat(),showerOn:()=>showerOn(),shower:()=>SW.lab.shower,mutsStart:()=>labMutantsStart(),rpose:m=>{for(let i=0;i<40;i++)ritaPose(0.1,m||'stand');},sfx:()=>({kHum,kWhimper,kGiggle,kMoan,kClicks,cryBurst,sMeow,sPurr,sSqueal,sSnarl,sChatter,sSniff,sGroan,speakSyl,delilahSay}),ambAll:v=>{for(const k in amb)setAmb(k,v,0.05);},c3Map:()=>openC3Map(),yoliEmerge:()=>c3YoliEmerge(),aptLock:()=>c3AptLock(),bakLock:()=>c3BakLock(),yoliSearch:()=>c3YoliSearch(),yoliKill:()=>c3YoliWindowKill(),skyDrop:()=>c3SkyDrop(),stabCow:()=>c3StabCow(),post:()=>postU,cDanger:()=>cDanger(),c3Apply:()=>{c3HushAll();C3.areaApply.forEach(f=>f());},shk:()=>SHK,setMode:k=>setMode(k)};
 })();
 </script>
