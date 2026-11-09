@@ -2571,10 +2571,17 @@ function aptShade(x,y,z){const b=0.84+hash3(x,y,z)*0.16;const k=y>2.3?0.82:(y<0.
 function makeGlass(){const g=new THREE.Group();const m=psx(new THREE.MeshLambertMaterial({color:0xc4dcee,transparent:true,opacity:0.36,depthWrite:false,side:THREE.DoubleSide}));
   const c=new THREE.Mesh(new THREE.CylinderGeometry(.055,.045,.14,9,1,true),m);c.position.y=.07;g.add(c);const b=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,.01,9),m);b.position.y=.005;g.add(b);
   const lid=new THREE.Mesh(new THREE.PlaneGeometry(.13,.13),lam({color:0xe8e2cc,side:THREE.DoubleSide}));lid.rotation.x=-Math.PI/2;lid.position.y=.142;lid.visible=false;g.add(lid);g.userData.lid=lid;return g;}
-function buildSpider(){const g=new THREE.Group();const m=lam({color:0x2a211a});
-  const ab=new THREE.Mesh(new THREE.SphereGeometry(.03,6,4),m);ab.scale.set(1,.7,1.3);ab.position.set(0,.022,-.032);g.add(ab);
-  const th=new THREE.Mesh(new THREE.SphereGeometry(.019,6,4),m);th.position.set(0,.018,.02);g.add(th);
-  const legs=[];for(const sd of [-1,1])for(let i=0;i<4;i++){const lg=new THREE.Group();lg.position.set(sd*.012,.02,.03-i*.013);lg.rotation.y=sd*(Math.PI/2+(i-1.5)*0.42);const seg=boxm(.006,.006,.075,m);seg.position.set(0,-.008,.036);seg.rotation.x=0.35;lg.add(seg);g.add(lg);legs.push(lg);}
+function buildSpider(){const g=new THREE.Group();const m=lam({color:0x1a1410,emissive:0x040302}),gl=psx(new THREE.MeshPhongMaterial({color:0x2a1e16,specular:0x6a5a48,shininess:50})),ey=basic({color:0x0a0806});
+  /* v8.8: a glossy abdomen on a waist, a flatter head-chest, fangs, and legs that bend at the knee (each leg group still rocks as one) */
+  const ab=new THREE.Mesh(new THREE.SphereGeometry(.03,10,8),gl);ab.scale.set(1,.78,1.3);ab.position.set(0,.03,-.048);g.add(ab);
+  const mk=boxm(.006,.002,.03,lam({color:0x5a4a3a}));mk.position.set(0,.054,-.05);g.add(mk);
+  const pd=new THREE.Mesh(new THREE.SphereGeometry(.007,6,4),m);pd.position.set(0,.025,-.012);g.add(pd);
+  const th=new THREE.Mesh(new THREE.SphereGeometry(.02,10,6),gl);th.scale.set(1,.65,1.15);th.position.set(0,.024,.014);g.add(th);
+  for(const sd of [-1,1]){const f=boxm(.005,.012,.006,m);f.position.set(sd*.006,.013,.036);f.rotation.x=0.3;g.add(f);const e=new THREE.Mesh(new THREE.SphereGeometry(.003,4,3),ey);e.position.set(sd*.005,.034,.032);g.add(e);}
+  const legs=[];for(const sd of [-1,1])for(let i=0;i<4;i++){const lg=new THREE.Group();lg.position.set(sd*.011,.024,.026-i*.01);lg.rotation.y=sd*(Math.PI/2+(i-1.5)*0.42);
+    const fe=new THREE.Group();fe.rotation.x=-0.7;lg.add(fe);const L1=.036+(i===0||i===3?.008:0);fe.add(at(boxm(.0055,.0055,L1,m),0,0,L1/2));
+    const kn=new THREE.Group();kn.position.z=L1;kn.rotation.x=1.75;fe.add(kn);const L2=.05+(i===0||i===3?.008:0);kn.add(at(boxm(.0045,.0045,L2,m),0,0,L2/2));
+    g.add(lg);legs.push(lg);}
   g.scale.setScalar(1.5);return {g,legs};}
 function addAptLight(S,col,int,distance,x,y,z,kind){const l=new THREE.PointLight(col,int,distance,1.5);l.position.set(x,y,z);S.add(l);AP.lights.push({l,base:int,kind});return l;}
 function buildApt(){
@@ -2912,8 +2919,8 @@ function enterStreet(){
    ============================================================ */
 const NOTES={
  '1':{verb:'Read the newspaper clipping',title:'Clipping, soaked through',cls:'type',html:`<div class="mast">THE RIVERSIDE COURIER</div><div class="hl">Second Woman Found Near Storm Drain</div>
-  <p>Police have identified the woman found Tuesday beside a storm drain on Fourth Street as Carla Reyes, 34. Like a woman discovered in March, Reyes had severe wounds to the abdomen.</p>
-  <p>A department spokesperson described both women as transient and said there was no threat to the general public.</p>
+  <p>The woman found Sunday beside a storm drain on Fourth Street has been identified as Carla Reyes, 34, the wife of the mayor. The body was too badly disfigured to recognize. Police identified her by her handbag, her coat and her wedding ring.</p>
+  <p>Like a woman discovered in March, she had severe wounds to the abdomen. A department spokesperson described the first woman as transient, said there was no threat to the general public, and would not say what Mrs. Reyes was doing on Fourth Street.</p>
   <div class="margin">there are FIVE of us gone. FIVE.</div>`},
  '2':{verb:'Read the inspection log',title:'Water Dept. log, Sector C',cls:'type',html:`<div class="mast">CITY WATER DEPT &middot; SECTOR C INSPECTION</div>
   <div class="log"><span>04/02</span><span>Grate 14 cleared. Rags, debris.</span><span>04/09</span><span>Heard crying in the overflow line. Reported.</span><span>04/16</span><span>Crying again. Supervisor says cats.</span><span>04/23</span><span>It is not cats. Something keeps moving the debris back. Requesting a partner for Sector C.</span><span>04/30</span><span>Request denied.</span></div>`},
@@ -3333,14 +3340,14 @@ function takeMap(){if(F.hasMap)return;F.hasMap=true;SW.board.visible=false;SW.bo
 function openMap(){if(C3.on){openC3Map();return;}if(F.ch2){openLabMap();return;}if(!F.hasMap||level!=='sewer'||(mode!=='play'&&mode!=='paused'))return;const back=mode==='paused'?'pause':'play';if(back==='pause')$('pause').hidden=true;mapOpen=back;
   releaseLock();setMode('ui');sPaper();markMapSeen();const cv=$('mapCv');drawMapCanvas(cv,{notes:true,here:true});
   try{if(document.fonts&&document.fonts.load)Promise.all([document.fonts.load('19px "Reenie Beanie"'),document.fonts.load('10px "Special Elite"')]).then(()=>{if(mapOpen)drawMapCanvas(cv,{notes:true,here:true});}).catch(()=>{});}catch(e){}
-  $('mapHelp').textContent=touchMode?'Marissa marks things on it as she learns them':'M or Esc to fold it up  ·  Marissa marks things on it as she learns them';$('mapUI').hidden=false;
+  $('mapHelp').textContent=touchMode?'You mark things on it as you learn them':'M or Esc to fold it up  ·  You mark things on it as you learn them';$('mapUI').hidden=false;
   if(!touchMode)setTimeout(()=>{try{$('mapClose').focus({preventScroll:true});}catch(e){}},30);}
 function closeMap(){if(!mapOpen)return;const back=mapOpen;mapOpen=false;$('mapUI').hidden=true;sPaper();if(back==='pause'){setMode('paused');$('pause').hidden=false;}else setMode('play');}
 function mapTick(dt){if(level!=='sewer')return;
   if(SW.boardCv&&!SW.boardDrawn){SW.boardDrawn=true;drawMapCanvas(SW.boardCv,{scale:SW.boardCv.width/(MW1*10+32),board:true});SW.boardTex.needsUpdate=true;
     try{if(document.fonts&&document.fonts.load)document.fonts.load('10px "Special Elite"').then(()=>{drawMapCanvas(SW.boardCv,{scale:SW.boardCv.width/(MW1*10+32),board:true});SW.boardTex.needsUpdate=true;}).catch(()=>{});}catch(e){}}
   if(!F.hasMap||mode!=='play'||F.ch2||C3.on)return;mapCheckT-=dt;if(mapCheckT>0)return;mapCheckT=1;let nw=false;
-  mapNotes().forEach(n=>{if(!F.mapSeen.has(n.id)){F.mapSeen.add(n.id);nw=true;}});if(nw)tip('Marissa marks it on her map. '+(touchMode?'Tap MAP to look.':'Press M to look.'),5);}
+  mapNotes().forEach(n=>{if(!F.mapSeen.has(n.id)){F.mapSeen.add(n.id);nw=true;}});if(nw)tip('You mark it on your map. '+(touchMode?'Tap MAP to look.':'Press M to look.'),5);}
 function hintNow(){
   if(level==='apt'){const o=$('objText').textContent;
     if(o===OBJ.feed)return !AP.hasCan?"Pip's food is in one of the kitchen cabinets.":!AP.canOpen?"The can opener is on the kitchen counter.":"Pip's bowl is on the kitchen floor.";
@@ -4273,7 +4280,7 @@ function buildMutantRig(kind,seed){const g=new THREE.Group();const sci=kind==='s
   const wp=[ball(.07,glow,8,6),ball(.05,glow,7,5)];wp[0].position.set(0,.5,-.13);wp[1].position.set(.06,.76,-.04);wp.forEach(w=>body.add(w));
   const shadow=blob(.8,.7,0.55);g.add(shadow);bakeShade(g,0);
   return {g,hips,body,legs,L,R:Rr,head,syr,wp,jaw};}
-function makeMutant(d,i){const rig=buildMutantRig(d.kind,d.seed);rig.g.visible=false;
+function makeMutant(d,i){const rig=buildMutantRig(d.kind,d.seed);rig.g.visible=false;rig.g.scale.setScalar(0.92+((Math.abs(d.seed|0)*7919)%17)/100);/* v8.8: 0.92 to 1.08 */
   return {i,d,rig,kind:d.kind,x:wc(d.start[0]),z:wc(d.start[1]),yaw:0,state:'patrol',wp:0,path:[],goal:-1,repath:0,sus:0,lx:0,lz:0,lost:0,inv:null,wait:0,cool:0,atkT:0,recT:0,stunT:0,saw:null,
     alive:true,active:false,ph:R()*10,spd:0,breathT:R()*2,stepT:0,twT:0,tw:0,pan:null};}
 function mSolid(cx,cz){return solidCell(cx,cz)||cellAt(cx,cz)==='c';}
@@ -4408,7 +4415,7 @@ function delilahSay(){const dest=delilahDest(),w=DVOX[SW.lab.dv%DVOX.length];SW.
 let dsubT=null;function dsub(text,dur){const el=$('sub');sub(text,dur);el.classList.add('dvox');clearTimeout(dsubT);dsubT=setTimeout(()=>el.classList.remove('dvox'),dur*1000);}
 function useCure(){if(!(F.inj>0)){F.cureSeen=true;labMark('cure');sub("A freezer full of blue vials. The label says: REVERSAL. ADMINISTER WITHIN 60 SECONDS OF EXPOSURE.",4.4);return;}
   F.inj=0;F.cureT=0;F.cureSeen=true;labMark('cure');if(AC){const t=now()+0.01;sNoise(busFx,t,0.35,'highpass',2600,0.7,0.35,0.02);sGasp(true);}postU.uFlash.value=0.25;
-  sub('It burns going in. Then her head is quiet.',3);setObjective(ch2Obj());labHud(true);writeSave(makeSave(zoneName()));}
+  sub('It burns going in. Then your head is quiet.',3);setObjective(ch2Obj());labHud(true);writeSave(makeSave(zoneName()));}
 function dieInfection(needle){if(mode!=='play')return;setMode('cine');P.lookT=null;setChase(false);SW.lab.dspike=1.5;
   if(AC){scream(comp,now()+0.02,1.4,520,1.0,{fall:0.6});const d=delilahDest();if(d)sTone(d,now()+0.3,3,'sine',40,28,0.5,0.4);}dsub('feed.',3);
   const p0=P.pitch;tween(1.4,k=>{P.eye=lerp(P.eye,0.3,k*k*0.3);P.pitch=lerp(p0,-0.9,k);});
@@ -4418,12 +4425,12 @@ let labHudV=-1;function labHud(force){const on=F.ch2&&F.inj>0,el=$('mInfect');if
 function infectLevel(){if(!F.ch2)return 0;if(!(F.inj>0))return (F.bossIn&&!F.bossDead)?Math.min(0.9,0.08+SW.lab.dspike*0.45):0;return Math.min(1,0.32+0.2*F.inj+0.35*(1-F.cureT/60))+SW.lab.dspike*0.35;}
 
 /* ---------- the lab map ---------- */
-function labMark(id){if(!F.labNotes)F.labNotes=[];if(F.labNotes.includes(id))return;F.labNotes.push(id);if(F.hasLabMap&&mode==='play')tip('Marissa marks it on her map. '+(touchMode?'Tap MAP to look.':'Press M to look.'),5);}
+function labMark(id){if(!F.labNotes)F.labNotes=[];if(F.labNotes.includes(id))return;F.labNotes.push(id);if(F.hasLabMap&&mode==='play')tip('You mark it on your map. '+(touchMode?'Tap MAP to look.':'Press M to look.'),5);}
 function takeLabMap(){if(F.hasLabMap)return;F.hasLabMap=true;SW.lab.board.visible=false;SW.lab.ghost.visible=true;sPaper();speak('Marissa','An evacuation plan. Good.',2.4);after(0.4,()=>openLabMap());}
 function openLabMap(){if(!F.hasLabMap||level!=='sewer'||(mode!=='play'&&mode!=='paused'))return;const back=mode==='paused'?'pause':'play';if(back==='pause')$('pause').hidden=true;mapOpen=back;
   releaseLock();setMode('ui');sPaper();const cv=$('mapCv');drawLabMap(cv,{notes:true,here:true});
   try{if(document.fonts&&document.fonts.load)Promise.all([document.fonts.load('19px "Reenie Beanie"'),document.fonts.load('10px "Special Elite"')]).then(()=>{if(mapOpen)drawLabMap(cv,{notes:true,here:true});}).catch(()=>{});}catch(e){}
-  $('mapHelp').textContent=touchMode?'Marissa marks things on it as she learns them':'M or Esc to fold it up  ·  Marissa marks things on it as she learns them';$('mapUI').hidden=false;
+  $('mapHelp').textContent=touchMode?'You mark things on it as you learn them':'M or Esc to fold it up  ·  You mark things on it as you learn them';$('mapUI').hidden=false;
   if(!touchMode)setTimeout(()=>{try{$('mapClose').focus({preventScroll:true});}catch(e){}},30);}
 function drawLabMap(cv,o){o=o||{};const c0=127,c1=192,r0=1,r1=24,cs=10,mx=16,top=48,bot=24,Wd=(c1-c0)*cs+mx*2,Ht=top+(r1-r0)*cs+bot,S=o.board?cv.width/Wd:2;
   if(!o.board){cv.width=Math.round(Wd*S);cv.height=Math.round(Ht*S);}const g=cv.getContext('2d');g.setTransform(S,0,0,S,0,0);
@@ -4576,10 +4583,10 @@ function drawMaze(g,ox,oy,w,h,rat){const cs=Math.min((w-20)/MZ_W,(h-20)/MZ_H),x0
 /* ---------- puzzle outcomes ---------- */
 function cryoCheck(){const ok=PZ.slots.every((p,i)=>p===LIMB_ORDER[i]);
   if(!ok){PZ.msg='The rack buzzes and spits the drawers back open. Wrong order.';PZ.slots=[];if(AC)sTone(comp,now()+0.01,0.4,'square',140,0,0.12);noise(P.x,P.z,7);renderPuz();return;}
-  F.cryoDone=true;closePuz();if(AC){const t=now()+0.01;sClank(busFx,t,0.4);sNoise(busFx,t+0.3,1.6,'highpass',1800,0.7,0.3,0.1);}sub('The drawers lock. Somewhere behind her, glass lifts with a hiss.',3.4);
+  F.cryoDone=true;closePuz();if(AC){const t=now()+0.01;sClank(busFx,t,0.4);sNoise(busFx,t+0.3,1.6,'highpass',1800,0.7,0.3,0.1);}sub('The drawers lock. Somewhere behind you, glass lifts with a hiss.',3.4);
   const pod=SW.lab.pod;if(pod)tween(1.6,k=>{pod.position.y=pod.userData.y0+k*2.0;});setObjective(ch2Obj());}
 function chemMix(){const ok=PZ.seq.length===4&&PZ.seq.every((id,i)=>id===CHEM_RECIPE[i]);
-  if(!ok){let n=0;while(n<PZ.seq.length&&PZ.seq[n]===CHEM_RECIPE[n])n++;PZ.msg=PZ.seq.includes('moon')?'The moon. It goes black at once and the fumes sting her eyes. She pours it out.':n===0?'It fizzes black the moment the first one hits the flask. She pours it out.':n>=PZ.seq.length?'It stays clear, but it needs all four. She pours it out.':'It stays clear for '+['','the first pour','two pours','three pours'][n]+', then fizzes black. She pours it out.';PZ.seq=[];if(AC)sNoise(busFx,now()+0.01,1.0,'bandpass',600,2,0.35,0.05,2400);renderPuz();return;}
+  if(!ok){let n=0;while(n<PZ.seq.length&&PZ.seq[n]===CHEM_RECIPE[n])n++;PZ.msg=PZ.seq.includes('moon')?'The moon. It goes black at once and the fumes sting your eyes. You pour it out.':n===0?'It fizzes black the moment the first one hits the flask. She pours it out.':n>=PZ.seq.length?'It stays clear, but it needs all four. She pours it out.':'It stays clear for '+['','the first pour','two pours','three pours'][n]+', then fizzes black. She pours it out.';PZ.seq=[];if(AC)sNoise(busFx,now()+0.01,1.0,'bandpass',600,2,0.35,0.05,2400);renderPuz();return;}
   F.chemDone=true;takeItem('chem');closePuz();if(AC){const t=now()+0.01;sNoise(busFx,t,1.2,'bandpass',800,3,0.3,0.1,300);sTone(busFx,t+0.4,1.4,'sine',220,440,0.08);}
   sub('It turns a sick, glowing green. Across the lab a monitor flickers on.',3.4);drawChemScreen();setObjective(ch2Obj());}
 function mazeRun(){const r=mzPath();PZ.msg='';let i=0;PZ.ratAt=MZ_START;const st=()=>{if(!PZ.open)return;i++;if(i<r.path.length){PZ.ratAt=r.path[i];if(AC)sTone(comp,now()+0.005,0.02,'square',2600,0,0.02);renderPuz();after(0.22,st);}
@@ -4593,7 +4600,7 @@ function openCodeDoor(k){const d=SW.lab.doors[k];if(k==='closet')F.closetOpen=tr
 const VHS={on:false};
 const TAPES={
  1:{dur:30,label:'TRIAL 7',date:'OCT 14 1987',lines:[[3,7,'Doctor',"The trial water isn't approved, ma'am."],[7.5,11.5,'Wife',"He's dying. You said it could save him."],[12,15.5,'Doctor','It might save him. It might change him.'],[16,18.5,'Wife','Give it to me.'],[21.5,24.5,null,'(the baby screams)']]},
- 2:{dur:27,label:'CH 6 ARCHIVE',date:'MAR 02 1988',lines:[[2.5,7,'Anchor','The earthquake struck just after midnight. The wave came minutes later.'],[7.5,12,'Anchor','Tonight the whole lower district of Old Riverside is under water.'],[12.5,17,'Anchor','The city says the flooded district cannot be recovered.'],[17.5,22.5,'Anchor','Instead, the mayor says, Riverside will be built over it.']]},
+ 2:{dur:27,label:'CH 6 ARCHIVE',date:'MAR 02 1974',lines:[[2.5,7,'Anchor','The earthquake struck just after midnight. The wave came minutes later.'],[7.5,12,'Anchor','Tonight the whole lower district of Old Riverside is under water.'],[12.5,17,'Anchor','The city says the flooded district cannot be recovered.'],[17.5,22.5,'Anchor','Instead, the mayor says, Riverside will be built over it.']]},
  3:{dur:31,label:'CAM 04',date:'NOV 02 1988',lines:[[3,7,'Log','Log forty-one. They stopped sleeping. They say she talks to them.'],[7.5,11.5,'Log','Log forty-three. Henderson says she told him the skin is bad.'],[12,16,'Log',"Log forty-four. He took Pike's face off. Then he wore it."],[16.5,21.5,'Log',"Log forty-five. I'm leaving the baton charging in Security. The door code is zero six one nine."],[22,27,'Log',"If anyone's watching this, take it. Don't drink the water."]]}};
 function tapeAvailable(){return (F.tapes||[]).find(t=>!(F.tapesSeen||[]).includes(t));}
 function playTape(n){if(VHS.on||mode!=='play')return;releaseLock();setMode('cine');hidePrompt();$('tip').hidden=true;$('sub').hidden=true;
@@ -5047,7 +5054,7 @@ async function ventEnter(g){if(mode!=='play'||P.inVent||P.climbing)return;P.clim
   P.inVent=true;
   await tween(0.95,k=>{const e=easeV(k);P.floor=lerp(0,VENT_Y,e);P.eye=lerp(e0,0.62,e);P.pitch=lerp(-1.1,0,e);P.yaw=y0+angDiff(y0,yT)*e;});
   P.floor=VENT_Y;P.eye=0.62;P.climbing=false;setMode('play');sCrawl();
-  if(!F.ventTip){F.ventTip=true;after(0.6,()=>sub('Sheet metal, cold against her knees. Nothing his size fits down here.',3.6));}}
+  if(!F.ventTip){F.ventTip=true;after(0.6,()=>sub('Sheet metal, cold against your knees. Nothing his size fits down here.',3.6));}}
 async function ventExit(g){if(mode!=='play'||!P.inVent||P.climbing)return;P.climbing=true;setMode('cine');hidePrompt();
   const z0=P.z,p0=P.pitch,e0=P.eye;if(AC){const t=now()+0.01;sNoise(busFx,t,0.25,'bandpass',1000,2,0.22);sClank(busFx,t+0.35,0.25);}
   await tween(0.35,k=>{const e=easeV(k);P.z=lerp(z0,g.z,e);P.x=VENT_X;P.pitch=lerp(p0,0.9,e);});
@@ -5084,7 +5091,7 @@ function chatBufs(){if(CHAT_BUFS)return CHAT_BUFS;const sr=AC.sampleRate;CHAT_BU
     t+=0.05+rr()*0.18;}
   return b;});return CHAT_BUFS;}
 function sChatter(dest,t,amp){if(!AC)return;const bufs=chatBufs(),s=AC.createBufferSource();s.buffer=bufs[(Math.random()*bufs.length)|0];s.playbackRate.value=0.85+Math.random()*0.35;
-  const f=AC.createBiquadFilter();f.type='bandpass';f.frequency.value=2800;f.Q.value=0.9;const g=AC.createGain();g.gain.value=amp;s.connect(f);f.connect(g);g.connect(dest);s.start(t);s.onended=()=>{try{g.disconnect();}catch(e){}};return s.buffer.duration/s.playbackRate.value;}
+  const f=AC.createBiquadFilter();f.type='bandpass';f.frequency.value=2800;f.Q.value=0.9;const g=AC.createGain();g.gain.value=amp*2;s.connect(f);f.connect(g);g.connect(dest);s.start(t);s.onended=()=>{try{g.disconnect();}catch(e){}};return s.buffer.duration/s.playbackRate.value;}
 /* a low, wet animal snarl: a buzzing throat, roughened by a fast flutter, a rasp of breath over it; about a dozen nodes, a third of a full voice */
 var GROWL_CURVE=null;
 function sSnarl(dest,t,amp,long){if(!AC)return 0;const d=long?0.9+Math.random()*0.5:0.45+Math.random()*0.35,f0=78+Math.random()*34;
@@ -5096,7 +5103,7 @@ function sSnarl(dest,t,amp,long){if(!AC)return 0;const d=long?0.9+Math.random()*
   o.connect(am);am.connect(sh);sh.connect(bp);bp.connect(lp);lp.connect(env);env.connect(dest);o.start(t);lfo.start(t);o.stop(t+d+0.02);lfo.stop(t+d+0.02);o.onended=()=>{try{env.disconnect();}catch(e){}};
   sNoise(dest,t,d*0.9,'bandpass',520+Math.random()*260,1.4,amp*0.32,0.05,1300);return d;}
 /* sniffing, like a dog working a scent */
-function sSniff(dest,t,amp){for(let i=0;i<3;i++)sNoise(dest,t+i*0.13,0.07,'bandpass',2300+Math.random()*700,2.5,amp,0.01);}
+function sSniff(dest,t,amp){for(let i=0;i<3;i++){sNoise(dest,t+i*0.13,0.07,'bandpass',2300+Math.random()*700,2.5,amp*1.8,0.01);sNoise(dest,t+i*0.13,0.09,'bandpass',1000+Math.random()*300,1.6,amp*0.9,0.01);}}
 /* what a mutant says, given what it's doing; called every frame, rate-limited per mutant */
 function mutVox(m,dt,d){if(!AC||!m.pan)return;if(m.voxRank>1&&m.state!=='chase')return;m.voxT=(m.voxT==null?1+Math.random()*3:m.voxT)-dt;m.chatT=Math.max(0,(m.chatT||0)-dt);m.snarlT=Math.max(0,(m.snarlT||0)-dt);
   if(m.voxT>0||d>28)return;const t=now()+0.02,st=m.state;
@@ -5660,7 +5667,7 @@ function bossHurt(src,kx,kz,kb){const D=SW.boss;if(mode!=='play'||time<D.iframe|
 function bossKillPlayer(src){const D=SW.boss;if(mode!=='play')return;setMode('cine');bmStop(1.2);D.rig.hd.getWorldPosition(_w);P.lookT=[_w.x,_w.y,_w.z];SW.lab.dspike=1.5;
   if(AC){scream(comp,now()+0.02,1.4,520,1.0,{fall:0.6});bRoar(now()+0.5,true);}dsub('feed.',3);
   const p0=P.pitch;tween(1.4,k=>{P.eye=lerp(P.eye,0.3,k*k*0.3);P.pitch=lerp(p0,-0.6,k);});
-  after(1.6,()=>fadeTo(1,1.0));after(2.8,()=>{$('mHurt').hidden=true;deathScreen(src==='acid'?'The bile ate through her.':'Delilah fed.');});}
+  after(1.6,()=>fadeTo(1,1.0));after(2.8,()=>{$('mHurt').hidden=true;deathScreen(src==='acid'?'The bile ate through you.':'Delilah fed.');});}
 let bossHudV='';function bossHud(){const D=SW.boss,el=$('mHurt');if(!el||!D)return;const on=F.bossIn&&!F.bossDead&&D.state!=='dead'&&D.state!=='dying';if(el.hidden===on)el.hidden=!on;if(!on)return;
   const v=String(D.hp);if(v===bossHudV)return;bossHudV=v;el.querySelector('span').textContent='Hurt '+'●'.repeat(BOSS_HP-D.hp)+'○'.repeat(Math.max(0,D.hp));el.classList.toggle('low',D.hp<=1);}
 function bossDanger(){const D=SW.boss;if(!D||!F.bossIn||F.bossDead||mode!=='play')return 0;const d=Math.hypot(P.x-D.x,P.z-D.z);return D.state==='idle'?0.3:(d<10?0.62:0.4);}
@@ -5989,6 +5996,9 @@ const VS={sil:VF([500,1500,2500,3500],0),he:VF([700,1700,2700,3500],0,1),eh:VF([
   mh:VF([250,1100,2300,3200],0.7,0,420),sc:VF([850,1300,2800,3500],1,0.3),hs:VF([900,1500,2600,3800],0,1),hs0:VF([600,1200,2400,3500],0,1),grn:VF([300,800,2300,3200],0.7,0,600)};
 const VO=o=>Object.assign({par:1,pg:[1,0.5,0.25,0.12],floor:0.05},o);
 const COWPG={pg:[1,0.75,0.7,0.6],floor:0.09};
+/* v8.8: the cow's formants sit under 400 Hz, which a phone speaker can't play. A second, nasal throat an octave of formant higher, plus a rasp. */
+const COWMID=VF([640,1250,2500,3300],1,0.12),COWMM=VF([320,1150,2300,3200],0.8,0,1100);
+function cowMid(d,t,s,f0,amp,drive){s=s.map(r=>[r[0]===VS.mm?COWMM:COWMID,r[1],r[2],r[3]]);amp*=2.1;vsay(d,t,s,{f0,breath:0.25,vib:0.012,vibR:4,pg:[0.7,1,0.8,0.4],tract:1.0,drive:drive||3.2,amp:amp,low:true});const L=vdur(s);cvNoise(d,t+0.12,L*0.8,'bandpass',1150,2.2,0.16*amp,0.12,850);}
 function vsay(d,t,seq,o,b){const ac=d.context;if(ac===AC){if(t-AC.currentTime>0.5){atAudio(t,tt=>vsay(d,tt,seq,o,b));return seq.reduce((a,s)=>a+s[1],0);}if(o.low&&cvLive>10)return 0;cvLive++;setTimeout(()=>{cvLive--;},(seq.reduce((a,s)=>a+s[1],0)+0.3)*1000);}
   return voxSay(ac,d,t,seq,b||[],VO(o));}
 const vdur=s=>s.reduce((a,x)=>a+x[1],0);
@@ -5999,39 +6009,40 @@ function vHenSeq(n,kawk){const s=[];for(let i=0;i<n;i++)s.push([VS.hb,0.025,0.01
   if(kawk)s.push([VS.hb,0.025,0.01,1.05],[VS.bk,0.05,0.01,0.9],[VS.sil,0.03,0.01,1.3],[VS.aw,0.1,0.03,1.7],[VS.aw,0.22,0.1,1.35],[VS.hb,0.05,0.02,1.3]);return s;}
 /* a slow wet growl, for tails and the croc */
 function vGrowl(d,t,o){const s=[[VS.o,0.3*(o.L||1),0.05,1],[VS.a,0.5*(o.L||1),0.2,o.peak||0.85],[VS.o,0.5*(o.L||1),0.3,0.6]];vsay(d,t,s,{f0:o.f0||70,breath:0.85,vib:0,tract:o.tract||0.9,drive:3.5,jit:[50,0.1],am:[25,0.85],amp:o.amp||0.8,low:o.low});return vdur(s);}
+const YHUM2=VF([330,1400,2600,3300],0.85,0.05,1700);
 const C3V={
   /* ---- Yoli: a low woman's laugh with a second voice a fourth under it, then the thing inside her breathes out ---- */
   yoliLaugh(d,t,o={}){d=cvGain(d,6.5);const n=o.n||(7+((Math.random()*2)|0)),f0=o.f0||cvR(210,228),s=vLaughSeq(n,0.7),L=vdur(s);
     vsay(d,t,s,{f0,breath:0.6,vib:0.03,vibR:7,tract:1.12,amp:o.amp||1,low:o.low});vsay(d,t,s,{f0:f0*0.75,breath:0.3,vib:0.03,vibR:7,tract:1.25,amp:(o.amp||1)*0.3,low:o.low});
     if(o.big===false)return L;return L-0.1+vGrowl(d,t+L-0.1,{f0:70,amp:0.6,L:0.9});},
   yoliGiggle(d,t,o={}){return C3V.yoliLaugh(d,t,{n:3+((Math.random()*2)|0),big:false,amp:0.7,f0:cvR(200,215),low:true});},
-  yoliHum(d,t){d=cvGain(d,4);const s=[];for(const st of [0,-2,-4,-2,0,-5]){const p=Math.pow(2,st/12);s.push([VS.mh,cvR(0.32,0.42),0.08,p],[VS.mh,0.06,0.03,p]);}
-    vsay(d,t,s,{f0:190,breath:0.1,vib:0.02,vibR:5.5,tract:0.95,amp:0.55,low:true,pg:[1,0.8,0.6,0.4]});vsay(d,t,s,{f0:142,breath:0.05,vib:0.02,vibR:5.5,tract:0.85,amp:0.2,low:true});return vdur(s);},
+  yoliHum(d,t){d=cvGain(d,4.2);const s=[];for(const st of [0,-2,-4,-2,0,-5]){const p=Math.pow(2,st/12);s.push([VS.mh,cvR(0.32,0.42),0.08,p],[VS.mh,0.06,0.03,p]);}
+    vsay(d,t,s,{f0:190,breath:0.1,vib:0.02,vibR:5.5,tract:0.95,amp:0.55,low:true,pg:[1,0.8,0.6,0.4]});vsay(d,t,s,{f0:142,breath:0.05,vib:0.02,vibR:5.5,tract:0.85,amp:0.2,low:true});vsay(d,t,s.map(r=>[YHUM2,r[1],r[2],r[3]]),{f0:380,breath:0.15,vib:0.025,vibR:5.5,tract:1.1,pg:[0.8,1,0.7,0.4],amp:0.75,low:true});return vdur(s);},
   yoliShriek(d,t){d=cvGain(d,2.4);const s=[[VS.he,0.05,0.01,1],[VS.sc,0.25,0.05,1.5],[VS.sc,0.6,0.3,1.35],[VS.sc,0.4,0.3,0.9]];vsay(d,t,s,{f0:330,breath:0.4,vib:0.06,vibR:8,tract:1.05,drive:3,amp:1.1});
     vsay(d,t,s,{f0:247,breath:0.2,vib:0.06,vibR:8,tract:0.95,drive:3,amp:0.45});return vdur(s);},
   yoliLurch(d,t){d=cvGain(d,3);cvNoise(d,t,0.3,'bandpass',1400,2,0.7,0.02,600);return 0.2+C3V.yoliLaugh(d,t+0.2,{n:3,big:false,f0:240,amp:0.85});},
-  yoliStep(d,t,o={}){const w=o.wet?1:0.45;cvNoise(d,t,0.07,'bandpass',900,1.2,0.5*w+0.25,0.003,500);cvTone(d,t,0.09,'sine',110,60,0.35);if(Math.random()<0.25)cvNoise(d,t+0.03,0.02,'highpass',3500,0.7,0.25);return 0.12;},
+  yoliStep(d,t,o={}){const w=o.wet?1:0.45;cvNoise(d,t,0.07,'bandpass',900,1.2,0.5*w+0.25,0.003,500);cvTone(d,t,0.09,'sine',110,60,0.35);cvNoise(d,t,0.03,'bandpass',2600,1.6,0.45);cvNoise(d,t+0.02,0.08,'bandpass',1500,1.2,0.25,0.01,900);if(Math.random()<0.25)cvNoise(d,t+0.03,0.02,'highpass',3500,0.7,0.25);return 0.12;},
   /* ---- the cow-man: a real moo in a huge throat; the bellow ends in a roar, the death goes on too long ---- */
   cowMoo(d,t,o={}){const k=o.kind||'idle';d=cvGain(d,{idle:3.4,bellow:3,death:4.2,short:3.2}[k]||3.2);/* v8.7: louder (it got lost on phone speakers and under the hens) */
-    if(k==='short'){const s=vMooSeq(0.15,0.55);vsay(d,t,s,{f0:cvR(135,150),breath:0.35,vib:0.012,vibR:4,...COWPG,tract:0.45,drive:2,amp:0.8});return vdur(s);}
-    if(k==='death'){const s=[[VS.mm,0.3,0.05,1],[VS.uu,0.4,0.2,1.3],[VS.oh,1.2,0.4,1.1],[VS.ue,1.0,0.6,0.55],[VS.ue,0.6,0.3,0.4]];vsay(d,t,s,{f0:150,breath:0.5,vib:0.03,vibR:5,...COWPG,tract:0.45,drive:2.6,amp:1.1});
+    if(k==='short'){const s=vMooSeq(0.15,0.55),f0=cvR(135,150);vsay(d,t,s,{f0,breath:0.35,vib:0.012,vibR:4,...COWPG,tract:0.45,drive:2,amp:0.8});cowMid(d,t,s,f0,0.6);return vdur(s);}
+    if(k==='death'){const s=[[VS.mm,0.3,0.05,1],[VS.uu,0.4,0.2,1.3],[VS.oh,1.2,0.4,1.1],[VS.ue,1.0,0.6,0.55],[VS.ue,0.6,0.3,0.4]];vsay(d,t,s,{f0:150,breath:0.5,vib:0.03,vibR:5,...COWPG,tract:0.45,drive:2.6,amp:1.1});cowMid(d,t,s,150,0.5,3.6);
       voiceTo(d,t+0.3,2.4,240,0.28,{contour:[0.9,1.3,1.2,1.0,0.6],drive:16,wobble:0.25,breath:0.6,F1:600,wet:0.5,tract:0.9});return vdur(s)+vGrowl(d,t+vdur(s)-0.3,{f0:58,amp:0.7,L:1.3})-0.3;}
     const L=k==='bellow'?1.25:cvR(0.95,1.1),s=vMooSeq(k==='bellow'?0.4:0.25,L),f0=k==='bellow'?cvR(158,170):cvR(140,152);
-    vsay(d,t,s,{f0,breath:k==='bellow'?0.45:0.3,vib:0.012,vibR:4,...COWPG,tract:0.45,drive:k==='bellow'?2.8:2,amp:o.amp||1});
+    vsay(d,t,s,{f0,breath:k==='bellow'?0.45:0.3,vib:0.012,vibR:4,...COWPG,tract:0.45,drive:k==='bellow'?2.8:2,amp:o.amp||1});cowMid(d,t,s,f0,(o.amp||1)*(k==='bellow'?0.55:0.7),k==='bellow'?3.8:3.2);
     if(k!=='bellow')return vdur(s);voiceTo(d,t+0.2,vdur(s)*0.8,220,0.22,{contour:[0.9,1.3,1.2,1.0,0.6],drive:16,wobble:0.25,breath:0.6,F1:600,wet:0.5,tract:0.9});
     return vdur(s)-0.2+vGrowl(d,t+vdur(s)-0.2,{f0:68,amp:0.85});},
   cowSnort(d,t){d=cvGain(d,3.3);cvNoise(d,t,0.18,'bandpass',500,1.4,0.9,0.01,260);cvNoise(d,t+0.26,0.24,'bandpass',420,1.4,0.8,0.01,220);return 0.55;},
-  cowHoof(d,t,o={}){cvTone(d,t,0.07,'triangle',180,95,0.5);cvNoise(d,t,0.045,'bandpass',1500,2.5,0.45);if(o.wet)cvNoise(d,t+0.01,0.18,'bandpass',600,0.9,0.3,0.01,300);return 0.1;},
+  cowHoof(d,t,o={}){cvTone(d,t,0.07,'triangle',180,95,0.5);cvNoise(d,t,0.045,'bandpass',1500,2.5,0.75);cvNoise(d,t+0.004,0.02,'bandpass',3200,2,0.5);cvNoise(d,t+0.03,0.09,'bandpass',900,1.4,0.3,0.01,600);if(o.wet)cvNoise(d,t+0.01,0.18,'bandpass',600,0.9,0.3,0.01,300);return 0.1;},
   cowProd(d,t){for(let i=0;i<7;i++)cvNoise(d,t+i*0.035,0.03,'bandpass',4200+Math.random()*2500,3,0.7);cvTone(d,t,0.28,'square',120,118,0.12);return 0.3;},
   /* ---- the croc: a hiss with a throat in it, a slow wet growl, a bellow you feel more than hear, the snap ---- */
-  crocHiss(d,t,o={}){d=cvGain(d,8.6);const L=o.dur||1.25;vsay(d,t,[[VS.hs0,0.15,0.1,1],[VS.hs,L-0.15,0.4,1]],{f0:100,breath:0,amp:1.3,tract:0.9});return L;},
-  crocGrowl(d,t){d=cvGain(d,5);const s=[[VS.o,0.35,0.05,1],[VS.a,0.9,0.4,1.15],[VS.o,0.6,0.3,0.8]];vsay(d,t,s,Object.assign({breath:0.7,vib:0,tract:1.8,drive:3.5,jit:[60,0.06],am:[30,0.7]},{f0:cvR(65,75),amp:1}));return vdur(s);},
+  crocHiss(d,t,o={}){d=cvGain(d,16);const L=o.dur||1.25;vsay(d,t,[[VS.hs0,0.15,0.1,1],[VS.hs,L-0.15,0.4,1]],{f0:100,breath:0,amp:1.3,tract:0.9});return L;},
+  crocGrowl(d,t){d=cvGain(d,10);const s=[[VS.o,0.35,0.05,1],[VS.a,0.9,0.4,1.15],[VS.o,0.6,0.3,0.8]];vsay(d,t,s,Object.assign({breath:0.7,vib:0,tract:1.8,drive:3.5,jit:[60,0.06],am:[30,0.7]},{f0:cvR(65,75),amp:1}));return vdur(s);},
   /* three rumbling bursts, each a little lower: the way a bull croc bellows */
-  crocBellow(d,t){d=cvGain(d,4);const s=[];const f=[1.1,1.0,0.9];for(let k=0;k<3;k++){s.push([VS.o,0.12,0.04,f[k]],[VS.a,0.42,0.15,f[k]*1.1],[VS.o,0.22,0.1,f[k]*0.85],[VS.sil,0.18,0.05,f[k]*0.8]);}
+  crocBellow(d,t){d=cvGain(d,8);const s=[];const f=[1.1,1.0,0.9];for(let k=0;k<3;k++){s.push([VS.o,0.12,0.04,f[k]],[VS.a,0.42,0.15,f[k]*1.1],[VS.o,0.22,0.1,f[k]*0.85],[VS.sil,0.18,0.05,f[k]*0.8]);}
     vsay(d,t,s,{breath:0.7,vib:0,tract:1.8,drive:3.5,jit:[60,0.08],am:[30,0.75],f0:cvR(62,68),amp:1});return vdur(s);},
-  crocGrunt(d,t){d=cvGain(d,4);const s=[[VS.o,0.2,0.04,1],[VS.a,0.45,0.15,1.1],[VS.o,0.3,0.12,0.8]];vsay(d,t,s,Object.assign({breath:0.7,vib:0,tract:1.8,drive:3.5,jit:[60,0.06],am:[30,0.7]},{f0:cvR(66,74),amp:1}));return vdur(s);},
-  crocSnap(d,t){d=cvGain(d,1.1);cvNoise(d,t,0.025,'highpass',2400,0.7,1.0);cvTone(d,t,0.07,'sine',240,70,0.8);cvNoise(d,t+0.005,0.09,'lowpass',700,0.7,0.6);return 0.15;},
-  crocSwim(d,t){d=cvGain(d,2);cvNoise(d,t,0.6,'bandpass',500,0.8,0.5,0.15,300);cvNoise(d,t+0.3,0.5,'lowpass',260,0.7,0.4,0.1);return 0.9;},
+  crocGrunt(d,t){d=cvGain(d,8);const s=[[VS.o,0.2,0.04,1],[VS.a,0.45,0.15,1.1],[VS.o,0.3,0.12,0.8]];vsay(d,t,s,Object.assign({breath:0.7,vib:0,tract:1.8,drive:3.5,jit:[60,0.06],am:[30,0.7]},{f0:cvR(66,74),amp:1}));return vdur(s);},
+  crocSnap(d,t){d=cvGain(d,2.2);cvNoise(d,t,0.025,'highpass',2400,0.7,1.0);cvTone(d,t,0.07,'sine',240,70,0.8);cvNoise(d,t+0.005,0.09,'lowpass',700,0.7,0.6);return 0.15;},
+  crocSwim(d,t){d=cvGain(d,3.6);cvNoise(d,t,0.6,'bandpass',500,0.8,0.5,0.15,300);cvNoise(d,t+0.3,0.5,'lowpass',260,0.7,0.4,0.1);return 0.9;},
   /* ---- the mayor: a body full of liquid. Bubbles, belches in two throats, groans, wheezes, the floor taking his weight ---- */
   mayorGurgle(d,t,o={}){const L=o.dur||cvR(1.2,1.8);const ac=d.context;const lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=2200;lp.connect(d);
     let tt=t;while(tt<t+L){const f=cvR(300,900);cvTone(lp,tt,cvR(0.03,0.07),'sine',f,f*cvR(1.8,2.8),cvR(0.3,0.6),0.004);tt+=cvR(0.02,0.08);}cvNoise(lp,t,L,'bandpass',350,2,0.25,0.1);return L;},
@@ -6250,7 +6261,7 @@ function c3BuildGrowth(S){const rr=mulberry(3601),cols=[0xd040e0,0x30d8c8,0x9ae0
 
 /* ---------- pills ---------- */
 function c3TakePill(){if(mode!=='play'||!C3.on)return;if(!(F.pills>0)){return;}if(P.hp>0.97){sub('Not yet. Save them.',2);return;}F.pills--;P.hp=1;postU.uFlash.value=0;
-  if(AC){const t=now()+0.01;for(let i=0;i<5;i++)sNoise(busFx,t+i*0.05,0.04,'bandpass',3200+R()*800,3,0.18);sNoise(busFx,t+0.5,0.25,'lowpass',500,0.8,0.25);sGasp(false);}sub('She dry-swallows two. The ache backs off.',2.8);}
+  if(AC){const t=now()+0.01;for(let i=0;i<5;i++)sNoise(busFx,t+i*0.05,0.04,'bandpass',3200+R()*800,3,0.18);sNoise(busFx,t+0.5,0.25,'lowpass',500,0.8,0.25);sGasp(false);}sub('You dry-swallow two. The ache backs off.',2.8);}
 
 /* ---------- the shared HUD bits ---------- */
 function c3Hud(){if(!C3.on)return;$('mHealth').hidden=false;$('mHealth').querySelector('b').style.width=(P.hp*100).toFixed(0)+'%';$('mHealth').classList.toggle('low',P.hp<0.35);
@@ -6336,8 +6347,8 @@ function c3KilledBy(m,line,head,fx){if(mode!=='play'&&mode!=='cine')return;setMo
   C3.lastHit=m.def.id;if(AC)scream(comp,now()+0.02,0.85,560+R()*40,1.0,{cut:true});const hp=head||[m.x,(m.y||0)+1.6,m.z];P.lookT=hp;
   if(killFov0==null)killFov0=camera.fov;{const a=camera.fov;tween(0.7,k=>{camera.fov=lerp(a,killFov0*0.62,k*k*(3-2*k));camera.updateProjectionMatrix();});}if(fx)fx();
   after(0.8,()=>{sDeath();postU.uFlash.value=1;});after(1.5,()=>fadeTo(1,0.6));after(2.2,()=>c3DeathScreen(m.def.id,line));}
-function c3DeathScreen(id,line){const L={croc:['IT TOOK YOU UNDER.','The water closed over her.'],cow:['IT FOUND YOU.','The prod kept going after she stopped.'],yoli:['SHE FOUND YOU.','Yoli is still smiling.'],
-    mayor:['HE ATE.','Bellini\'s is open again.'],spore:['YOU BREATHED IT IN.','The spores took root.'],drown:['YOU DROWNED.','No air under the rubble.'],fall:['YOU FELL.','The hole goes down a long way.'],hurt:['YOU DIED.','Nobody down here will find her.']}[id]||['YOU DIED.','Nobody down here will find her.'];
+function c3DeathScreen(id,line){const L={croc:['IT TOOK YOU UNDER.','The water closed over you.'],cow:['IT FOUND YOU.','The prod kept going after you stopped.'],yoli:['SHE FOUND YOU.','Yoli is still smiling.'],
+    mayor:['HE ATE.','Bellini\'s is open again.'],spore:['YOU BREATHED IT IN.','The spores took root.'],drown:['YOU DROWNED.','No air under the rubble.'],fall:['YOU FELL.','The hole goes down a long way.'],hurt:['YOU DIED.','Nobody down here will find you.']}[id]||['YOU DIED.','Nobody down here will find you.'];
   $('dead').querySelector('h2').textContent=L[0];deathScreen(line||L[1]);}
 
 /* ---------- what Marissa is after, and what she tells herself ---------- */
@@ -6427,31 +6438,40 @@ function c3BuildPills(S){C3.pillM=C3_PILLS.map(([u,v,y],i)=>{const [x,z]=[L3x(u)
 function c3ApplyPills(){(C3.pillM||[]).forEach((g,i)=>{g.visible=!(F.pillsTaken||[]).includes(i);});}
 
 /* ---------- Rita ---------- */
-function buildRita(){const r=buildHomeless({seed:97,coat:0x7a6a50,coatMap:T.coat,pants:0x3a3426,skin:0x5a4232,boot:0x1e1810,glove:0x2a2218,
-  head:{skin:[104,78,60],lip:[100,64,54],iris:'#2a1c10',brow:'rgba(50,40,30,0.95)',hair:'#2e2620',hairline:38,hairLen:104,age:0.8},
+function buildRita(){/* v8.8: as her missing poster says: gray hair, a green army jacket */
+  T.army=T.army||tex(64,64,(g,w,h)=>{g.fillStyle='#4e5634';g.fillRect(0,0,w,h);const r2=mulberry(41);for(let i=0;i<260;i++){g.fillStyle=r2()<0.5?'rgba(30,34,18,0.35)':'rgba(110,116,80,0.25)';g.fillRect(r2()*w,r2()*h,1+r2()*3,1);}
+    g.fillStyle='rgba(30,26,16,0.4)';for(let i=0;i<6;i++){g.beginPath();g.arc(r2()*w,r2()*h,3+r2()*6,0,TAU);g.fill();}g.fillStyle='rgba(20,22,12,0.5)';g.fillRect(0,31,w,1);g.fillRect(31,0,1,h);});
+  const r=buildHomeless({seed:97,coat:0xc8c8c0,coatMap:T.army,pants:0x4a4234,skin:0x7a5a44,boot:0x1e1810,glove:0x2a2218,
+  head:{skin:[150,112,86],lip:[132,86,74],iris:'#2a1c10',brow:'rgba(150,146,138,0.95)',hair:'#9a968e',hairline:36,hairLen:108,age:0.85},
   prof:[[0,-0.2],[0.21,-0.2],[0.23,-0.08],[0.21,0.14],[0.215,0.34],[0.225,0.49],[0.2,0.57],[0.12,0.62],[0.06,0.645],[0,0.645]],
   extras({body,head,armR}){const mud=lam({color:0x2e2a1a,emissive:0x060504});
     /* mud caked to the knees and up the front of the coat, a scarf over the hair */
-    for(let i=0;i<9;i++){const b=ball(.06+i%3*.02,mud,6,5);b.position.set((i%3-1)*.12,-.15+((i/3)|0)*.18,.17);b.scale.set(1.3,.7,.5);body.add(b);}
-    const sc=lam({map:T.knit,color:0x4a3a2a,emissive:0x0a0806});const hood=new THREE.Mesh(new THREE.SphereGeometry(.12,12,8,0,TAU,0,Math.PI*0.55),sc);hood.scale.set(1.05,1.08,1.1);hood.position.y=.015;head.add(hood);
-    const sm=ball(.05,mud,6,5);sm.position.set(.05,.02,.09);sm.scale.set(1,.5,.3);head.add(sm);
+    for(let i=0;i<5;i++){const b=ball(.06+i%2*.02,mud,6,5);b.position.set((i-2)*.08,-.16+(i%2)*.06,.165);b.scale.set(1.3,.6,.25);body.add(b);}
+    /* gray hair, chopped short and wild; the jacket's collar, pockets and a faded flag patch */
+    const hm=lam({color:0x8e8a82,emissive:0x0c0c0a});const hr=new THREE.Mesh(lumpify(new THREE.SphereGeometry(.112,12,8,0,TAU,0,Math.PI*0.6),0.1,977),hm);hr.position.set(0,.012,-.008);head.add(hr);
+    for(let i=0;i<7;i++){const a=(i/6-0.5)*2.6;const lk=new THREE.Mesh(new THREE.ConeGeometry(.022,.09,4),hm);lk.position.set(Math.sin(a)*.1,-.03,Math.cos(a)*-.07-.01);lk.rotation.set(Math.PI+Math.cos(a)*-0.3,0,Math.sin(a)*-0.3);head.add(lk);}
+    const jk=lam({map:T.army,color:0xb0b0a8,emissive:0x080806});const col=new THREE.Mesh(new THREE.CylinderGeometry(.075,.1,.08,10,1,true),jk);col.position.y=.62;col.material.side=THREE.DoubleSide;body.add(col);
+    for(const sd of [-1,1]){const pk=boxm(.09,.08,.02,jk);pk.position.set(sd*.1,.4,.175);body.add(pk);const fl=boxm(.092,.025,.024,jk);fl.position.set(sd*.1,.445,.178);body.add(fl);}
+    const pt=boxm(.06,.04,.01,lam({color:0x6a5a4a}));pt.position.set(.245,.42,.02);pt.rotation.y=Math.PI/2;body.add(pt);
+    
     }});
   /* the rifle goes on after the body is merged, so it can still be raised */
   const rifle=new THREE.Group();const wood=lam({color:0x5a3a20,emissive:0x0a0604}),steel=lam({color:0x3a3c3c,emissive:0x060606});rifle.add(at(boxm(.06,.1,.42,wood),0,0,-.2));const bar=cylm(.016,.016,.7,6,steel);bar.rotation.x=Math.PI/2;bar.position.set(0,.03,.32);rifle.add(bar);
-  rifle.add(at(boxm(.04,.06,.16,steel),0,.0,.08));rifle.position.set(-.04,.36,.24);rifle.rotation.set(0.25,0.5,0);r.body.add(rifle);r.rifle=rifle;r.g.visible=false;return r;}
+  rifle.add(at(boxm(.04,.06,.16,steel),0,.0,.08));rifle.position.set(-.235,.23,.36);rifle.rotation.set(0,1.35,0);r.body.add(rifle);r.rifle=rifle;r.g.visible=false;return r;}
 const r_={};
 function ritaPose(dt,mode){const R3=C3.rita;if(!R3)return;capPose(R3,mode==='walk'?'walk':'stand',dt);
   if(mode==='aim'){R3.armR.a.rotation.x=-1.15;R3.armR.f.rotation.x=-0.55;R3.armR.a.rotation.z=0.3;R3.armL.a.rotation.x=-1.4;R3.armL.f.rotation.x=-0.05;R3.armL.a.rotation.z=-0.32;R3.head.rotation.x=0.18;R3.head.rotation.z=-0.12;if(R3.rifle){R3.rifle.rotation.set(-0.04,-0.06,0);R3.rifle.position.set(-0.06,0.56,0.36);}}
-  else if(R3.rifle){R3.rifle.rotation.set(0.25,0.5,0);R3.rifle.position.set(-.04,.36,.24);R3.armR.a.rotation.x=-0.6;R3.armR.f.rotation.x=-1.1;R3.armL.a.rotation.x=-0.7;R3.armL.f.rotation.x=-1.0;}}
+  else if(R3.rifle){/* v8.8: carried across her body, right hand on the grip, left on the barrel */R3.rifle.rotation.set(0,1.35,0);R3.rifle.position.set(-.235,.23,.36);R3.armR.a.rotation.x=-0.35;R3.armR.f.rotation.x=-1.1;R3.armL.a.rotation.x=-0.45;R3.armL.f.rotation.x=-0.95;}}
 Object.assign(VOICES,{Rita:{f0:176,form:1.02,breath:0.36,rasp:true}});
 Object.assign(DLG,{
   ra1:{who:'Rita',text:'Don\'t. Move.',next:'ra2'},
   ra2:{who:'Rita',text:'...Wait. I know you. Egg salad. The bench outside the laundromat.',next:'ra3'},
   ra3:{who:'Marissa',text:'Rita? Oh my God. What are you doing down here?',next:'ra4'},
-  ra4:{who:'Rita',text:'Living. Same as up there, just wetter.',next:'ra5'},
+  ra4:{who:'Rita',text:'Wasn\'t my idea. Men in white coats grabbed me by the pump room. Brought me down, put me in their water, made me breathe their yellow stuff. Didn\'t take.',next:'ra4b'},
+  ra4b:{who:'Rita',text:'So they dumped me down here with the rest of the garbage. Said the lift would come back for me. It never came down. And those things out there kept me in that doorway.',next:'ra5'},
   ra5:{who:'Marissa',text:'My cat. Have you seen a cat? She\'s small, she\'s scared...',next:'ra6'},
   ra6:{who:'Rita',text:'Heard her. Crying half the night. I know where she is.',choices:[{t:'Take me to her.',go:'ra7'},{t:'Please. She\'s all I have.',go:'ra7'}]},
-  ra7:{who:'Rita',text:'Nothing\'s free down here, honey. You fed me once. Feed me again. Egg salad.',next:'ra8'},
+  ra7:{who:'Rita',text:'Nothing\'s free down here. You fed me once. Feed me again. Egg salad.',next:'ra8'},
   ra8:{who:'Marissa',text:'You want a sandwich. Now.',next:'ra9'},
   ra9:{who:'Rita',text:'Mayo at the market. Somebody kept hens at the slaughterhouse. Bread at the bakery on Canal, if any of it\'s good. Bellini\'s still has gas.',next:'ra10'},
   ra10:{who:'Rita',text:'And stay out of the water in that market. Something in there eats.',next:null},
@@ -6459,7 +6479,7 @@ Object.assign(DLG,{
   rb2:{who:'Marissa',text:'Here. Egg salad. Like you wanted.',next:'rb3'},
   rb3:{who:'Rita',text:'...God. It\'s good. It\'s really good.',next:'rb4'},
   rb4:{who:'Rita',text:'Your cat\'s in the toy store, just past the alley. That\'s where the crying was.',next:'rb5'},
-  rb5:{who:'Rita',text:'Take this. Couple rounds left in it. I\'m going back up. With those freaks dead there\'s nothing keeping me down here.',next:null}});
+  rb5:{who:'Rita',text:'Take this. Couple rounds left in it. You came down in that lift, so it runs. With those freaks dead, I\'m going up.',next:null}});
 function c3RitaBuild(S){const R3=buildRita();S.add(R3.g);C3.rita=R3;const [x,z]=L3(11,9);R3.g.position.set(x+0.4,0,z);R3.g.rotation.y=-Math.PI/2;R3.mode='hide';
   /* her doorway: a mattress, a candle, a plastic bag of cans */
   const g=new THREE.Group();g.position.set(x,0,z);S.add(g);g.add(at(boxm(1.4,.18,.8,lam({color:0x5a5040,map:T.tarp})),.2,.4,.3));const cd=cylm(.03,.03,.12,6,lam({color:0xe8dcc0,emissive:0x302010}));cd.position.set(.5,.56,-.5);g.add(cd);
@@ -6572,7 +6592,7 @@ function drawC3Map(cv,o){o=o||{};const cs=10,mx=16,top=48,bot=26,Wd=C3W*cs+mx*2,
 function openC3Map(){if(!F.c3Map||!C3.on||(mode!=='play'&&mode!=='paused'))return;const back=mode==='paused'?'pause':'play';if(back==='pause')$('pause').hidden=true;mapOpen=back;
   releaseLock();setMode('ui');sPaper();const cv=$('mapCv');drawC3Map(cv,{notes:true,here:true});
   try{if(document.fonts&&document.fonts.load)Promise.all([document.fonts.load('19px "Reenie Beanie"'),document.fonts.load('10px "Special Elite"')]).then(()=>{if(mapOpen)drawC3Map(cv,{notes:true,here:true});}).catch(()=>{});}catch(e){}
-  $('mapHelp').textContent=touchMode?'Marissa marks things on it as she goes':'M or Esc to fold it up  ·  Marissa marks things on it as she goes';$('mapUI').hidden=false;
+  $('mapHelp').textContent=touchMode?'You mark things on it as you go':'M or Esc to fold it up  ·  You mark things on it as you go';$('mapUI').hidden=false;
   if(!touchMode)setTimeout(()=>{try{$('mapClose').focus({preventScroll:true});}catch(e){}},30);}
 
 /* ---------- the lift and the alley ---------- */
@@ -6828,7 +6848,7 @@ function c3BuildRoofs(S){const rust=lam({map:T.rust}),conc=lam({map:T.concrete,c
     for(let i=0;i<10;i++){const sd=new THREE.Mesh(new THREE.PlaneGeometry(0.06+R()*0.1,0.04+R()*0.08),sh);sd.rotation.set(-Math.PI/2,0,R()*3);sd.position.set(cx+(R()-0.5)*2.4,0.02,cz+(R()-0.5)*2.4);g.add(sd);}
     C3.skylight=g;
     c3Inter({kind:'link',x:x0-0.45,z:cz,y:6,r:1.6,label:()=>'Drop through the skylight',can:()=>!P.hidden,act(){c3SkyDrop();}});}
-  c3Inter({kind:'misc',x:L3x(33.6),z:wc(18),y:6,r:1.8,label:()=>'Look',act(){sub('It grew across the gap. It is warm through her shoes, and it moves when she breathes.',3.6);}});}
+  c3Inter({kind:'misc',x:L3x(33.6),z:wc(18),y:6,r:1.8,label:()=>'Look',act(){sub('It grew across the gap. It is warm through your shoes, and it moves when you breathe.',3.6);}});}
 
 /* v8.6: through the skylight. She lowers herself through the broken panes, hangs, and lets go onto the feed sacks. */
 async function c3SkyDrop(){if(mode!=='play'||P.climbing)return;if(!F.c3Mayo){speak('Marissa',c3Need(),2.6);return;}P.climbing=true;setMode('cine');hidePrompt();P.lookT=null;P.crouch=false;
@@ -6862,7 +6882,9 @@ function buildCowMan(){const g=new THREE.Group(),hide=lam({map:c3HideTex(),emiss
   const man=new THREE.Group();man.position.set(0,1.35,.95);man.rotation.x=-0.25;root.add(man);
   const seam=new THREE.Mesh(new THREE.TorusGeometry(.3,.07,6,12),raw);seam.rotation.x=Math.PI/2;man.add(seam);
   const tor=new THREE.Mesh(new THREE.LatheGeometry([[0,0],[.28,0],[.27,.2],[.24,.42],[.27,.58],[.2,.68],[.08,.74],[0,.75]].map(([r,y])=>new THREE.Vector2(r,y)),12),skin);tor.scale.set(1,1,.7);man.add(tor);
-  const head=new THREE.Group();head.position.set(0,.92,.02);man.add(head);head.add(new THREE.Mesh(headGeo(.12),lam({map:mutFaceTex(77)})));
+  const head=new THREE.Group();head.position.set(0,.98,.03);head.scale.setScalar(1.4);man.add(head);head.add(new THREE.Mesh(headGeo(.12),lam({map:mutFaceTex(77)})));
+  /* v8.8: the cow's horns, screwed into his skull */
+  {const hornM=lam({color:0xc8bca0,emissive:0x0c0a08});for(const sd of [-1,1]){const hp=new THREE.Group();hp.position.set(sd*.085,.075,0);hp.rotation.set(0,0,sd*-1.1);head.add(hp);const h1=new THREE.Mesh(new THREE.ConeGeometry(.026,.13,6),hornM);h1.position.y=.06;hp.add(h1);h1.rotation.z=sd*0.35;hp.add(at(cylm(.03,.03,.02,6,raw),0,0,0));}}
   const jaw=new THREE.Group();jaw.position.set(0,-.07,.05);head.add(jaw);jaw.add(at(boxm(.09,.02,.06,raw),0,-.01,.04));
   man.add(at(cylm(.05,.06,.14,8,skin),0,.8,0));
   /* the cow's own head hangs off his right shoulder, still alive */
@@ -6886,12 +6908,33 @@ function c3CowAnim(m,dt){const r=m.rig;r.g.position.set(m.x,(m.y||0),m.z);r.g.ro
   r.L.a.rotation.x=damp(r.L.a.rotation.x,wind?-2.4:rec?-1.5:-0.9,wind?6:14,dt);r.L.f.rotation.x=damp(r.L.f.rotation.x,wind?-0.6:rec?0:-0.7,10,dt);r.R.a.rotation.x=damp(r.R.a.rotation.x,-0.3+Math.sin(time*1.1)*0.1,4,dt);
   r.head.rotation.y=damp(r.head.rotation.y,clamp(angDiff(m.yaw,Math.atan2(P.x-m.x,P.z-m.z)),-1,1),4,dt);r.jaw.rotation.x=damp(r.jaw.rotation.x,(m.state==='chase'||wind)?0.5:0.1+Math.max(0,Math.sin(time*0.9))*0.1,8,dt);
   r.ch.rotation.z=0.9+Math.sin(time*1.7)*0.12;r.zap.material.opacity=(wind&&Math.random()<0.5)||(rec&&Math.random()<0.7)?0.9:(Math.random()<0.02?0.6:0);}
-function buildChicken(seed){const rr=mulberry(seed),g=new THREE.Group(),fe=lam({color:rr()<0.5?0xd8d0c0:0x8a5a3a,emissive:0x0a0806}),bald=lam({color:0xc89088,emissive:0x100606}),leg=lam({color:0xc8a040}),red=lam({color:0xa01810,emissive:0x200404}),eye=basic({color:0xff3010});
-  const body=new THREE.Group();body.position.y=.24;g.add(body);const b=ball(.16,fe,8,6);b.scale.set(.8,.8,1.1);body.add(b);const bp=ball(.08,bald,6,4);bp.position.set(.09,.04,-.02);body.add(bp);
-  const tail=boxm(.06,.12,.1,fe);tail.position.set(0,.1,-.17);tail.rotation.x=-0.5;body.add(tail);
-  const head=new THREE.Group();head.position.set(0,.16,.15);body.add(head);head.add(ball(.065,bald,6,5));const bk=new THREE.Mesh(new THREE.ConeGeometry(.022,.07,4),leg);bk.rotation.x=Math.PI/2;bk.position.z=.07;head.add(bk);
-  head.add(at(boxm(.015,.05,.06,red),0,.06,0));[-.04,.04,0].forEach((o,i)=>{const e=ball(.012,eye,4,3);e.position.set(o,.02+(i===2?.035:0),.05);head.add(e);});
-  const legs=[-1,1].map(sd=>{const l=new THREE.Group();l.position.set(sd*.05,.18,0);g.add(l);l.add(at(cylm(.008,.008,.18,4,leg),0,-.09,0));return l;});
+function buildChicken(seed){const g=new THREE.Group(),rr=mulberry(seed),brown=rr()<0.55,T2=buildChicken.tx||(buildChicken.tx={});
+  /* v8.8: a real hen's shape: teardrop body, breast, folded wings, a fan of tail feathers, neck, comb and wattle, scaly toed feet. Speckled, moulting, three red eyes. */
+  const key=brown?'b':'w',ftx=T2[key]||(T2[key]=tex(64,64,(g,w,h)=>{g.fillStyle=brown?'#74462a':'#c4b8a2';g.fillRect(0,0,w,h);const r2=mulberry(brown?5:6);
+    for(let y=0;y<h+4;y+=4)for(let x=((y/4)%2)*3;x<w+4;x+=6){g.fillStyle=brown?(r2()<0.5?'#55301a':'#93643a'):(r2()<0.5?'#a2967f':'#dcd2c0');g.beginPath();g.arc(x,y,2.4,0,Math.PI);g.fill();}
+    for(let i=0;i<50;i++){g.fillStyle=brown?'rgba(26,14,6,0.65)':'rgba(84,72,58,0.55)';g.fillRect(r2()*w,r2()*h,1+r2()*2,1);}}));
+  const fe=lam({map:ftx,emissive:0x0a0806}),dk=lam({map:ftx,color:0x707070,emissive:0x060504}),bald=lam({color:0xc89088,emissive:0x100606}),leg=lam({color:0xb89a48,emissive:0x0c0a04}),
+    beakM=lam({color:0xc8a858,emissive:0x0c0a04}),red=lam({color:0xa01810,emissive:0x200404}),eye=basic({color:0xff3010});
+  const body=new THREE.Group();body.position.y=.24;g.add(body);
+  const b=ball(.15,fe,10,8);b.scale.set(.85,.8,1.12);b.position.z=-.01;body.add(b);
+  const br=ball(.105,fe,8,6);br.position.set(0,-.025,.075);body.add(br);
+  const rp=ball(.09,fe,8,6);rp.position.set(0,.045,-.11);body.add(rp);
+  const bp=ball(.06,bald,6,5);bp.scale.set(.5,1,1.2);bp.position.set(.105,.03,-.02);body.add(bp);
+  if(rr()<0.6){const bp2=ball(.045,bald,6,5);bp2.scale.set(1,.5,1);bp2.position.set(-.03,.11,-.04);body.add(bp2);}
+  for(const sd of [-1,1]){const wg=ball(.1,dk,8,6);wg.scale.set(.32,.62,1.1);wg.position.set(sd*.112,.02,-.025);wg.rotation.x=-0.15;body.add(wg);}
+  const tf=new THREE.Group();tf.position.set(0,.06,-.15);tf.rotation.x=-0.55;body.add(tf);
+  for(let i=0;i<5;i++){if(rr()<0.18)continue;const fp=new THREE.Group();fp.rotation.z=(i-2)*0.27;tf.add(fp);const fb=boxm(.032,.17+rr()*.04,.012,dk);fb.position.y=.09;fp.add(fb);}
+  const nk=cylm(.038,.058,.13,7,fe);nk.position.set(0,.1,.11);nk.rotation.x=0.45;body.add(nk);
+  const head=new THREE.Group();head.position.set(0,.16,.15);body.add(head);
+  head.add(ball(.05,bald,8,6));const hf=ball(.047,fe,7,5);hf.position.set(0,.004,-.022);head.add(hf);
+  const bk=new THREE.Mesh(new THREE.ConeGeometry(.016,.048,4),beakM);bk.rotation.x=Math.PI/2;bk.position.set(0,.004,.066);head.add(bk);
+  const bk2=new THREE.Mesh(new THREE.ConeGeometry(.011,.03,4),beakM);bk2.rotation.x=Math.PI/2+0.25;bk2.position.set(0,-.012,.058);head.add(bk2);
+  [[.03,.052],[.012,.062],[-.01,.062],[-.03,.054]].forEach(([z,y])=>{const c=ball(.017,red,6,4);c.scale.set(.45,1,1);c.position.set(0,y,z);head.add(c);});
+  for(const sd of [-1,1]){const w=ball(.013,red,6,4);w.scale.set(.8,1.6,.8);w.position.set(sd*.008,-.034,.05);head.add(w);}
+  [[-.036,.015,.036],[.036,.015,.036],[0,.034,.042]].forEach(([x,y,z])=>{const e=ball(.011,eye,5,4);e.position.set(x,y,z);head.add(e);});
+  const legs=[-1,1].map(sd=>{const l=new THREE.Group();l.position.set(sd*.05,.18,0);g.add(l);const th=ball(.045,fe,7,5);th.scale.set(1,1.2,1);th.position.y=.005;l.add(th);
+    l.add(at(cylm(.009,.007,.16,5,leg),0,-.095,0));const ft=new THREE.Group();ft.position.y=-.176;l.add(ft);
+    for(const a of [-0.45,0,0.45]){const tp=new THREE.Group();tp.rotation.y=a;ft.add(tp);tp.add(at(boxm(.007,.006,.055,leg),0,0,.027));}ft.add(at(boxm(.007,.006,.028,leg),0,0,-.013));return l;});
   g.scale.setScalar(1.1);return {g,body,head,legs};}
 function c3BuildSlaughter(S){const metal=lam({map:T.metal,color:0x9aa09a}),top=lam({color:0x5a605a}),rust=lam({map:T.rust}),meat=lam({color:0x8a2a22,emissive:0x140404}),fat=lam({color:0xd8c8a8,emissive:0x0a0806}),wire=lam({color:0x6a6a62,map:T.chain||T.metal,transparent:true,alphaTest:0.3,side:THREE.DoubleSide});
   /* steel tables to hide under, the rail of carcasses overhead */
@@ -6909,7 +6952,7 @@ function c3BuildSlaughter(S){const metal=lam({map:T.metal,color:0x9aa09a}),top=l
     const m={i,rig:ch,x,z,y,yaw:Math.PI,home:[x,z,y],state:'caged',ph:R()*6,box:SLA.box,ok:(cx,cz)=>c3c(cx,cz)==='.'&&cx>=SLA.box[0]&&cx<=SLA.box[1]&&cz>=SLA.box[2]&&cz<=SLA.box[3],rad:0.15,path:[],goal:-1,repath:0,spd:0};C3.chickens.push(m);}
   /* the eggs, in the nest boxes, once there's nothing left to stop her */
   const eggs=new THREE.Group();{const [x,z]=[L3x(41.5),23*CELL-0.6];eggs.position.set(x,0.42,z);S.add(eggs);const em=lam({color:0xd8c8a8,emissive:0x0e0c0a});for(let i=0;i<6;i++){const e=ball(.04,em,6,5);e.scale.y=1.3;e.position.set((i%3-1)*.1,0,(i/3|0)*.1-.05);eggs.add(e);}
-    c3Inter({kind:'take',x,z:z-1.1,y:0,r:1.9,label:()=>'Take the eggs',can:()=>F.cowDead&&!F.c3Eggs,act(){F.c3Eggs=true;eggs.visible=false;takeItem('eggs');sub('Six eggs, still warm. She doesn\'t think about it.',2.8);setObjective(c3Obj());writeSave(makeSave('The slaughterhouse'));}});}
+    c3Inter({kind:'take',x,z:z-1.1,y:0,r:1.9,label:()=>'Take the eggs',can:()=>F.cowDead&&!F.c3Eggs,act(){F.c3Eggs=true;eggs.visible=false;takeItem('eggs');sub('Six eggs, still warm. You don\'t think about it.',2.8);setObjective(c3Obj());writeSave(makeSave('The slaughterhouse'));}});}
   C3.eggMesh=eggs;
   /* the lever on the east wall */
   {const x=46*CELL+C3X*CELL-0.12,z=wc(19),g=new THREE.Group();g.position.set(x,1.3,z);S.add(g);g.add(at(boxm(.06,.5,.3,metal),0,0,0));const h=new THREE.Group();h.position.set(-.05,0,0);g.add(h);h.add(at(cylm(.025,.025,.5,5,rust),0,.25,0));h.add(at(ball(.05,lam({color:0xa02010}),6,5),0,.5,0));h.rotation.z=0.6;C3.lever=h;
@@ -7052,7 +7095,7 @@ function buildYoli(){const g=new THREE.Group(),skin=lam({color:0x8e8c7a,emissive
   const eyeT=tex3(64,64,3961,(g2,w,h)=>{g2.fillStyle='#e8e4d0';g2.fillRect(0,0,w,h);g2.strokeStyle='rgba(160,30,30,0.6)';for(let i=0;i<10;i++){g2.beginPath();g2.moveTo(0,i*7);g2.lineTo(w*0.4,i*7+3);g2.stroke();}const gr=g2.createRadialGradient(w*0.5,h*0.5,0,w*0.5,h*0.5,w*0.25);gr.addColorStop(0,'#000');gr.addColorStop(0.45,'#000');gr.addColorStop(0.5,'#c8a020');gr.addColorStop(1,'#5a3a08');g2.fillStyle=gr;g2.beginPath();g2.arc(w*.5,h*.5,w*.22,0,TAU);g2.fill();});
   const eye=new THREE.Mesh(new THREE.SphereGeometry(.09,12,10),lam({map:eyeT,emissive:0x2a2a20}));eye.position.set(0,.22,.07);eye.rotation.y=-Math.PI/2;body.add(eye);
   const arm=(sd,spiky)=>{const a=limb(.56,.045,.035,skin,6);a.position.set(sd*.19,.74,0);a.rotation.z=sd*0.12;body.add(a);{const sl=cylm(.068,.06,.46,7,rag);sl.position.y=-.24;a.add(sl);}const f=limb(.56,.036,.026,skin,6);f.position.y=-.56;a.add(f);const hd=new THREE.Group();hd.position.y=-.56;f.add(hd);
-    if(spiky){/* the hand is gone: a knot of bone and wet flesh, spikes out of it */const kn=new THREE.Mesh(lumpify(new THREE.SphereGeometry(.09,8,6),0.12,3971),raw);kn.scale.y=1.3;hd.add(kn);
+    if(spiky){/* the hand is gone: a knot of bone and wet flesh, spikes out of it */const kn=new THREE.Mesh(lumpify(new THREE.SphereGeometry(.065,8,6),0.12,3971),lam({color:0xa07a70,emissive:0x100808}));kn.scale.y=1.25;hd.add(kn);const kr=ball(.035,raw,6,4);kr.position.set(.02,-.04,.03);hd.add(kr);
       for(let i=0;i<6;i++){const s=new THREE.Mesh(new THREE.ConeGeometry(.022,.3+i*.05,4),bone);const a2=i/6*TAU;s.position.set(Math.cos(a2)*.05,-.15,Math.sin(a2)*.05);s.rotation.set(Math.sin(a2)*0.5+Math.PI,0,Math.cos(a2)*0.5);hd.add(s);}}
     else{hd.add(ball(.04,skin,6,5));for(let k=0;k<4;k++){const fg=limb(.2,.01,.006,skin,4);fg.position.set((k-1.5)*.018,-.03,.01);fg.rotation.x=0.2;hd.add(fg);}}return {a,f,hd};};
   const L=arm(1,true),Rr=arm(-1,false);
@@ -7101,7 +7144,7 @@ function c3BuildBakery(S){const wood=lam({map:T.wood}),glass=lam({color:0x3a4a40
     for(let i=0;i<7;i++){const b=ball(.14,i%2?mold:bread,7,5);b.scale.set(1.6,.7,.8);b.position.set(-1.5+i*.5,1.1,(i%2-0.5)*.3);g.add(b);const m2=ball(.08,mold,5,4);m2.position.set(-1.4+i*.5,1.17,(i%2-0.5)*.3);g.add(m2);}}
   {const [x,z]=L3(62,3),g=new THREE.Group();g.position.set(x,0,z);S.add(g);c3PropBox(x-1.0,x+1.0,z-0.95,z+0.75,0);g.add(at(boxm(1.9,1.8,1.6,lam({color:0x4a4a44,map:T.metal})),0,.9,-.1));g.add(at(boxm(1.4,.4,.04,basic({color:0x3a1404})),0,1.0,.72));}
   /* racks of bread along the walls, all of it fuzzed over */
-  const MOLD=['Green fur all through it. Moldy.','Soft and blue under the crust. Moldy.','It falls apart in her hand. Something moves in it.','Moldy. Every loaf on the rack.'];
+  const MOLD=['Green fur all through it. Moldy.','Soft and blue under the crust. Moldy.','It falls apart in your hand. Something moves in it.','Moldy. Every loaf on the rack.'];
   [[58.3,2.2,0],[63.6,4.5,-Math.PI/2],[63.6,6.5,-Math.PI/2],[58.2,6.7,Math.PI/2]].forEach(([u,v,ry],i)=>{const [x,z]=[L3x(u),v*CELL],g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=ry;S.add(g);
     for(let r=0;r<3;r++){g.add(at(boxm(1.6,.04,.45,wood),0,.5+r*.5,0));for(let k=0;k<4;k++){const b=ball(.12,k%3?mold:bread,6,5);b.scale.set(1.5,.7,.8);b.position.set(-.55+k*.36,.58+r*.5,0);g.add(b);}}
     [-.78,.78].forEach(o=>g.add(at(boxm(.04,1.55,.45,wood),o,.78,0)));/* v8.6: the racks had boards and no sides */
@@ -7119,7 +7162,7 @@ function c3BuildBakery(S){const wood=lam({map:T.wood}),glass=lam({color:0x3a4a40
     const d=c3Door('bak',{shut:()=>!open(),apply(){dl.rotation.y=open()?-1.3:0;C3.bakBolt.position.x=F.bakLocked&&!F.bakFree?1.86:1.72;}});C3.doors[(C3X+61)+',8']=d;
     const swing=()=>{if(AC){const t=now()+0.01;sTone(busFx,t,0.5,'triangle',1320,1320,0.05);sNoise(busFx,t,0.4,'lowpass',500,0.8,0.2);}tween(1.0,k=>{dl.rotation.y=-1.3*k*k*(3-2*k);});noise(P.x,P.z,6);};
     c3Inter({kind:'door',x:L3x(62),z:z+0.9,y:0,r:2.0,label:()=>'Open',can:()=>!open()&&!(F.bakLocked&&!F.yoliDead),act(){if(!F.c3Eggs){speak('Marissa',c3Need(),2.6);return;}
-      if(F.bakLocked){F.bakFree=true;C3.bakBolt.position.x=1.72;if(AC){sNoise(busFx,now()+0.01,0.3,'lowpass',300,0.7,0.6);sClank(busFx,now()+0.3,0.3);}sub('She puts her shoulder to it. The rotten frame gives.',2.6);swing();return;}
+      if(F.bakLocked){F.bakFree=true;C3.bakBolt.position.x=1.72;if(AC){sNoise(busFx,now()+0.01,0.3,'lowpass',300,0.7,0.6);sClank(busFx,now()+0.3,0.3);}sub('You put your shoulder to it. The rotten frame gives.',2.6);swing();return;}
       F.bakOpen=true;swing();}});
     c3Inter({kind:'door',x:L3x(62),z:z-0.9,y:0,r:1.8,label:()=>'Open',can:()=>F.bakLocked&&!F.bakFree,act(){if(AC){const t=now()+0.01;sClank(busFx,t,0.3);sNoise(busFx,t,0.2,'lowpass',400,0.8,0.3);}C3.bakLeaf.rotation.y=0.02;after(0.08,()=>{C3.bakLeaf.rotation.y=0;});sub('It won\'t open. The bolt is jammed into the frame.',2.4);}});}
   /* the flat upstairs: the bed faces the window, so from under it you can watch the window */
@@ -7207,7 +7250,7 @@ async function c3BakLock(){if(C3.bakLockGo||F.bakLocked)return;C3.bakLockGo=true
   const r0=dl.rotation.y;await tween(0.22,k=>{dl.rotation.y=lerp(r0,0,k*k);});shake(0.18);noise(P.x,P.z,4);if(C3.bakBell)tween(0.8,k=>{C3.bakBell.rotation.z=Math.sin(k*25)*0.4*(1-k);});
   await sleep(0.5);if(C3.bakBolt)tween(0.12,k=>{C3.bakBolt.position.x=lerp(1.72,1.86,k);});
   after(0.7,()=>{const m=C3.yoli;if(m&&!F.yoliDead)c3Voice(m,'yoliGiggle',{at:[L3x(54),5.4,wc(3)],ref:3,life:5});});
-  after(0.4,()=>{if(mode==='play')sub('The door slams behind her. The bolt drops.',2.6);});}
+  after(0.4,()=>{if(mode==='play')sub('The door slams behind you. The bolt drops.',2.6);});}
 /* she comes down from the flat as Marissa nears the stairs */
 async function c3YoliEmerge(){if(C3.yEm||F.yoliDead)return;C3.yEm=true;const m=C3.yoli,tx=L3x(55)+1.3,tz=wc(2);
   cStart(m,tx,tz,Math.PI/2);m.y=3.6;m.rig.g.visible=true;m.state='script';m.scr=null;m.ok=m.okHunt;m.threat=true;m.spd=0;
@@ -7239,7 +7282,7 @@ async function c3AptLock(){if(C3.aptGo||F.aptLocked)return;C3.aptGo=true;const m
     if(m.x>=x1-0.02){m.scr=null;m.state='patrol';m.ok=m.okShop;m.wp=0;m.path=[];m.goal=-1;}};if(close)after(0.8,()=>c3Voice(m,'yoliLaugh',{force:true}));}
   else if(m.active)m.ok=m.okShop;
   setMode('play');F.hp3=P.hp;writeSave(makeSave('The flat upstairs'));}
-async function c3TakeBread(){if(F.c3Bread)return;F.c3Bread=true;C3.goodBread.visible=false;takeItem('bread');sClick();sub('Wrapped in a towel at the back. Soft. No mold. She almost laughs.',3);setObjective(c3Obj());c3YoliBreakIn();}
+async function c3TakeBread(){if(F.c3Bread)return;F.c3Bread=true;C3.goodBread.visible=false;takeItem('bread');sClick();sub('Wrapped in a towel at the back. Soft. No mold. You almost laugh.',3);setObjective(c3Obj());c3YoliBreakIn();}
 /* she heard: the stairs, then the door, again and again, long enough to get under the bed */
 async function c3YoliBreakIn(){if(C3.breakGo||F.yoliDead)return;C3.breakGo=true;F.c3BreadAgain=false;const m=C3.yoli,d=C3.aptLeaf,b=C3.aptBolt;await sleep(1.6);if(F.yoliDead)return;
   if(!m.active)cStart(m,L3x(58)+0.6,wc(2),-Math.PI/2);m.rig.g.visible=true;m.state='script';m.scr=null;m.ok=m.okAll;m.atWin=false;m.threat=true;m.saw=null;
@@ -7377,7 +7420,7 @@ function c3BuildRest(S){const wood=lam({map:T.wood,color:0x7a5a40}),cloth=lam({c
     const hd=lam({color:0x8a8a82,map:T.metal});S.add(at(boxm(2.0,3.8-2.5,2.0,hd),L3x(76)+1,2.5+(3.8-2.5)/2,wc(4)));}
   {const [x,z]=[L3x(74.5),wc(2)+0.1];S.add(at(boxm(2.6,1.05,.7,wood),x,.52,z));S.add(at(boxm(2.7,.06,.8,lam({color:0x3a2a1a})),x,1.07,z));C3.boxes.push([x-1.3,x+1.3,z-0.38,z+0.38,0]);
     for(let i=0;i<5;i++){const b=cylm(.04,.05,.3,7,lam({color:[0x3a5a2a,0x6a3a1a,0x2a2a4a][i%3],transparent:true,opacity:0.8}));b.position.set(x-1+i*0.5,1.25,z+0.1);S.add(b);}}
-  c3Note('M1',{verb:'Read the clipping',title:'',cls:'type',html:`<div class="mast">THE RIVERSIDE COURIER</div><div class="hl">Mayor's Wife Found Dead</div><p>The wife of the mayor was found early Sunday. Police say there is no suspicion of foul play. Friends describe her as having struggled "for years, ever since the baby."</p><p>The mayor has cancelled all appearances.</p>`});
+  c3Note('M1',{verb:'Read the clipping',title:'',cls:'type',html:`<div class="mast">THE RIVERSIDE COURIER</div><div class="hl">Mayor's Wife Found Dead</div><p>Carla Reyes, 34, the wife of the mayor, was found early Sunday beside a storm drain on Fourth Street. The body was badly disfigured; she was identified by her belongings. Friends describe her as having struggled "for years, ever since the baby."</p><p>The mayor has cancelled all appearances.</p>`});
   c3Note('M2',{verb:'Read the letter',title:'',cls:'hand',html:`<p>She told me, at the end. Our boy didn't die. She left him down here. In the dark. A baby.</p><p>All these years I gave speeches about this town.</p><p>I've come down to bring him home. Whatever he is now.</p><p class="faded">I found him. God help me, I found him.</p>`});
   [[L3x(74.2),wc(2)+0.3,1.1,'M1'],[L3x(67.2),wc(7)-0.3,0.88,'M2']].forEach(([x,z,y,id])=>{const p=new THREE.Mesh(new THREE.PlaneGeometry(.22,.28),decal(lam({map:T.paper,emissive:0x2e2a1e})));p.rotation.x=-Math.PI/2;p.rotation.z=0.3;p.position.set(x,y,z);S.add(p);
     c3Inter({kind:'note',x,z:z+(id==='M1'?0.9:-0.9),y:0,r:1.8,label:()=>id==='M1'?'Read the clipping':'Read the letter',act(){openNote(id);}});});
@@ -7415,7 +7458,7 @@ function c3BuildRest(S){const wood=lam({map:T.wood,color:0x7a5a40}),cloth=lam({c
     /* cabinets on the south wall: one has a bowl */
     C3.cabs=[];[78,79,80].forEach((u,i)=>{const x=L3x(u)+1,z=wc(7)+0.6;S.add(at(boxm(1.8,.9,.6,wood),x,.45,z));C3.boxes.push([x-0.9,x+0.9,z-0.3,z+0.4,0]);const dr=new THREE.Group();dr.position.set(x-0.85,.45,z-0.31);S.add(dr);dr.add(at(boxm(.85,.8,.03,lam({map:T.wood,color:0x9a7a5a})),.42,0,0));C3.cabs.push(dr);
       c3Inter({kind:'cab',x,z:z-1.0,y:0,r:1.6,label:()=>'Open the cabinet',can:()=>!(F.cook&&F.cook['cab'+i]),act(){(F.cook=F.cook||{})['cab'+i]=true;tween(0.4,k=>{dr.rotation.y=-1.6*k;});sCab(P.x);
-        if(i===1){F.cook.bowl=true;sub('A mixing bowl. Dusty, but whole.',2.4);}else if(i===0){sub('A nest of something. Empty, thank God.',2.4);}else sub('Swollen cans. Nothing she can use.',2.4);}});});
+        if(i===1){F.cook.bowl=true;sub('A mixing bowl. Dusty, but whole.',2.4);}else if(i===0){sub('A nest of something. Empty, thank God.',2.4);}else sub('Swollen cans. Nothing you can use.',2.4);}});});
     /* rum on the shelf over the cabinets, rags on the hook by the sink */
     C3.bottles=[];for(let i=0;i<3;i++){const b=new THREE.Group();b.add(at(cylm(.04,.045,.24,8,lam({color:0x6a3a10,transparent:true,opacity:0.85})),0,.12,0));b.add(at(cylm(.015,.02,.08,6,lam({color:0x6a3a10})),0,.28,0));b.position.set(L3x(78.5)+i*0.3,1.6,wc(7)+0.85);S.add(b);C3.bottles.push(b);}
     S.add(at(boxm(1.4,.04,.25,wood),L3x(78.8),1.58,wc(7)+0.85));
@@ -7453,7 +7496,7 @@ function c3BoardAct(){const ck=F.cook=F.cook||{};const L=c3BoardLabel();const ch
   else if(L==='Slice the bread'){ck.cut=true;chop();sub('Four thick slices.',2);}
   else if(L==='Peel the eggs'){ck.peeled=true;if(AC)sNoise(busFx,now()+0.01,0.8,'highpass',3000,0.7,0.12);sub('The shells come away in wet flakes.',2.4);}
   else if(L==='Chop the eggs'){ck.chopped=true;chop();sub('Chopped.',1.6);}
-  else if(L==='Examine'){sub('She needs something to mix it in.',2.2);}
+  else if(L==='Examine'){sub('You need something to mix it in.',2.2);}
   else if(L==='Mix the eggs and the mayo'){ck.mixed=true;dropItem('mayo');if(AC)sNoise(busFx,now()+0.01,1.0,'bandpass',800,1,0.12);sub('Eggs, mayo. Egg salad. In a dead man\'s kitchen.',3);}
   else if(L==='Make the sandwich'){ck.done=true;F.c3Sand=true;dropItem('bread');dropItem('eggs');takeItem('sandwich');sub('An egg salad sandwich.',2.4);setObjective(c3Obj());c3BoardShow();F.hp3=P.hp;writeSave(makeSave('Bellini\'s kitchen'));after(2.6,()=>c3BurstIn());}
   c3BoardShow();}
@@ -7570,10 +7613,10 @@ const C3D_DRAW={
     g.strokeStyle='#4a4640';g.lineWidth=1;g.beginPath();g.moveTo(43,60);g.quadraticCurveTo(48,63.5,53,60);g.stroke();g.strokeStyle='rgba(60,56,50,0.5)';g.beginPath();g.moveTo(48,53);g.lineTo(47,57);g.lineTo(49,57.5);g.stroke();
     for(let i=0;i<500;i++){const v=(rr()*255)|0;g.fillStyle='rgba('+v+','+v+','+v+',0.12)';g.fillRect(18+rr()*60,23+rr()*60,1,1);}g.restore();
     g.strokeStyle='#f0ece0';g.lineWidth=2;g.strokeRect(18,23,60,60);
-    c3DT(g,'HAVE YOU SEEN ME?',w/2,91,8,'#1a1a1a');c3DLines(g,14,98,68,2,'#5a564c',rr);g.fillStyle='#3a3830';for(let i=0;i<9;i++)g.fillRect(4+i*11,110,1,18);},
+    c3DT(g,'HAVE YOU SEEN ME?',w/2,91,8,'#1a1a1a');c3DT(g,'LAST SEEN FEB. 9, 1974',w/2,100,5,'#3a3830');c3DLines(g,14,105,68,1,'#5a564c',rr);g.fillStyle='#3a3830';for(let i=0;i<9;i++)g.fillRect(4+i*11,110,1,18);},
   boil(g,w,h,rr){g.fillStyle='#e2dcc4';g.fillRect(0,0,w,h);g.fillStyle='#24426e';g.fillRect(0,0,w,20);c3DT(g,'CITY NOTICE',w/2,11,10,'#e8e4d4');
     g.strokeStyle='#24426e';g.lineWidth=2;g.beginPath();g.arc(w/2,35,10,0,TAU);g.stroke();g.beginPath();g.arc(w/2,35,5,0,TAU);g.stroke();
-    c3DT(g,'BOIL',w/2,57,16,'#a01a14');c3DT(g,'WATER',w/2,73,16,'#a01a14');c3DT(g,'BEFORE USE',w/2,87,9,'#1a1a1a');c3DLines(g,12,95,72,4,'#6a665a',rr);c3DT(g,'BY ORDER OF THE MAYOR',w/2,121,6,'#24426e');},
+    c3DT(g,'BOIL',w/2,57,16,'#a01a14');c3DT(g,'WATER',w/2,73,16,'#a01a14');c3DT(g,'BEFORE USE',w/2,87,9,'#1a1a1a');c3DT(g,'IN EFFECT JAN. 21, 1974',w/2,96,5,'#3a3830');c3DLines(g,12,102,72,3,'#6a665a',rr);c3DT(g,'BY ORDER OF THE MAYOR',w/2,121,6,'#24426e');},
   mayor(g,w,h,rr){g.fillStyle='#e8e2d2';g.fillRect(0,0,w,h);
     /* v8.6: a campaign portrait: sky-blue backdrop, a fat pleased face, the chain of office */
     const bg=g.createRadialGradient(48,60,8,48,62,58);bg.addColorStop(0,'#d4dce4');bg.addColorStop(1,'#6e88a8');g.fillStyle=bg;g.fillRect(0,22,w,82);
@@ -7602,7 +7645,7 @@ const C3D_DRAW={
     g.fillStyle='#7a2a22';g.beginPath();g.moveTo(37,65);g.quadraticCurveTo(48,76,59,65);g.quadraticCurveTo(48,69,37,65);g.closePath();g.fill();
     g.fillStyle='#f2eee0';g.beginPath();g.moveTo(39,65.6);g.quadraticCurveTo(48,72.5,57,65.6);g.quadraticCurveTo(48,68,39,65.6);g.closePath();g.fill();g.strokeStyle='rgba(120,100,80,0.6)';g.lineWidth=0.5;for(let i=0;i<7;i++){const x=41+i*2.3;g.beginPath();g.moveTo(x,66.4);g.lineTo(x,68.6+Math.sin(i/6*Math.PI)*2);g.stroke();}
     g.strokeStyle='rgba(120,60,44,0.55)';g.lineWidth=0.9;g.beginPath();g.moveTo(35,63);g.quadraticCurveTo(36,67,38,68);g.stroke();g.beginPath();g.moveTo(61,63);g.quadraticCurveTo(60,67,58,68);g.stroke();
-    g.fillStyle='#8c1a18';g.fillRect(0,0,w,22);g.fillStyle='#f0ece0';g.fillRect(0,21,w,1.5);c3DT(g,'RE-ELECT',w/2,12,15,'#f0ece0');g.fillStyle='#1c2a62';g.fillRect(0,h-24,w,24);g.fillStyle='#f0ece0';g.fillRect(0,h-24,w,1.5);c3DT(g,'HE KEEPS US DRY',w/2,h-15,8,'#f0ece0');c3DT(g,'VOTE TUESDAY',w/2,h-5,6,'#c8c4b8');},
+    g.fillStyle='#8c1a18';g.fillRect(0,0,w,22);g.fillStyle='#f0ece0';g.fillRect(0,21,w,1.5);c3DT(g,'RE-ELECT',w/2,12,15,'#f0ece0');g.fillStyle='#1c2a62';g.fillRect(0,h-24,w,24);g.fillStyle='#f0ece0';g.fillRect(0,h-24,w,1.5);c3DT(g,'HE KEEPS US DRY',w/2,h-15,8,'#f0ece0');c3DT(g,'VOTE TUES. MARCH 5, 1974',w/2,h-5,5,'#c8c4b8');},
   produce(g,w,h,rr){g.fillStyle='#efe0ae';g.fillRect(0,0,w,h);g.fillStyle='#2e6a30';g.fillRect(0,0,w,4);g.fillRect(0,h-4,w,4);c3DT(g,'FRESH PRODUCE',w/2,14,13,'#24622a');
     g.strokeStyle='#e8c838';g.lineWidth=5;for(const x of [58,66]){g.beginPath();g.arc(x,30,18,0.3*Math.PI,0.75*Math.PI);g.stroke();}
     [[20,44,'#c0281c'],[36,50,'#b8301c'],[24,60,'#c0281c'],[84,48,'#e88a20'],[96,58,'#e88a20'],[48,62,'#6aa030']].forEach(([x,y,c])=>{g.fillStyle=c;g.beginPath();g.arc(x,y,8,0,TAU);g.fill();g.fillStyle='#2a6a20';g.fillRect(x-2,y-9,4,3);g.fillStyle='rgba(255,255,255,0.35)';g.fillRect(x-4,y-4,3,2);});
@@ -7882,7 +7925,7 @@ requestAnimationFrame(t=>{last=t;frame(t);});
 initStore();
 window.__abandoned={get mode(){return mode;},pbox:()=>SW.pbox,look:p=>{P.pitch=p;},rend:()=>renderer,qa:()=>({archY,archR,isTube,cellAt,props:SW.propList,MW,MH,K,MUTS,PIPE_YC,PIPE_R}),blackout(){F.blackout=true;blackoutStart();},blackoutApply:()=>blackoutApply(),tvApply:()=>tvApply(),openNote:id=>openNote(id),closeNote:()=>closeNote(),endChapter:()=>endChapter(),newGame:()=>startGame(),inters:()=>SW.inter,SW:()=>SW,get level(){return level;},P,get K(){return K;},F:()=>F,
   skipToSewer(){initAudio();$('title').hidden=true;F=freshFlags();P.onPlat=false;enterSewer(true);},ventIntro:()=>ventIntro(),climbPipe:(u,i)=>climbPipe(u,CLIMBS[i||0]),steams:()=>[SW.steam,...(SW.steams||[])],cell:(x,z)=>cellAt(Math.floor(x/CELL),Math.floor(z/CELL)),duct:e=>ductMove(e),takeTrap:i=>takeTrap(i),setTrap:()=>setTrap(),climb:up=>climb(up),openLock:()=>openLock(),LOCK,killer:()=>K,throwBiter:()=>throwBiter(),hurt:a=>hurtPlayer(a),enterHide:i=>enterHide(SW.hides[i]),hides:()=>SW.hides,street:()=>{initAudio();$('title').hidden=true;enterStreet();},teleport(cx,cz,yaw){P.x=wc(cx);P.z=wc(cz);if(yaw!=null)P.yaw=yaw;},
-  hunt(){pickValve();},emerge:w=>emerge(w==='e'?VENT_E:VENT_W),canSee:()=>canSee(),kWord:w=>kWord(K.pan,w,1),kVox:w=>({hum:kHum,whimper:kWhimper,giggle:kGiggle,moan:kMoan,clicks:kClicks})[w](K.pan,1),cineScore:()=>cineScore(),scoreStop:(S,f)=>scoreStop(S,f),setMode:m=>setMode(m),hintNow:()=>hintNow(),openMap:()=>openMap(),closeMap:()=>closeMap(),release:w=>releaseSpider(w),npcs:()=>NPCS,remains:()=>SW.remains,spawnK:(cx,cz,wp)=>spawnKiller(cx,cz,wp||0),openGate,startGame,AP,trap:()=>trapSpider(),takeGlass:()=>takeGlass(),openCab:i=>openCab(AP.cabs[i]),takeCan:()=>takeCan(),useOpener:()=>useOpener(),feed:()=>feedPip(),news:()=>startNews(),spider:()=>spiderAppear(),release:()=>releaseSpider(),rats:()=>SW.rats,grabRat:r=>grabRat(r),throwRat:()=>throwRat(),litter:i=>pickLitter(i),burn:i=>burnSave(SW.fires[i||0]),save:()=>lastSave,load:sv=>loadGame(sv),ch2:()=>ch2FromTitle(),startCh2:()=>startChapter2(),ch2Wake:()=>ch2Wake(),vents:()=>VENTS2,ventHunt:()=>ventHunt(true),ventRoam:()=>ventRoam(),takeBattery:()=>takeBattery(),liftExamine:()=>liftExamine(),liftDown:()=>liftDown(),liftDead:()=>liftDead(),liftGate:()=>tryLiftGate(),endBuild:()=>endBuild(),pCrawl:()=>pCrawl(),c2:()=>SW.c2,ch2Lights:()=>SW.ch2L,lab:()=>SW.lab,muts:()=>MUTS,openLabDoor:()=>openLabDoor(),infect:i=>infect(MUTS[i||0]),cure:()=>useCure(),labWake:()=>labWake(),takeLabMap:()=>takeLabMap(),openLabMap:()=>openLabMap(),mSolid:(x,z)=>mSolid(x,z),mBfs:(a,b,c,d)=>mBfs(a,b,c,d),bfs:(a,b,c,d)=>bfs(a,b,c,d),patrol:()=>PATROL,openPuz:k=>openPuz(k),closePuz:()=>closePuz(),PZ,renderPuz:()=>renderPuz(),pzDigit:d=>pzDigit(d),pzEnter:()=>pzEnter(),cryoCheck:()=>cryoCheck(),chemMix:()=>chemMix(),mazeRun:()=>mazeRun(),mzPath:()=>mzPath(),playTape:n=>playTape(n),VHS,vhsEnd:()=>vhsEnd(),stab:i=>stab(MUTS[i]),canStab:i=>canStab(MUTS[i]),cellDoor:w=>cellDoor(w),useBench:()=>useBench(),applyLab2:()=>applyLab2(),labObj:()=>labObj(),labHint:()=>labHint(),inter:()=>SW.inter,give:k=>F.inv.push(k),boss:()=>SW.boss,bossIntro:()=>bossIntro(),bGo:x=>bGo(x),bossStab:()=>bossStab(),bossTarget:()=>bossTarget(),bossHurt:x=>bossHurt(x||'test',0,0,0),applyBoss:()=>applyBoss(),liftGo:()=>liftGo(),endCh2:()=>endCh2(),bmOn:()=>BM.on,blastAct:()=>blastAct(),bossLos:()=>bossLos(),ch3:()=>ch3FromTitle(),startCh3:()=>startChapter3(),C3:()=>C3,c3c:(cx,cz)=>c3c(cx,cz),L3:(u,v)=>L3(u,v),c3Tele(u,v,yaw){const x=(C3X+u)*CELL,z=v*CELL;P.x=x;P.z=z;if(yaw!=null)P.yaw=yaw;const cx=Math.floor(x/CELL),cz=Math.floor(z/CELL);P.lvl=c3Nav(cx,cz,x)||0;const c=c3c(cx,cz);P.inWater=c==='~'||c==='w';P.floor=P.inWater?FLOOD_Y-1.25:c3Floor(cx,cz,x);},c3Obj:()=>c3Obj(),c3Hint:()=>c3Hint(),c3Zone:()=>c3Zone(),c3Traverse:L=>c3Traverse(L),links:()=>C3.links,cutWires:()=>c3CutWires(),pullLever:()=>c3PullLever(),takeBread:()=>c3TakeBread(),stabYoli:()=>c3StabYoli(),pushYoli:()=>c3PushYoli(),C3V:()=>C3V,cvSyl:()=>cvSyl,cvNoise:()=>cvNoise,cvTone:()=>cvTone,voxSay:()=>voxSay,VOXT:()=>VOX_TRACKS,c3Voice:(m,k,o)=>c3Voice(m,k,o),sndLog:()=>C3SND.log,cvLive:()=>cvLive,liveShots:()=>liveShots,AC:()=>AC,barDoor:()=>c3BarDoor(),burstIn:()=>c3BurstIn(),ignite:()=>c3MayorIgnite(),ritaFeed:()=>c3RitaFeed(),pill:()=>c3TakePill(),endCh3:()=>c3EndChapter(),hold:k=>c3Hold(k),throw3:()=>c3ThrowHook(),C3SND:()=>C3SND,hushAll:()=>c3HushAll(),emerge:()=>c3MayorEmerge(),yoliBreak:()=>c3YoliBreakIn(),mayorHit:(x,y,z)=>c3MayorHit(C3.mayor,x,y,z),mayorPts:()=>({trap:MAYOR_TRAP,fall:MAYOR_FALL}),liveHq:()=>liveHq,bus:()=>({comp,busFx}),c3Off:()=>c3Off(),yoliSplat:()=>c3YoliSplat(),c3Map:()=>openC3Map(),yoliEmerge:()=>c3YoliEmerge(),aptLock:()=>c3AptLock(),bakLock:()=>c3BakLock(),yoliSearch:()=>c3YoliSearch(),yoliKill:()=>c3YoliWindowKill(),skyDrop:()=>c3SkyDrop(),stabCow:()=>c3StabCow(),post:()=>postU,cDanger:()=>cDanger(),c3Apply:()=>{c3HushAll();C3.areaApply.forEach(f=>f());},shk:()=>SHK,setMode:k=>setMode(k)};
+  hunt(){pickValve();},emerge:w=>emerge(w==='e'?VENT_E:VENT_W),canSee:()=>canSee(),kWord:w=>kWord(K.pan,w,1),kVox:w=>({hum:kHum,whimper:kWhimper,giggle:kGiggle,moan:kMoan,clicks:kClicks})[w](K.pan,1),cineScore:()=>cineScore(),scoreStop:(S,f)=>scoreStop(S,f),setMode:m=>setMode(m),hintNow:()=>hintNow(),openMap:()=>openMap(),closeMap:()=>closeMap(),release:w=>releaseSpider(w),npcs:()=>NPCS,remains:()=>SW.remains,spawnK:(cx,cz,wp)=>spawnKiller(cx,cz,wp||0),openGate,startGame,AP,trap:()=>trapSpider(),takeGlass:()=>takeGlass(),openCab:i=>openCab(AP.cabs[i]),takeCan:()=>takeCan(),useOpener:()=>useOpener(),feed:()=>feedPip(),news:()=>startNews(),spider:()=>spiderAppear(),release:()=>releaseSpider(),rats:()=>SW.rats,grabRat:r=>grabRat(r),throwRat:()=>throwRat(),litter:i=>pickLitter(i),burn:i=>burnSave(SW.fires[i||0]),save:()=>lastSave,load:sv=>loadGame(sv),ch2:()=>ch2FromTitle(),startCh2:()=>startChapter2(),ch2Wake:()=>ch2Wake(),vents:()=>VENTS2,ventHunt:()=>ventHunt(true),ventRoam:()=>ventRoam(),takeBattery:()=>takeBattery(),liftExamine:()=>liftExamine(),liftDown:()=>liftDown(),liftDead:()=>liftDead(),liftGate:()=>tryLiftGate(),endBuild:()=>endBuild(),pCrawl:()=>pCrawl(),c2:()=>SW.c2,ch2Lights:()=>SW.ch2L,lab:()=>SW.lab,muts:()=>MUTS,openLabDoor:()=>openLabDoor(),infect:i=>infect(MUTS[i||0]),cure:()=>useCure(),labWake:()=>labWake(),takeLabMap:()=>takeLabMap(),openLabMap:()=>openLabMap(),mSolid:(x,z)=>mSolid(x,z),mBfs:(a,b,c,d)=>mBfs(a,b,c,d),bfs:(a,b,c,d)=>bfs(a,b,c,d),patrol:()=>PATROL,openPuz:k=>openPuz(k),closePuz:()=>closePuz(),PZ,renderPuz:()=>renderPuz(),pzDigit:d=>pzDigit(d),pzEnter:()=>pzEnter(),cryoCheck:()=>cryoCheck(),chemMix:()=>chemMix(),mazeRun:()=>mazeRun(),mzPath:()=>mzPath(),playTape:n=>playTape(n),VHS,vhsEnd:()=>vhsEnd(),stab:i=>stab(MUTS[i]),canStab:i=>canStab(MUTS[i]),cellDoor:w=>cellDoor(w),useBench:()=>useBench(),applyLab2:()=>applyLab2(),labObj:()=>labObj(),labHint:()=>labHint(),inter:()=>SW.inter,give:k=>F.inv.push(k),boss:()=>SW.boss,bossIntro:()=>bossIntro(),bGo:x=>bGo(x),bossStab:()=>bossStab(),bossTarget:()=>bossTarget(),bossHurt:x=>bossHurt(x||'test',0,0,0),applyBoss:()=>applyBoss(),liftGo:()=>liftGo(),endCh2:()=>endCh2(),bmOn:()=>BM.on,blastAct:()=>blastAct(),bossLos:()=>bossLos(),ch3:()=>ch3FromTitle(),startCh3:()=>startChapter3(),C3:()=>C3,c3c:(cx,cz)=>c3c(cx,cz),L3:(u,v)=>L3(u,v),c3Tele(u,v,yaw){const x=(C3X+u)*CELL,z=v*CELL;P.x=x;P.z=z;if(yaw!=null)P.yaw=yaw;const cx=Math.floor(x/CELL),cz=Math.floor(z/CELL);P.lvl=c3Nav(cx,cz,x)||0;const c=c3c(cx,cz);P.inWater=c==='~'||c==='w';P.floor=P.inWater?FLOOD_Y-1.25:c3Floor(cx,cz,x);},c3Obj:()=>c3Obj(),c3Hint:()=>c3Hint(),c3Zone:()=>c3Zone(),c3Traverse:L=>c3Traverse(L),links:()=>C3.links,cutWires:()=>c3CutWires(),pullLever:()=>c3PullLever(),takeBread:()=>c3TakeBread(),stabYoli:()=>c3StabYoli(),pushYoli:()=>c3PushYoli(),C3V:()=>C3V,cvSyl:()=>cvSyl,cvNoise:()=>cvNoise,cvTone:()=>cvTone,voxSay:()=>voxSay,VOXT:()=>VOX_TRACKS,c3Voice:(m,k,o)=>c3Voice(m,k,o),sndLog:()=>C3SND.log,cvLive:()=>cvLive,liveShots:()=>liveShots,AC:()=>AC,barDoor:()=>c3BarDoor(),burstIn:()=>c3BurstIn(),ignite:()=>c3MayorIgnite(),ritaFeed:()=>c3RitaFeed(),pill:()=>c3TakePill(),endCh3:()=>c3EndChapter(),hold:k=>c3Hold(k),throw3:()=>c3ThrowHook(),C3SND:()=>C3SND,hushAll:()=>c3HushAll(),emerge:()=>c3MayorEmerge(),yoliBreak:()=>c3YoliBreakIn(),mayorHit:(x,y,z)=>c3MayorHit(C3.mayor,x,y,z),mayorPts:()=>({trap:MAYOR_TRAP,fall:MAYOR_FALL}),liveHq:()=>liveHq,bus:()=>({comp,busFx}),c3Off:()=>c3Off(),yoliSplat:()=>c3YoliSplat(),rpose:m=>{for(let i=0;i<40;i++)ritaPose(0.1,m||'stand');},sfx:()=>({kHum,kWhimper,kGiggle,kMoan,kClicks,cryBurst,sMeow,sPurr,sSqueal,sSnarl,sChatter,sSniff,sGroan,speakSyl,delilahSay}),ambAll:v=>{for(const k in amb)setAmb(k,v,0.05);},c3Map:()=>openC3Map(),yoliEmerge:()=>c3YoliEmerge(),aptLock:()=>c3AptLock(),bakLock:()=>c3BakLock(),yoliSearch:()=>c3YoliSearch(),yoliKill:()=>c3YoliWindowKill(),skyDrop:()=>c3SkyDrop(),stabCow:()=>c3StabCow(),post:()=>postU,cDanger:()=>cDanger(),c3Apply:()=>{c3HushAll();C3.areaApply.forEach(f=>f());},shk:()=>SHK,setMode:k=>setMode(k)};
 })();
 </script>
 </body></html>
