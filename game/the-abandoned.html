@@ -64,6 +64,7 @@ button{font:inherit;color:inherit}
 .ctl dt{color:var(--bile);white-space:nowrap}
 .ctl dd{margin:0;color:var(--bone)}
 .panel{background:rgba(8,10,8,.78);border:1px solid rgba(220,213,192,.18);padding:12px 14px}
+#chapPanel{display:grid;gap:8px;max-width:660px}#chapPanel[hidden]{display:none}.chapRow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}.chapRow .chapName{flex:1 1 220px;font-size:15px;letter-spacing:.12em;text-transform:uppercase;opacity:.85}.chapRow.locked .chapName{opacity:.4}.chapRow .btn{font-size:16px;padding:5px 10px 3px}
 .big-red{font-family:var(--f-type);font-size:clamp(40px,10vw,92px);line-height:.95;color:var(--rust);margin:0;text-shadow:2px 0 rgba(0,0,0,.8)}
 .sumlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:22px;line-height:1.15}
 .sumlist li{display:grid;grid-template-columns:7.5em 1fr;gap:10px}
@@ -299,11 +300,11 @@ button{font:inherit;color:inherit}
     <div class="row">
       <button class="btn primary" id="contBtn" type="button" hidden>Continue</button>
       <button class="btn" id="startBtn" type="button">Start</button>
-      <button class="btn" id="ch2TitleBtn" type="button">Chapter Two</button>
-      <button class="btn" id="ch3TitleBtn" type="button">Chapter Three</button>
+      <button class="btn" id="chapBtn" type="button" aria-expanded="false">Chapters</button>
       <button class="btn" id="ctlBtn" type="button" aria-expanded="false">Controls</button>
     </div>
     <div id="ctlPanel" class="panel" hidden></div>
+    <div id="chapPanel" class="panel" hidden></div>
     <p class="kicker blink" id="sndHint">Tap anywhere for sound</p>
   </div>
 </section>
@@ -2491,10 +2492,15 @@ function fireExamine(){sub(F.fireTip?'Burn a piece of litter here to save.':'A f
 function burnSave(fire){if(F.litter<=0)return;
   F.litter--;fire.flare=1.3;sWhoosh(busFx);writeSave(makeSave(zoneName()));sub('Progress saved.',2.4);}
 const SAVE_KEY='abandoned.save.v1';
+/* v8.3: one save per chapter, so playing one chapter never wipes another */
+const slotKey=n=>'abandoned.slot'+n+'.v1';
+function svChap(sv){const f=(sv&&sv.f)||{};return f.ch3?3:f.ch2?2:1;}
+function lsGet(k){try{const v=JSON.parse(localStorage.getItem(k)||'null');return v&&v.v===1?v:null;}catch(e){return null;}}
+function lsHas(k){try{return localStorage.getItem(k)!=null;}catch(e){return false;}}
 const store={db:null,uid:null};
 let lastSave=null,saveChain=Promise.resolve();
 function makeSave(where){if(C3.on)F.hp3=+P.hp.toFixed(3);const f={};for(const k in F){const v=F[k];f[k]=v instanceof Set?[...v]:Array.isArray(v)?v.slice():(v&&typeof v==='object')?JSON.parse(JSON.stringify(v)):v;}return {v:1,t:Date.now(),where,px:+(P.inVent?VENT_X:P.x).toFixed(3),pz:+(P.inVent?ventSafeZ(P.z):P.z).toFixed(3),yaw:+P.yaw.toFixed(3),plat:!!P.onPlat,hk:P.highKind||null,f};}
-function writeSave(sv){lastSave=sv;try{localStorage.setItem(SAVE_KEY,JSON.stringify(sv));}catch(e){}
+function writeSave(sv){lastSave=sv;try{localStorage.setItem(SAVE_KEY,JSON.stringify(sv));localStorage.setItem(slotKey(svChap(sv)),JSON.stringify(sv));}catch(e){}
   if(store.db){const ref=store.db.doc('data/users/'+store.uid+'/save');saveChain=saveChain.then(()=>ref.set(sv)).catch(()=>{});}}
 function localSave(){try{const v=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');return v&&v.v===1?v:null;}catch(e){return null;}}
 async function initStore(){
@@ -3226,7 +3232,8 @@ $('retryBtn').addEventListener('click',()=>{if(AC&&AC.state==='suspended')AC.res
 $('deadRestart').addEventListener('click',()=>{if(C3.on||F.ch3){const sv=c3StartSave();if(sv){if(AC&&AC.state==='suspended')AC.resume();loadGame(sv);return;}}if(F.ch2){const sv=ch2StartSave();if(sv){if(AC&&AC.state==='suspended')AC.resume();loadGame(sv);return;}}location.reload();});
 $('contBtn').addEventListener('click',()=>{if(lastSave)loadGame(lastSave);});
 $('sens').addEventListener('input',e=>{sens=parseFloat(e.target.value)||1;try{localStorage.setItem('abandoned.sens',String(sens));}catch(err){}});
-$('startBtn').addEventListener('click',()=>{startGame();});
+/* v8.3: New game asks twice when Chapter One already has progress to lose */
+{let armed=0;$('startBtn').addEventListener('click',()=>{const b=$('startBtn');if(!lsGet(slotKey(1))||Date.now()-armed<5000){startGame();return;}armed=Date.now();const t=b.textContent;b.textContent='Tap again to erase Chapter One progress';setTimeout(()=>{if(b.textContent!==t)b.textContent=t;},5000);});}
 $('sndHint').textContent=touchMode?'Tap anywhere for sound':'Click anywhere for sound';
 const wakeTitle=()=>{if(mode!=='title')return;initAudio();startMenuMusic();};$('title').addEventListener('pointerdown',wakeTitle);addEventListener('keydown',wakeTitle);
 
@@ -3731,9 +3738,23 @@ function liftHumStop(quick){const h=SW.c2&&SW.c2.hum;if(!h||!AC)return;SW.c2.hum
   setTimeout(()=>{h.os.forEach(o=>{try{o.stop();}catch(e){}});try{h.p.disconnect();}catch(e){}},quick?400:2500);}
 
 $('ch2Btn').addEventListener('click',()=>{startChapter2();});
-$('ch2TitleBtn').addEventListener('click',()=>{ch2FromTitle();});
 $('ch3Btn').addEventListener('click',()=>{startChapter3();});
-$('ch3TitleBtn').addEventListener('click',()=>{ch3FromTitle();});
+/* ---------- v8.3: chapter select. A chapter opens once the one before it is finished (or she has reached it).
+   Each chapter keeps its own save; starting a chapter over asks twice. ---------- */
+const CHAPS=[[1,'Chapter One','The Drain'],[2,'Chapter Two','The Lab'],[3,'Chapter Three','The City']];
+function chapOpen(n){if(n===1||lsGet(slotKey(n)))return true;if(n===2)return lsHas('abandoned.ch1done')||lsHas(C2_KEY);if(n===3)return lsHas('abandoned.ch2done')||lsHas(C3_KEY);return false;}
+function chapMigrate(){const sv=lsGet(SAVE_KEY);if(sv&&!lsGet(slotKey(svChap(sv))))try{localStorage.setItem(slotKey(svChap(sv)),JSON.stringify(sv));}catch(e){}}
+function chapFresh(n){if(n===1){startGame();return;}const sv=lsGet(n===2?C2_KEY:C3_KEY);if(sv){loadGame(sv);writeSave(sv);return;}if(n===2)ch2FromTitle();else ch3FromTitle();}
+function chapRender(){chapMigrate();const p=$('chapPanel');p.innerHTML='';
+  for(const [n,k,name] of CHAPS){const open=chapOpen(n),sv=open&&lsGet(slotKey(n)),row=document.createElement('div');row.className='chapRow'+(open?'':' locked');
+    const lbl=document.createElement('div');lbl.className='chapName';lbl.textContent=k+' · '+name+(open?'':' · locked');row.append(lbl);
+    const mk=(t,cls,fn)=>{const b=document.createElement('button');b.type='button';b.className='btn'+(cls?' '+cls:'');b.textContent=t;b.addEventListener('click',fn);row.append(b);return b;};
+    if(!open){const b=mk('Finish '+CHAPS[n-2][1]+' first','',()=>{});b.disabled=true;}
+    else if(!sv)mk('Start','primary',()=>chapFresh(n));
+    else{mk('Continue · '+sv.where,'primary',()=>loadGame(lsGet(slotKey(n))));
+      let armed=0;const b=mk('Start over','',()=>{if(Date.now()-armed<5000){chapFresh(n);return;}armed=Date.now();b.textContent='Tap again to erase '+k+' progress';setTimeout(()=>{if(b.isConnected)b.textContent='Start over';},5000);});}
+    p.append(row);}}
+$('chapBtn').addEventListener('click',()=>{const p=$('chapPanel');if(p.hidden)chapRender();p.hidden=!p.hidden;$('chapBtn').setAttribute('aria-expanded',String(!p.hidden));if(!p.hidden){$('ctlPanel').hidden=true;$('ctlBtn').setAttribute('aria-expanded','false');requestAnimationFrame(()=>p.scrollIntoView({block:'end',behavior:'smooth'}));}});
 
 /* ============================================================
    CHAPTER TWO, ZONE 3: THE LAB (part one: the space, the mutants, the infection)
@@ -5658,6 +5679,8 @@ function endCh2(){if(mode==='end')return;setMode('end');releaseLock();setChase(f
   $('end').hidden=false;$('fade').style.opacity='0';setTimeout(()=>$('ch3Btn').focus({preventScroll:true}),40);}
 
 /* ---------- per frame ---------- */
+/* v8.3: Delilah moves and thinks at this fraction of full speed (1 = the old pace). Wind-ups, strikes, stuck windows and rests all stretch with it. */
+const BOSS_PACE=0.8;
 function bossTick(dt){const D=SW.boss;if(!D)return;
   if(!(F.bossIn||F.blastOpen))return;if(mode!=='play'&&mode!=='cine')return;
   if(camera.far<37){camera.far=37;camera.updateProjectionMatrix();}
@@ -5665,12 +5688,12 @@ function bossTick(dt){const D=SW.boss;if(!D)return;
   if(dt>0){D.pvx=damp(D.pvx,(P.x-D.ppx)/dt,6,dt);D.pvz=damp(D.pvz,(P.z-D.ppz)/dt,6,dt);}D.ppx=P.x;D.ppz=P.z;
   const alive=D.state!=='dead';
   if(alive){
-    if(mode==='play'&&F.bossIn)bossAI(dt);
+    if(mode==='play'&&F.bossIn)bossAI(dt*BOSS_PACE);
     else{D.t+=dt;
       if(D.state==='dying'){D.swell=clamp(D.t/2.8,0,1);D.lurch=(Math.random()-0.5)*0.12;if(Math.random()<dt*6){D.rig.hd.getWorldPosition(_w);goreAt(_w.x+(R()-0.5)*3,1.2+R()*1.5,_w.z+(R()-0.5)*3,3,2.5);}
         if(D.t>=2.8&&!D.boomed)bossExplode();if(D.t>=5.6)bossDone();}
       if(mode==='cine'&&(D.state==='rise'||D.state==='phase'||D.state==='dying'||D.state==='sleep')&&F.bossIn&&!D.boomed){D.rig.hd.getWorldPosition(_w);P.lookT=[_w.x,_w.y*0.85,_w.z];}}
-    if(D.rig.root.visible)bossPose(dt);
+    if(D.rig.root.visible)bossPose(dt*BOSS_PACE);
     D.tw=mode==='play'?bossTarget():null;
     if(mode==='play'&&F.bossIn&&alive&&D.state!=='dying'){const cy=Math.cos(D.yaw),sy=Math.sin(D.yaw);for(const [lz,rad] of [[0,1.85],[-1.6,1.75],[1.5,1.45]]){const cx=D.x+sy*lz,cz=D.z+cy*lz,ex=P.x-cx,ez=P.z-cz,ed=Math.hypot(ex,ez),m=rad+0.3;if(ed<m&&ed>0.001){P.x=cx+ex/ed*m;P.z=cz+ez/ed*m;}}collide(P,0.34,pSolid);}}
   /* spit in the air */
