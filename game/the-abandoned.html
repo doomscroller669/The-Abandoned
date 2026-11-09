@@ -3370,6 +3370,7 @@ function step(dt){
   // camera
   const bobA=reduceMotion?0.012:0.04;const by=(P.moving>0.2&&!P.hidden&&mode==='play')?Math.sin(P.bob)*bobA:0;
   let ey=P.floor+P.eye+by;if(P.hidden)ey=P.hidden.camY;
+  SHK.a=Math.max(0,SHK.a-dt*1.8); // every shake fades out, in every chapter (it only faded in the Delilah fight)
   camera.position.set(P.x+bShake(),ey+bShake()*0.7,P.z+bShake());camera.rotation.set(P.pitch,P.yaw,P.sub?Math.sin(time*1.4)*0.03:0);
   // underwater + danger
   const under=level==='sewer'&&P.inWater&&camera.position.y<(C3.on?FLOOD_Y:WATER_Y);
@@ -5657,7 +5658,7 @@ function endCh2(){if(mode==='end')return;setMode('end');releaseLock();setChase(f
   $('end').hidden=false;$('fade').style.opacity='0';setTimeout(()=>$('ch3Btn').focus({preventScroll:true}),40);}
 
 /* ---------- per frame ---------- */
-function bossTick(dt){const D=SW.boss;if(!D)return;SHK.a=Math.max(0,SHK.a-dt*1.8);
+function bossTick(dt){const D=SW.boss;if(!D)return;
   if(!(F.bossIn||F.blastOpen))return;if(mode!=='play'&&mode!=='cine')return;
   if(camera.far<37){camera.far=37;camera.updateProjectionMatrix();}
   if(mode==='cine'&&postU.uFlash.value>0)postU.uFlash.value=Math.max(0,postU.uFlash.value-dt*0.9);
