@@ -946,19 +946,22 @@ setInterval(runAud,40);
 function envG(g,t,a,peak,hold,rel){g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setValueAtTime(peak,t+a+hold);g.gain.exponentialRampToValueAtTime(0.0001,t+a+hold+rel);}
 function sNoise(dest,t,dur,type,freq,q,peak,a=0.005,f2){if(!AC)return;if(t-AC.currentTime>0.5){atAudio(t,tt=>sNoise(dest,tt,dur,type,freq,q,peak,a,f2));return;}const s=AC.createBufferSource();s.buffer=noiseBuf;const f=AC.createBiquadFilter();f.type=type;f.frequency.setValueAtTime(freq,t);if(f2)f.frequency.exponentialRampToValueAtTime(f2,t+a+dur);f.Q.value=q;
   const g=AC.createGain();envG(g,t,a,peak,0,dur);s.connect(f);f.connect(g);g.connect(dest);s.start(t,Math.random()*1.5);s.stop(t+a+dur+0.05);}
-/* v8.4: the jump-scare stinger. A bowed-string stab: a high minor-second cluster that scrapes down, a low growl under it,
-   a rosin scratch on the attack, tremolo while it rings. amp 1 is full. */
-function sStinger(t,amp=1){if(!AC)return;if(t-AC.currentTime>0.5){atAudio(t,tt=>sStinger(tt,amp));return;}
+/* v8.5: jump-scare stingers. One bowed-string attack, three voicings so they don't wear out:
+   rita = high screech, croc = low heavy swell, yoli = mid cluster that slides down and wobbles. amp 1 is full. */
+const STING={
+  rita:{n:[[1108.7,.11],[1174.7,.11],[1244.5,.09],[2217,.035],[554.4,.08],[587.3,.08],[69.3,.16],[73.4,.14]],slide:.94,sMin:500,l0:7,l1:12,f0:7000,f1:1800,atk:.025,scr:3200},
+  croc:{n:[[138.6,.16],[146.8,.16],[155.6,.13],[277.2,.08],[293.7,.07],[36.7,.22],[34.6,.16]],slide:.9,sMin:100,l0:4,l1:7,f0:2600,f1:600,atk:.06,scr:900},
+  yoli:{n:[[440,.12],[466.2,.12],[493.9,.1],[880,.06],[932.3,.05],[110,.12],[116.5,.1]],slide:.72,sMin:200,l0:13,l1:19,f0:5200,f1:1400,atk:.02,scr:2400}};
+function sStinger(t,amp=1,kind='rita'){if(!AC)return;if(t-AC.currentTime>0.5){atAudio(t,tt=>sStinger(tt,amp,kind));return;}const K=STING[kind]||STING.rita;
   const env=AC.createGain(),trem=AC.createGain(),lp=AC.createBiquadFilter(),lfo=AC.createOscillator(),lg=AC.createGain();
-  lp.type='lowpass';lp.Q.value=0.8;lp.frequency.setValueAtTime(7000,t);lp.frequency.exponentialRampToValueAtTime(1800,t+1.8);
-  lfo.frequency.setValueAtTime(7,t);lfo.frequency.linearRampToValueAtTime(12,t+1.6);lg.gain.value=0.28;lfo.connect(lg);lg.connect(trem.gain);trem.gain.value=0.72;
-  env.gain.setValueAtTime(0.0001,t);env.gain.exponentialRampToValueAtTime(amp,t+0.025);env.gain.setTargetAtTime(0.42*amp,t+0.1,0.22);env.gain.setTargetAtTime(0.0001,t+1.0,0.38);
+  lp.type='lowpass';lp.Q.value=0.8;lp.frequency.setValueAtTime(K.f0,t);lp.frequency.exponentialRampToValueAtTime(K.f1,t+1.8);
+  lfo.frequency.setValueAtTime(K.l0,t);lfo.frequency.linearRampToValueAtTime(K.l1,t+1.6);lg.gain.value=0.28;lfo.connect(lg);lg.connect(trem.gain);trem.gain.value=0.72;
+  env.gain.setValueAtTime(0.0001,t);env.gain.exponentialRampToValueAtTime(amp,t+K.atk);env.gain.setTargetAtTime(0.42*amp,t+K.atk+0.08,0.22);env.gain.setTargetAtTime(0.0001,t+1.0,0.38);
   lp.connect(trem);trem.connect(env);env.connect(comp);const end=t+2.8;lfo.start(t);lfo.stop(end);
-  [[1108.7,0.11],[1174.7,0.11],[1244.5,0.09],[2217,0.035],[554.4,0.08],[587.3,0.08],[69.3,0.16],[73.4,0.14]].forEach(([f,a],i)=>{
-    const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.detune.value=(i%2?7:-7);
-    o.frequency.setValueAtTime(f*1.035,t);o.frequency.exponentialRampToValueAtTime(f,t+0.06);if(f>500)o.frequency.exponentialRampToValueAtTime(f*0.94,t+1.8);
+  K.n.forEach(([f,a],i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.detune.value=(i%2?7:-7);
+    o.frequency.setValueAtTime(f*1.035,t);o.frequency.exponentialRampToValueAtTime(f,t+0.06);if(f>K.sMin)o.frequency.exponentialRampToValueAtTime(f*K.slide,t+1.8);
     g.gain.value=a;o.connect(g);g.connect(lp);o.start(t);o.stop(end);});
-  sNoise(comp,t,0.16,'bandpass',3200,1.2,0.45*amp);sNoise(comp,t,0.25,'lowpass',260,0.7,0.5*amp);}
+  sNoise(comp,t,0.16,'bandpass',K.scr,1.2,0.45*amp);sNoise(comp,t,kind==='croc'?0.6:0.25,'lowpass',kind==='croc'?160:260,0.7,(kind==='croc'?0.8:0.5)*amp);}
 function sTone(dest,t,dur,type,f0,f1,peak,a=0.005){if(!AC)return;if(t-AC.currentTime>0.5){atAudio(t,tt=>sTone(dest,tt,dur,type,f0,f1,peak,a));return;}const o=AC.createOscillator();o.type=type;o.frequency.setValueAtTime(f0,t);if(f1)o.frequency.exponentialRampToValueAtTime(f1,t+a+dur);
   const g=AC.createGain();envG(g,t,a,peak,0,dur);o.connect(g);g.connect(dest);o.start(t);o.stop(t+a+dur+0.05);}
 function mkPanner(x,y,z,ref=1.6,hq){const p=AC.createPanner();p.panningModel=hq?'HRTF':'equalpower';p.distanceModel='inverse';p.refDistance=ref;p.rolloffFactor=1.15;p.maxDistance=90;setPan(p,x,y,z);p.connect(busFx);return p;}
@@ -6568,6 +6571,11 @@ function c3BuildPharm(S){const M=c3Mats(),sh=lam({map:T.metal,color:0x9a9a92}),b
 
 /* ---------- the market: shelves sticking out of black water, and what lives in it ---------- */
 const MKT={box:[C3X+15,C3X+27,15,21]};
+/* v8.5: where the croc can rear up: the four 2 m aisles between the shelf runs and the two 4 m channels at the ends (local u, v of its middle) */
+const MKT_AISLES=[[15.5,18],[18,18],[20,18],[22,18],[24,18],[26.5,18]];
+/* can she see (x1,z1) from (x0,z0) with her eye at ey? walls block; shelf runs block unless she's up level with their tops */
+function c3Sight(x0,z0,ey,x1,z1){const d=Math.hypot(x1-x0,z1-z0),n=Math.ceil(d/0.25),c0=c3c(Math.floor(x0/CELL),Math.floor(z0/CELL));
+  for(let i=1;i<n;i++){const x=x0+(x1-x0)*i/n,z=z0+(z1-z0)*i/n,c=c3c(Math.floor(x/CELL),Math.floor(z/CELL));if(c==='#')return false;if(c==='s'&&c0!=='s'&&ey<2.4)return false;}return true;}
 function c3CrocTex(){if(C3.crocT)return C3.crocT;C3.crocT=tex3(64,64,3701,(g,w,h,rr)=>{g.fillStyle='#1a2216';g.fillRect(0,0,w,h);for(let y=0;y<8;y++)for(let x=0;x<8;x++){const b=22+rr()*18|0;g.fillStyle='rgb('+b+','+(b+10)+','+(b-4)+')';g.fillRect(x*8+1,y*8+1,6,6);}
   for(let i=0;i<10;i++){const x=rr()*w,y=rr()*h,r=2+rr()*4;g.fillStyle='rgba(120,90,70,0.6)';g.beginPath();g.arc(x,y,r,0,TAU);g.fill();g.fillStyle='rgba(200,190,120,0.5)';g.beginPath();g.arc(x,y,r*0.4,0,TAU);g.fill();}});return C3.crocT;}
 /* a tapered box: wide at the back, narrow at the front (snouts, jaws, tail links) */
@@ -6632,11 +6640,17 @@ function c3MarketTick(dt){const crocs=C3.crocs;if(!crocs)return;const W=C3.wires
   W.spk.visible=!F.crocsDead&&(W.fall<=0||W.fall<1);W.spk.material.opacity=Math.random()<0.25?0.9:0.25;
   (C3.floaters||[]).forEach((b,i)=>{b.position.y=FLOOD_Y-0.05+Math.sin(time*1.1+i)*0.03;});
   const u=Math.floor(P.x/CELL)-C3X,v=Math.floor(P.z/CELL),inMkt=u>=15&&u<=27&&v>=14&&v<=22;
-  /* walking in: one comes up out of the black down the center aisle, once she's on the landing looking that way (or as soon as she's up on the shelves) */
-  const [ax,az]=L3(22,18);const lookAisle=v===15&&Math.abs(P.x-ax)<1.3&&(-Math.sin(P.yaw)*(ax-P.x)-Math.cos(P.yaw)*(az-P.z))/Math.hypot(ax-P.x,az-P.z)>0.8;
-  if(inMkt&&!F.mktScare&&!F.crocsDead&&mode==='play'&&(lookAisle||v>=16)){F.mktScare=true;const m=crocs[0];m.x=ax;m.z=az;m.yaw=Math.PI;m.state='scare';m.t=0;if(AC)sStinger(now()+0.01,1);/* v8.4: center aisle, ~7 m in front of the landing, facing her; legs hang down so it fits between the shelves */
-    if(AC){const t=now()+0.01;sSplash();sNoise(comp,t,0.6,'lowpass',500,0.7,0.9);const at=[m.x,FLOOD_Y+0.4,m.z];c3Step(m,'crocSnap',{at,ref:4,low:false});c3Voice(m,'crocBellow',{force:true,at,ref:4,delay:0.15});}postU.uFlash.value=0.3;shake(0.3);
-    after(0.5,()=>{if(mode==='play')speak('Marissa','Jesus...!',1.6);});}
+  /* v8.5: walking in, one comes up out of the black in whichever aisle she looks down from the landing. If she climbs onto the shelves,
+     or stands on the landing 3 s without looking down one, it comes up in the nearest aisle and her head snaps to it. */
+  if(inMkt&&!F.mktScare&&!F.crocsDead&&mode==='play'&&v>=15){C3.mktT=(C3.mktT||0)+dt;
+    const ey=P.floor+P.eye,fx=-Math.sin(P.yaw),fz=-Math.cos(P.yaw);let best=null,bd=0.82,near=null,nd=1e9;
+    for(const [au,av] of MKT_AISLES){const [cx,cz]=L3(au,av),hz=cz-1.6,dx=cx-P.x,dz=hz-P.z,d=Math.hypot(dx,dz)||1;if(d<nd){nd=d;near=[cx,cz];}
+      const dot=(fx*dx+fz*dz)/d;if(dot>bd&&c3Sight(P.x,P.z,ey,cx,hz)){bd=dot;best=[cx,cz];}}
+    if(best||v>=16||C3.mktT>3){const [cx,cz]=best||near;F.mktScare=true;const m=crocs[0];m.x=cx;m.z=cz;m.yaw=Math.PI;m.state='scare';m.t=0;
+      const o=crocs[1];if(Math.hypot(o.x-cx,o.z-cz)<4){const [ox,oz]=L3(cx<L3x(21)?26.5:15.5,20.5);o.x=ox;o.z=oz;}
+    if(AC){const t=now()+0.01;sStinger(t,1,'croc');sSplash();sNoise(comp,t,0.6,'lowpass',500,0.7,0.9);const at=[m.x,FLOOD_Y+0.4,m.z];c3Step(m,'crocSnap',{at,ref:4,low:false});c3Voice(m,'crocBellow',{force:true,at,ref:4,delay:0.15});}postU.uFlash.value=0.3;shake(0.3);
+      if(!best){setMode('cine');P.lookT=[cx,1.6,cz-1.6];after(1.1,()=>{P.lookT=null;if(mode==='cine')setMode('play');});}
+      after(best?0.5:1.2,()=>{if(mode==='play')speak('Marissa','Jesus...!',1.6);});}}
   for(const m of crocs){const R3=m.rig;const dx=P.x-m.x,dz=P.z-m.z,d=Math.hypot(dx,dz);m.cool=Math.max(0,m.cool-dt);
     if(m.dead||m.state==='fry'||m.state==='kill'){m.spd=0;c3CrocAnim(m,dt);continue;}
     if(m.state==='scare'){m.t+=dt;m.rise=(m.t<0.25?m.t/0.25:m.t<1.4?1:Math.max(0,1-(m.t-1.4)/0.5));m.lunge=m.t<1.3?1:0;if(m.t>2.2){m.state='patrol';m.rise=0;m.cool=3;}c3CrocAnim(m,dt);continue;}
@@ -6951,7 +6965,7 @@ async function c3YoliBreakIn(){if(C3.breakGo||F.yoliOut)return;C3.breakGo=true;c
   await tween(2.8,k=>up(k));m.spd=0;
   if(F.aptDoor==='open'){const pc=Math.floor(P.x/CELL);if(pc!==C3X+55||Math.floor(P.z/CELL)!==2){F.aptDoor='shut';if(AC)sClank(busFx,now()+0.01,0.5);tween(0.15,k=>{d.rotation.y=1.4*(1-k);});sub('The door slams.',1.6);}}
   if(F.aptDoor!=='broken'&&F.aptDoor!=='open'){c3Voice(m,'yoliGiggle');for(let i=0;i<3;i++){await sleep(0.9);if(i===1)c3Voice(m,'yoliGiggle');if(AC){const t=now()+0.01;sNoise(comp,t,0.25,'lowpass',300,0.7,0.9);sTone(comp,t,0.3,'sine',70,40,0.6);}shake(0.15);d.rotation.y=0.08;after(0.12,()=>{d.rotation.y=0;});}
-    await sleep(0.6);if(AC){const t=now()+0.01;sStinger(t,0.9);sNoise(comp,t,0.6,'highpass',1200,0.6,0.9);sNoise(comp,t,0.5,'lowpass',400,0.8,0.8);}shake(0.35);F.aptDoor='broken';d.visible=false;C3.aptBits.visible=true;}
+    await sleep(0.6);if(AC){const t=now()+0.01;sStinger(t,0.9,'yoli');sNoise(comp,t,0.6,'highpass',1200,0.6,0.9);sNoise(comp,t,0.5,'lowpass',400,0.8,0.8);}shake(0.35);F.aptDoor='broken';d.visible=false;C3.aptBits.visible=true;}
   C3.yoliIn=true;m.ok=m.okAll;m.x=L3x(55)+0.6;m.z=wc(2);m.y=3.6;
   if(P.hidden){/* hidden: she hunts around the room, then stands at the window */m.state='script';const pts=[[L3x(54.5),wc(3)],[L3x(53.5),wc(5)],[L3x(54.8),wc(6)-0.4],[L3x(53.5),wc(7)-0.6]];let i=0;
     m.scr=(dt)=>{const p=pts[i];if(!p){m.spd=0;m.yaw+=angDiff(m.yaw,0)*Math.min(1,dt*3);m.atWin=true;if(!P.hidden){m.scr=null;m.atWin=false;m.state='chase';m.lx=P.x;m.lz=P.z;m.lost=0;m.yaw=Math.atan2(P.x-m.x,P.z-m.z);c3Voice(m,'yoliLaugh',{force:'soft'});}return;}
