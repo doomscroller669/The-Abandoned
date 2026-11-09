@@ -5137,7 +5137,7 @@ function buildLab2(S){const L=SW.lab;L.picks=[];L.doors={};L.gore=[];L.keys=[];b
     SW.inter.push({kind:'code',x:329,z:32.9,r:1.6,label:()=>'Enter a code',can:()=>!F.secOpen,act(){openPuz('sec');}});
     const d=new THREE.Group();d.position.set(329,0,41);S.add(d);d.add(at(boxm(1.8,.8,.8,lam({color:0x4a4038})),0,.4,0));d.add(at(boxm(.5,.4,.4,lam({color:0x2a2c28})),-.5,1.0,-.15));d.add(at(boxm(.4,.3,.02,basic({color:0x0c1410})),-.5,1.0,.06));
     d.add(at(boxm(.5,.08,.2,lam({color:0x2a2a28})),.35,.84,0));d.add(at(boxm(.03,.03,.02,basic({color:0x401008})),.55,.88,.1));
-    const bt=new THREE.Group();bt.add(at(cylm(.025,.025,.55,7,lam({color:0x181818})),0,0,0));bt.add(at(cylm(.032,.032,.15,7,lam({color:0x3a2a1a})),0,-.22,0));bt.rotation.z=Math.PI/2;addPick(S,'baton',bt,329.35,.92,41,'Take the baton',()=>{takeItem('baton');sub("A stun baton. Dead. The charging light's out.",3);},2.2);}
+    const bt=new THREE.Group();bt.add(at(cylm(.025,.025,.55,7,lam({color:0x181818})),0,0,0));bt.add(at(cylm(.032,.032,.15,7,lam({color:0x3a2a1a})),0,-.22,0));bt.rotation.z=Math.PI/2;addPick(S,'baton',bt,329.35,.92,41,'Take the baton',()=>{takeItem('baton');sub("A stun baton. Dead. The charging light's out.",3);writeSave(makeSave('Security'));setTimeout(()=>{if(mode==='play')sub('Progress saved.',2.4);},3200);},2.2);}
   /* the syringe, on the dead man in the workshop */
   {const sy=new THREE.Group();sy.add(at(cylm(.02,.02,.14,6,lam({color:0xc8e0e8,transparent:true,opacity:0.7})),0,0,0));sy.add(at(cylm(.005,.002,.09,4,lam({color:0xd0d4d0})),0,.11,0));sy.rotation.z=Math.PI/2;
     addPick(S,'syringe',sy,314.6,.25,44.6,'Search the body',()=>{takeItem('syringe');sub('A syringe in his coat pocket. Empty. Clean, at least.',3);});}
