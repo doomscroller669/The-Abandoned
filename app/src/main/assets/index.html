@@ -5328,7 +5328,9 @@ function buildDelilah(S){
   return r;}
 
 /* ---------- the arena ---------- */
-function buildBoss(S){const rr=mulberry(6161);const D=SW.boss={x:403,z:26,yaw:-Math.PI/2,state:'sleep',t:0,cd:2,phase:1,hp:3,iframe:0,hits:0,
+/* hits she can take in the Delilah fight (v8.2.2: 5, was 3) */
+const BOSS_HP=5;
+function buildBoss(S){const rr=mulberry(6161);const D=SW.boss={x:403,z:26,yaw:-Math.PI/2,state:'sleep',t:0,cd:2,phase:1,hp:BOSS_HP,iframe:0,hits:0,
     rear:0,rearT:0,rearK:5,slump:1.25,slumpT:1.25,jaw:0,jawT:0,lurch:0,tentAmp:0.2,tentWind:0,tentLash:0,lashS:0,tailMode:'sleep',tailK:3,tailSide:1.4,headMode:'sleep',headK:4,
     headL:new THREE.Vector3(0.4,1.35,3.0),tgt:new THREE.Vector3(),lock:false,arm:1,globs:[],pools:[],gore:[],decals:[],pvx:0,pvz:0,ppx:0,ppz:0,acidT:0,breathT:0,voiceT:12,swell:0,boomed:false,handLanded:false};
   D.rig=buildDelilah(S);D.wp=D.rig.wp;
@@ -5515,7 +5517,7 @@ function bossIntro(){const D=SW.boss;if(!D||F.bossIn||mode!=='play')return;const
         after(5.2,()=>bossRoar(true));after(5.8,bossCard);after(7.6,()=>speak('Marissa','Oh my God...',2.2));after(9.4,bossFight);}});});}
 function bossRoar(big){const D=SW.boss;D.rearT=0.9;D.rearK=3;D.jawT=1;D.tentAmp=1.8;after(1.7,()=>{D.rearT=0;D.jawT=0.1;D.tentAmp=1;});shake(big?0.7:0.45);SW.lab.dspike=1.2;if(AC)bRoar(now()+0.02,true);bmStart();}
 function bossCard(){const el=$('bossCard');if(!el)return;el.hidden=false;el.style.opacity='0';requestAnimationFrame(()=>{el.style.opacity='1';});setTimeout(()=>{el.style.opacity='0';},2900);setTimeout(()=>{el.hidden=true;},3900);}
-function bossFight(){const D=SW.boss;P.lookT=null;D.headK=4;setMode('play');bGo('idle');D.cd=1.6;D.hp=3;bossHud();setObjective(ch2Obj());
+function bossFight(){const D=SW.boss;P.lookT=null;D.headK=4;setMode('play');bGo('idle');D.cd=1.6;D.hp=BOSS_HP;bossHud();setObjective(ch2Obj());
   if(!F.bossTip){F.bossTip=true;after(0.8,()=>tip('Her weak points flare when a claw or her tail gets stuck in the floor. Stab them then. Hide behind a pillar when you hear her gurgle.',10));}}
 
 /* ---------- her mind ---------- */
@@ -5613,14 +5615,14 @@ function bossKillPlayer(src){const D=SW.boss;if(mode!=='play')return;setMode('ci
   const p0=P.pitch;tween(1.4,k=>{P.eye=lerp(P.eye,0.3,k*k*0.3);P.pitch=lerp(p0,-0.6,k);});
   after(1.6,()=>fadeTo(1,1.0));after(2.8,()=>{$('mHurt').hidden=true;deathScreen(src==='acid'?'The bile ate through her.':'Delilah fed.');});}
 let bossHudV='';function bossHud(){const D=SW.boss,el=$('mHurt');if(!el||!D)return;const on=F.bossIn&&!F.bossDead&&D.state!=='dead'&&D.state!=='dying';if(el.hidden===on)el.hidden=!on;if(!on)return;
-  const v=String(D.hp);if(v===bossHudV)return;bossHudV=v;el.querySelector('span').textContent='Hurt '+'●'.repeat(3-D.hp)+'○'.repeat(Math.max(0,D.hp));el.classList.toggle('low',D.hp<=1);}
+  const v=String(D.hp);if(v===bossHudV)return;bossHudV=v;el.querySelector('span').textContent='Hurt '+'●'.repeat(BOSS_HP-D.hp)+'○'.repeat(Math.max(0,D.hp));el.classList.toggle('low',D.hp<=1);}
 function bossDanger(){const D=SW.boss;if(!D||!F.bossIn||F.bossDead||mode!=='play')return 0;const d=Math.hypot(P.x-D.x,P.z-D.z);return D.state==='idle'?0.3:(d<10?0.62:0.4);}
 
 /* ---------- phase two, and her end ---------- */
 function bossPhase2(){const D=SW.boss;D.phase=2;bGo('phase');setMode('cine');hidePrompt();D.slumpT=1;D.rearT=0.9;D.rearK=3;D.jawT=1;D.tentAmp=2.2;D.tailMode='limp';
   if(AC){const t=now()+0.02;bRoar(t,true);sNoise(busFx,t+1.2,0.4,'bandpass',600,2,0.6);bBoom(t+1.8,0.9);}shake(0.6);SW.lab.dspike=1.6;bmPhase2();
   after(1.8,()=>{D.rearT=0;shake(0.5);});after(2.0,()=>dsub('skin bad...',2.2));after(3.2,()=>dsub('KILL.',1.6));
-  after(4.6,()=>{P.lookT=null;setMode('play');bossRest();D.cd=1.4;D.hp=Math.min(3,D.hp+1);bossHud();tip('She can barely hold herself up. When she lunges, dodge, then stab her ears or eyes while her head is down.',8);});}
+  after(4.6,()=>{P.lookT=null;setMode('play');bossRest();D.cd=1.4;D.hp=Math.min(BOSS_HP,D.hp+1);bossHud();tip('She can barely hold herself up. When she lunges, dodge, then stab her ears or eyes while her head is down.',8);});}
 function bmPhase2(){BM.phase=2;}
 function bossDie(){const D=SW.boss;bGo('dying');setMode('cine');hidePrompt();bmStop(2.5);D.tentAmp=3;D.jawT=1;D.boomed=false;F.bossAt=[+D.x.toFixed(2),+D.z.toFixed(2)];
   if(AC){const t=now()+0.02;scream(busFx,t,1.2,420,0.9,{fall:0.4});scream(busFx,t+1.0,1.4,560,0.9,{fall:0.3});scream(busFx,t+2.0,0.9,760,0.8,{fall:0.2});}dsub('feed...',2.4);SW.lab.dspike=1.8;}
@@ -5692,7 +5694,7 @@ function applyBoss(){const D=SW.boss;if(!D)return;bmStop(0.2);
   for(const b of D.globs)SW.scene.remove(b.m);D.globs=[];for(const p of D.pools)SW.scene.remove(p.m);D.pools=[];for(const d of D.decals)SW.scene.remove(d);D.decals=[];
   for(const p of D.gore){p.on=false;p.m.visible=false;}
   F.blastOpen=false;F.liftOpen=false;if(SW.lab.blast)SW.lab.blast.position.y=0;if(D.lift){D.lift.bars.scale.z=1;if(D.lift.led)D.lift.led.color.setHex(0x601008);}
-  D.hp=3;D.iframe=0;D.tw=null;D.swell=0;D.boomed=false;D.handLanded=false;D.hand.visible=false;$('bossCard').hidden=true;
+  D.hp=BOSS_HP;D.iframe=0;D.tw=null;D.swell=0;D.boomed=false;D.handLanded=false;D.hand.visible=false;$('bossCard').hidden=true;
   if(F.bossIn){F.hunt=false;if(K){K.active=false;K.m.root.visible=false;}MUTS.forEach(m=>{m.active=false;m.rig.g.visible=false;});bossLights(!!F.bossDead);}
   else if(SW.bossLit){SW.bossLit=false;SW.labLit=false;labLights();}
   if(F.bossDead){D.state='dead';D.rig.root.visible=false;D.rig.tg.visible=false;const at2=F.bossAt||[D.x,D.z];bloodAt(at2[0],at2[1],9.5);
