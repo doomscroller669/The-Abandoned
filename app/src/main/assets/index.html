@@ -6114,7 +6114,7 @@ function c3LightTick(dt){const pool=C3.pool;if(!pool)return;C3.lightT-=dt;
     else if(s.k==='fluor'){const f=Math.sin(time*1.3+s.ph)>0.93||Math.sin(time*0.37+s.ph)>0.97;v=f?(Math.random()<0.5?v*0.45:v*0.7):v;}/* v8.2.5: flickers but never drops to black (walls strobed black) */
     else if(s.k==='neon'){v*=Math.sin(time*0.8+s.ph)>0.96?0.62+0.12*Math.sin(time*37):0.9+0.1*Math.sin(time*50);}/* v8.2.5: a buzzing dip instead of strobing to 10% (the pharmacy walls flashed black) */
     else if(s.k==='pulse')v*=0.3+0.7*Math.pow(Math.max(0,Math.sin(time*2.6+s.ph)),3);
-    else if(s.k==='spark')v*=Math.random()<0.18?1.6:0.25;
+    else if(s.k==='spark'){if(!(time<s.nx)){s.fl=time+0.05+Math.random()*0.1;s.nx=time+0.3+Math.random()*1.3;}v*=time<s.fl?1.6:0.55;}/* v8.2.6: a steady glow with short flashes, instead of strobing to a quarter every frame (the market walls flashed black) */
     o.l.intensity=v*o.fade;}}
 
 /* ---------- interactions in the city carry a height, so a prompt on the floor doesn't show up on a roof ---------- */
