@@ -6503,7 +6503,9 @@ function buildRita(){/* v8.8: as her missing poster says: gray hair, a green arm
   rifle.add(at(boxm(.04,.06,.16,steel),0,.0,.08));rifle.position.set(-.235,.23,.36);rifle.rotation.set(0,1.35,0);r.body.add(rifle);r.rifle=rifle;r.g.visible=false;return r;}
 const r_={};
 function ritaPose(dt,mode){const R3=C3.rita;if(!R3)return;capPose(R3,mode==='walk'?'walk':'stand',dt);
-  if(mode==='aim'){R3.armR.a.rotation.x=-1.15;R3.armR.f.rotation.x=-0.55;R3.armR.a.rotation.z=0.3;R3.armL.a.rotation.x=-1.4;R3.armL.f.rotation.x=-0.05;R3.armL.a.rotation.z=-0.32;R3.head.rotation.x=0.18;R3.head.rotation.z=-0.12;if(R3.rifle){R3.rifle.rotation.set(-0.04,-0.06,0);R3.rifle.position.set(-0.06,0.56,0.36);}}
+  if(R3.gave){}
+  else if(mode==='give'&&R3.rifle){/* v9.2: held out to her in both hands */R3.armR.a.rotation.x=-1.25;R3.armR.f.rotation.x=-0.25;R3.armR.a.rotation.z=0.15;R3.armL.a.rotation.x=-1.25;R3.armL.f.rotation.x=-0.25;R3.armL.a.rotation.z=-0.15;R3.rifle.rotation.set(0,Math.PI/2,0);R3.rifle.position.set(-.235,.43,.53);}
+  else if(mode==='aim'){R3.armR.a.rotation.x=-1.15;R3.armR.f.rotation.x=-0.55;R3.armR.a.rotation.z=0.3;R3.armL.a.rotation.x=-1.4;R3.armL.f.rotation.x=-0.05;R3.armL.a.rotation.z=-0.32;R3.head.rotation.x=0.18;R3.head.rotation.z=-0.12;if(R3.rifle){R3.rifle.rotation.set(-0.04,-0.06,0);R3.rifle.position.set(-0.06,0.56,0.36);}}
   else if(R3.rifle){/* v8.8: carried across her body, right hand on the grip, left on the barrel */R3.rifle.rotation.set(0,1.35,0);R3.rifle.position.set(-.235,.23,.36);R3.armR.a.rotation.x=-0.35;R3.armR.f.rotation.x=-1.1;R3.armL.a.rotation.x=-0.45;R3.armL.f.rotation.x=-0.95;}}
 Object.assign(VOICES,{Rita:{f0:176,form:1.02,breath:0.36,rasp:true}});
 Object.assign(DLG,{
@@ -6532,7 +6534,7 @@ function c3RitaTick(dt){const R3=C3.rita;if(!R3)return;if(C3.ritaFlame)C3.ritaFl
     if(d<0.12){R3.walk.shift();return;}const st=Math.min(d,(R3.speed||1.5)*dt);R3.g.position.x+=dx/d*st;R3.g.position.z+=dz/d*st;R3.g.rotation.y+=angDiff(R3.g.rotation.y,Math.atan2(dx,dz))*Math.min(1,dt*7);ritaPose(dt,'walk');return;}
   if(R3.face){const ty=Math.atan2(P.x-R3.g.position.x,P.z-R3.g.position.z);R3.g.rotation.y+=angDiff(R3.g.rotation.y,ty)*Math.min(1,dt*4);}ritaPose(dt,R3.mode);}
 /* round the corner: she's right there, rifle up */
-async function c3RitaJump(){if(F.c3Rita||C3.ritaGo)return;C3.ritaGo=true;const R3=C3.rita,[x,z]=L3(11,9);setMode('cine');hidePrompt();P.crouch=false;$('bDuck').classList.remove('on');
+async function c3RitaJump(){if(F.c3Rita||C3.ritaGo)return;C3.ritaGo=true;if(C3.rita){C3.rita.gave=false;if(C3.rita.rifle)C3.rita.rifle.visible=true;}const R3=C3.rita,[x,z]=L3(11,9);setMode('cine');hidePrompt();P.crouch=false;$('bDuck').classList.remove('on');
   /* v8.7: she comes running round the corner from the square, splashing, and pulls up a metre short with the rifle up */
   const cx=L3x(10)+0.4,cz=wc(7)+0.3,dx0=cx-P.x,dz0=cz-P.z,dl=Math.hypot(dx0,dz0)||1,ax0=L3x(9)+0.45,ax1=L3x(11)-0.35;
   const tx=clamp(P.x+dx0/dl*1.1,ax0,ax1),tz=clamp(P.z+dz0/dl*1.1,wc(7),wc(10)+0.6);
@@ -6550,8 +6552,14 @@ async function c3RitaJump(){if(F.c3Rita||C3.ritaGo)return;C3.ritaGo=true;const R
   setMode('play');writeSave(makeSave('The alley'));}
 async function c3RitaFeed(){if(F.c3Fed)return;const R3=C3.rita;setMode('cine');hidePrompt();const [dx,dz]=L3(76,4);R3.g.visible=true;R3.mode='stand';R3.walk=null;R3.g.position.set(dx-1.6,0,dz+0.2);R3.face=false;
   if(AC){const t=now()+0.01;sClank(busFx,t,0.4);sNoise(busFx,t,0.3,'lowpass',600,0.8,0.4);}R3.walk=[[dx+0.6,dz+0.3]];R3.speed=2.2;
+  R3.gave=false;if(R3.rifle){R3.rifle.visible=true;if(R3.rifle.parent!==R3.body)R3.body.add(R3.rifle);}
   await sleep(0.9);R3.face=true;P.lookT=[dx+0.6,1.55,dz+0.3];await sleep(0.6);P.lookT=null;await runDialogue('rb1');
-  F.c3Fed=true;dropItem('sandwich');F.rifle=true;takeItem('rifle');setObjective(OBJ3.toy);sub('Rita gives you the rifle.',2.6);
+  /* v9.2: she holds it out, and it's in your hands */
+  setMode('cine');hidePrompt();R3.face=true;R3.mode='give';P.lookT=[R3.g.position.x,1.3,R3.g.position.z];await sleep(1.0);
+  {const rf=R3.rifle,H=c3RifleHand(),cw=new THREE.Vector3(),cq=new THREE.Quaternion(),hq=new THREE.Quaternion();SW.scene.attach(rf);const p0=rf.position.clone(),q0=rf.quaternion.clone();if(AC){const t=now()+0.01;sClank(busFx,t,0.3);sNoise(busFx,t,0.3,'bandpass',900,0.9,0.2);}
+    await tween(0.7,k=>{camera.getWorldPosition(cw);camera.getWorldQuaternion(cq);hq.copy(cq).multiply(H.quaternion);const tp=H.position.clone().applyQuaternion(cq).add(cw),e=k*k*(3-2*k);rf.position.lerpVectors(p0,tp,e);rf.quaternion.copy(q0).slerp(hq,e);});
+    rf.visible=false;R3.body.add(rf);rf.position.set(-.235,.23,.36);rf.rotation.set(0,1.35,0);R3.gave=true;}
+  F.c3Fed=true;dropItem('sandwich');F.rifle=true;takeItem('rifle');setObjective(OBJ3.toy);sub('Rita gives you the rifle.',2.6);R3.mode='stand';await sleep(0.6);P.lookT=null;
   R3.face=false;R3.walk=[[dx-0.5,dz+0.2],[L3x(70.5),wc(5)],[L3x(70.5),wc(8)+0.5],[L3x(70.5),wc(9.5)]];R3.speed=1.5;R3.onArrive=()=>{R3.g.visible=false;};
   setMode('play');writeSave(makeSave('Bellini\'s kitchen'));
   after(6,()=>{if(AC&&!F.c3Ended){oneShotAt(L3x(95),1.2,wc(18),p=>{cryBurst(p,0.5);},8,10);}});}
@@ -6568,7 +6576,10 @@ function updateCh3(dt){if(!C3.on)return;c3LightTick(dt);c3PodTick(dt);c3MoteTick
   C3.ambT=(C3.ambT||3)-dt;if(C3.ambT<=0&&AC){C3.ambT=2+R()*4;const f0=1500+R()*1400;oneShotAt(P.x+(R()-0.5)*16,2+R()*6,P.z+(R()-0.5)*16,(p,t)=>sTone(p,t,0.14,'sine',f0,f0*0.6,0.13),1.6,1,true);}
   C3.groanT=(C3.groanT||9)-dt;if(C3.groanT<=0&&AC){C3.groanT=14+R()*16;oneShotAt(P.x+(R()-0.5)*40,4,P.z+(R()-0.5)*40,(p,t)=>{sTone(p,t,3,'sawtooth',48,36,0.14,0.6);sNoise(p,t,2.6,'lowpass',200,0.7,0.18,0.6);},6,5,true);}
   c3StickTick();c3Hud();}
-function c3StickTick(){const I=SW.lab&&SW.lab.inj;if(!I)return;I.visible=hasItem('injector')&&!P.hidden&&(mode==='play'||!!C3.showStick)&&!P.sub;}
+/* v9.2: Rita's rifle, carried low across your body once she's handed it over */
+function c3RifleHand(){if(C3.rifleHand)return C3.rifleHand;const g=new THREE.Group(),wood=lam({color:0x5a3a20,emissive:0x0a0604}),steel=lam({color:0x3a3c3c,emissive:0x060606});g.add(at(boxm(.06,.1,.42,wood),0,0,-.2));const bar=cylm(.016,.016,.7,6,steel);bar.rotation.x=Math.PI/2;bar.position.set(0,.03,.32);g.add(bar);g.add(at(boxm(.04,.06,.16,steel),0,0,.08));
+  g.position.set(.2,-.34,-.42);g.rotation.set(-0.1,Math.PI+0.45,0.35);g.visible=false;camera.add(g);C3.rifleHand=g;return g;}
+function c3StickTick(){if(C3.on&&(C3.rifleHand||hasItem('rifle'))){const H=c3RifleHand();H.visible=hasItem('rifle')&&!P.hidden&&mode==='play'&&!P.sub&&!P.junk;}else if(C3.rifleHand)C3.rifleHand.visible=false;const I=SW.lab&&SW.lab.inj;if(!I)return;I.visible=hasItem('injector')&&!P.hidden&&(mode==='play'||!!C3.showStick)&&!P.sub;}
 function c3EndChapter(){if(F.c3Ended||mode==='end')return;F.c3Ended=true;setMode('end');releaseLock();setChase(false);for(const m of C3.creatures)m.active=false;
   fadeTo(1,1.6).then(()=>{$('mHealth').hidden=true;$('endKick').textContent='End of Chapter Three';$('endTitle').textContent='The City';
     const li=[['Rita','Fed. She went up top.'],['The market','Two of them, cooked in the water.'],['The slaughterhouse','The hens ate it.'],['The bakery','Yoli fell.'],['The mayor','Burned in his own kitchen.']];
@@ -7547,8 +7558,8 @@ function c3BuildRest(S){const wood=lam({map:T.wood,color:0x7a5a40}),cloth=lam({c
     c3Inter({kind:'cook',x:L3x(80)+0.6,z:2*CELL+1.2,y:0,r:1.5,label:()=>'Take the pot',can:()=>!(F.cook&&F.cook.pot)&&!F.c3Sand,async act(){if(mode!=='play')return;(F.cook=F.cook||{}).pot=true;const p=C3.pot,cab=C3.potCab,p0=p.position.clone();p.visible=true;sCab(p0.x);
       await c3Act([p0.x,p0.y+0.15,p0.z],1.3,t=>{const a=Math.min(1,t/0.35);cab.rotation.y=-1.7*a*(2-a);const k=clamp((t-0.4)/0.6,0,1);p.position.set(p0.x,p0.y+0.12*Math.sin(k*Math.PI),p0.z+0.85*k);});
       C3.potHeld=true;c3PotPlace();sClank(busFx,now()+0.01,0.2);}});
-    c3Inter({kind:'take',x:L3x(78.8),z:wc(7)-0.4,y:0,r:1.6,label:()=>'Take a bottle',can:()=>(F.mayorStun||C3.siege)&&!F.mayorDead&&!P.junk&&C3.bottles.some(b=>b.visible),act(){const b=C3.bottles.find(b=>b.visible);b.visible=false;c3Hold('bottle');}});
-    c3Inter({kind:'take',x:L3x(78.5),z:2*CELL+1.3,y:0,r:1.6,label:()=>'Take a rag',can:()=>(F.mayorStun||C3.siege)&&!F.mayorDead&&!P.junk&&C3.rags.some(b=>b.visible),act(){const r=C3.rags.find(b=>b.visible);r.visible=false;c3Hold('rag');}});}
+    c3Inter({kind:'take',x:L3x(78.8),z:wc(7)-0.4,y:0,r:1.6,label:()=>'Take a bottle',can:()=>(F.mayorStun||C3.siege)&&!F.mayorDead&&c3HandFree('bottle')&&C3.bottles.some(b=>b.visible),act(){const b=C3.bottles.find(b=>b.visible);b.visible=false;c3Hold('bottle');}});
+    c3Inter({kind:'take',x:L3x(78.5),z:2*CELL+1.3,y:0,r:1.6,label:()=>'Take a rag',can:()=>(F.mayorStun||C3.siege)&&!F.mayorDead&&c3HandFree('rag')&&C3.rags.some(b=>b.visible),act(){const r=C3.rags.find(b=>b.visible);r.visible=false;c3Hold('rag');}});}
   /* him */
   const okD=(cx,cz)=>{const c=c3c(cx,cz);return c==='.'&&cx>=RST.din[0]&&cx<=RST.din[1]&&cz>=RST.din[2]&&cz<=RST.din[3];};
   const okA=(cx,cz)=>{const c=c3c(cx,cz);if(cx<RST.all[0]||cx>RST.all[1]||cz<RST.all[2]||cz>RST.all[3])return false;if(c3DoorShut(cx,cz))return false;return c==='.';};
@@ -7558,7 +7569,7 @@ function c3BuildRest(S){const wood=lam({map:T.wood,color:0x7a5a40}),cloth=lam({c
     anim:c3MayorAnim});
   m.rig=buildMayor();S.add(m.rig.g);m.rig.g.visible=false;m.okD=okD;m.okA=okA;C3.mayor=m;
   C3.areaTick.push(c3RestTick);C3.areaApply.push(()=>{const m=C3.mayor;m.active=false;m.rig.g.visible=false;m.burn=0;m.dead=false;m.br2=false;m.bFrom=null;
-    C3.rTables.forEach(T0=>{T0.flipped=false;T0.tg.quaternion.identity();T0.tg.position.set(0,0,0);T0.chairs.forEach(([c,rx,rz])=>{c.rotation.x=rx;c.rotation.z=rz;});});C3.flipT=0;C3.slow=null;C3.boilT=null;C3.potHeld=false;C3.bursting=false;C3.siege=false;C3.burstTok=null;m.bPts=null;m.hy=null;m.ax=null;if(P.junk&&P.junk.c3){camera.remove(P.junk.g);P.junk=null;}
+    C3.rTables.forEach(T0=>{T0.flipped=false;T0.tg.quaternion.identity();T0.tg.position.set(0,0,0);T0.chairs.forEach(([c,rx,rz])=>{c.rotation.x=rx;c.rotation.z=rz;});});C3.flipT=0;C3.slow=null;C3.boilT=null;C3.potHeld=false;C3.bursting=false;C3.siege=false;C3.burstTok=null;m.bPts=null;m.hy=null;m.ax=null;if(P.junk&&P.junk.c3){camera.remove(P.junk.g);P.junk=null;}if(P.junk2){camera.remove(P.junk2.g);P.junk2=null;}
     (C3.fires||[]).forEach(f=>{SW.scene.remove(f);});C3.fires=[];$('mSlow')&&($('mSlow').hidden=true);
     if(F.c3Sand&&!F.mayorDead){F.kitBroke=false;F.mayorStun=false;}
     const ck=F.cook||{};C3.knifeM.visible=!ck.knife;C3.cabs.forEach((d,i)=>{d.rotation.y=ck['cab'+i]?-1.6:0;});C3.bottles.forEach(b=>b.visible=true);C3.rags.forEach(r=>r.visible=true);
@@ -7615,9 +7626,9 @@ async function c3SinkAct(){const ck=F.cook=F.cook||{},L=c3SinkLabel(),p=C3.pot,S
     await c3Act([SK[0],SK[1]+0.2,SK[2]],1.6,t=>{const a=t<1.1?Math.sin(Math.min(1,t/0.8)*Math.PI*0.5):Math.max(0,1-(t-1.1)/0.4);p.rotation.z=-1.0*a;C3.potWater.visible=t<0.8;st.position.set(SK[0],SK[1]+0.5+t*0.3,SK[2]);st.material.opacity=0.65*Math.sin(t/1.6*Math.PI);});
     st.material.opacity=0;p.rotation.z=0;ck.drained=true;sub('Steam rolls up off the sink.',2.2);c3BoardShow();}
   c3PotPlace();}
-function c3StoveLabel(){const ck=F.cook||{};if(P.junk&&P.junk.kind==='rag'&&!P.junk.lit)return 'Light the rag';if(ck.filled&&!ck.onStove&&hasItem('eggs'))return 'Put the eggs on to boil';if(ck.onStove&&!ck.boiled)return 'Wait';if(ck.boiled&&!ck.off)return 'Take the pot off';return null;}
+function c3StoveLabel(){const ck=F.cook||{};{const rg=c3Rag();if(rg&&!rg.lit)return 'Light the rag';}if(ck.filled&&!ck.onStove&&hasItem('eggs'))return 'Put the eggs on to boil';if(ck.onStove&&!ck.boiled)return 'Wait';if(ck.boiled&&!ck.off)return 'Take the pot off';return null;}
 async function c3StoveAct(){const ck=F.cook=F.cook||{},L=c3StoveLabel(),p=C3.pot,BN=[L3x(81)-0.38,0.95,wc(5.5)-0.6];if(!L)return;
-  if(L==='Light the rag'){P.junk.lit=true;const fl=new THREE.Sprite(new THREE.SpriteMaterial({map:T.flame,blending:THREE.AdditiveBlending,transparent:true,depthWrite:false}));fl.position.set(0,.18,0);fl.scale.set(.35,.5,1);P.junk.g.add(fl);P.junk.flame=fl;if(AC)sWhoosh(busFx);sub('It catches.',1.6);return;}
+  if(L==='Light the rag'){const rg=c3Rag();rg.lit=true;const fl=new THREE.Sprite(new THREE.SpriteMaterial({map:T.flame,blending:THREE.AdditiveBlending,transparent:true,depthWrite:false}));fl.position.set(0,.18,0);fl.scale.set(.35,.5,1);rg.g.add(fl);rg.flame=fl;if(AC)sWhoosh(busFx);sub('It catches.',1.6);return;}
   if(L==='Wait'){sub('Not yet.',1.2);return;}
   if(mode!=='play')return;
   if(L==='Put the eggs on to boil'){C3.potHeld=false;if(C3.potHand)C3.potHand.visible=false;p.visible=true;const A0=[BN[0]-0.7,1.25,BN[2]];C3.potEggs.forEach(e=>{e.visible=false;e.userData.sp=0;});let cl=false;
@@ -7633,8 +7644,13 @@ function c3PotPlace(){const ck=F.cook||{},p=C3.pot;if(!p)return;C3.potWater.visi
   if(ck.drained){p.position.set(L3x(77.6),0.92,2*CELL+0.35);p.visible=true;return;}
   if(C3.potHeld){p.visible=false;return;}p.visible=true;if(ck.onStove&&!ck.off){p.position.set(L3x(81)-0.38,0.95,wc(5.5)-0.6);return;}if(!ck.pot)p.position.set(L3x(80)+0.6,1.57,2*CELL+0.21);}
 /* holding something to throw */
+const c3HandFree=k=>!P.junk||(P.junk.c3&&!P.junk2&&P.junk.kind!==k);
+const c3Rag=()=>P.junk&&P.junk.kind==='rag'?P.junk:(P.junk2&&P.junk2.kind==='rag'?P.junk2:null);
+function c3HandsPose(){if(P.junk&&P.junk.c3)heldSide(P.junk.g,.22,-.25,-.45,.3,0,-.2);if(P.junk2)heldSide(P.junk2.g,-.24,-.28,-.45,.3,0,.2);}
 function c3Hold(kind){const g=new THREE.Group();if(kind==='bottle'){g.add(at(cylm(.04,.045,.24,8,lam({color:0x6a3a10,transparent:true,opacity:0.85})),0,0,0));}else g.add(at(boxm(.2,.04,.2,lam({color:0xc8c0a8})),0,0,0));
-  camera.add(g);heldSide(g,.22,-.25,-.45,.3,0,-.2);P.junk={c3:true,kind,g,state:'held',x:0,y:0,z:0,vx:0,vy:0,vz:0,spin:0};sClick();
+  camera.add(g);const it={c3:true,kind,g,state:'held',x:0,y:0,z:0,vx:0,vy:0,vz:0,spin:0};sClick();
+  /* v9.2: one in each hand. The rum goes in the throwing hand; the rag waits in the other until the rum is thrown */
+  if(P.junk&&P.junk.c3){if(kind==='bottle'){P.junk2=P.junk;P.junk=it;}else P.junk2=it;}else P.junk=it;c3HandsPose();
   if(!F.throwTip3){F.throwTip3=true;sub(touchMode?'Tap THROW to throw it.':'Press G to throw it.',2.4);}}
 function c3JunkTick(dt){const j=C3.fly;if(!j)return;j.vy-=13*dt;const nx=j.x+j.vx*dt,nz=j.z+j.vz*dt,ncx=Math.floor(nx/CELL),ncz=Math.floor(nz/CELL);
   {const c=c3c(ncx,ncz);/* props (the island, the counters, tables) only stop it below their tops; walls stop it anywhere low */
@@ -7646,10 +7662,10 @@ function c3JunkLand(j,hit){C3.fly=null;SW.scene.remove(j.g);const m=C3.mayor;
     if(hit){F.mayorSoaked=true;sub('Rum all over him. It reeks.',2.2);}else sub('It smashes on the floor.',1.8);}
   else{if(j.lit&&hit&&F.mayorSoaked){c3MayorIgnite();}else if(j.lit&&hit){sub('It just singes him. He needs to be soaked first.',2.6);}else if(j.lit){sub('It lands and gutters out in the water.',2.2);}else sub(hit?'It slaps off him.':'It falls in the water.',1.8);}}
 function c3ThrowHook(){const j=P.junk;if(!j||!j.c3)return false;P.junk=null;camera.remove(j.g);SW.scene.add(j.g);const cp=Math.cos(P.pitch),fx=-Math.sin(P.yaw)*cp,fy=Math.sin(P.pitch),fz=-Math.cos(P.yaw)*cp;
-  j.x=camera.position.x+fx*0.3;j.y=camera.position.y-0.1;j.z=camera.position.z+fz*0.3;j.vx=fx*10;j.vy=fy*10+2.0;j.vz=fz*10;j.state='fly';j.spin=9;C3.fly=j;if(AC)sNoise(busFx,now()+0.01,0.18,'bandpass',800,1,0.12);return true;}
+  j.x=camera.position.x+fx*0.3;j.y=camera.position.y-0.1;j.z=camera.position.z+fz*0.3;j.vx=fx*10;j.vy=fy*10+2.0;j.vz=fz*10;j.state='fly';j.spin=9;C3.fly=j;if(AC)sNoise(busFx,now()+0.01,0.18,'bandpass',800,1,0.12);if(P.junk2){P.junk=P.junk2;P.junk2=null;c3HandsPose();}return true;}
 /* entering the dining room: he comes out of the kitchen */
 function c3RestTick(dt){const m=C3.mayor;if(!m)return;const u=Math.floor(P.x/CELL)-C3X,v=Math.floor(P.z/CELL);c3JunkTick(dt);if(m.active)c3MayorTables(m,dt);
-  if(P.junk&&P.junk.c3&&P.junk.flame)P.junk.flame.scale.set(.3+Math.sin(time*13)*.05,.45+Math.sin(time*9)*.06,1);
+  for(const j of [P.junk,P.junk2])if(j&&j.c3&&j.flame)j.flame.scale.set(.3+Math.sin(time*13)*.05,.45+Math.sin(time*9)*.06,1);
   C3.burners.forEach((b,i)=>{b.material.opacity=0.55+0.15*Math.sin(time*17+i);});
   if(C3.boilT!=null){C3.boilT-=dt*(C3.slow?0:1);const p=C3.pot;C3.steam.position.set(p.position.x,p.position.y+0.5+Math.sin(time*2)*0.05,p.position.z);C3.steam.material.opacity=0.35+Math.sin(time*3)*0.1;
     if(AC&&Math.random()<dt*6)oneShotAt(p.position.x,p.position.y+0.2,p.position.z,(pp,t)=>sTone(pp,t,0.05,'sine',300+R()*300,200,0.05),1.5,1,true);
@@ -7722,8 +7738,8 @@ async function c3BurstIn(){const m=C3.mayor;if(F.mayorStun||F.mayorDead||!m.aliv
   C3.siege=true;setObjective(c3Obj());mScoreStart();mScoreSet(0.85,false);
   after(0.6,()=>{if(mode==='play'&&live())speak('Marissa','He\'s coming through. The rum... a rag. Something to burn.',3);});
   const [bx,bz]=L3(75,4);{const x0=m.x,z0=m.z;await tween(0.8,k=>{m.x=lerp(x0,bx,k);m.z=lerp(z0,bz,k);m.yaw=Math.PI/2;});}
-  for(let i=0;i<6;i++){if(!live())return;await tween(0.8,k=>{m.x=lerp(bx,bx-1.4,k*(2-k));m.yaw=Math.PI/2;});await sleep(0.25);await tween(0.4,k=>{m.x=lerp(bx-1.4,bx,k*k);});if(!live())return;
-    c3Bang(i/5);if(i===2||i===5)c3Voice(m,'mayorRoar',{force:true});await sleep(0.3);}
+  for(let i=0;i<8;i++){if(!live())return;await tween(0.8,k=>{m.x=lerp(bx,bx-1.4,k*(2-k));m.yaw=Math.PI/2;});await sleep(0.25);await tween(0.4,k=>{m.x=lerp(bx-1.4,bx,k*k);});if(!live())return;
+    c3Bang(i/7);if(i===2||i===5||i===7)c3Voice(m,'mayorRoar',{force:true});await sleep(0.3);}
   if(!live())return;setMode('cine');hidePrompt();P.lookT=[L3x(76)+1.5,1.6,wc(4)];
   await tween(0.9,k=>{m.x=lerp(bx,bx-1.8,k*(2-k));});await sleep(0.3);await tween(0.35,k=>{m.x=lerp(bx-1.8,bx,k*k);});if(!live())return;
   if(AC){const t=now()+0.01;sNoise(comp,t,0.4,'highpass',1600,0.7,0.9);sNoise(comp,t,0.6,'lowpass',300,0.7,1.0);}c3Voice(m,'mayorRoar',{force:true});shake(0.45);
