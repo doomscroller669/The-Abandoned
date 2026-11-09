@@ -946,6 +946,19 @@ setInterval(runAud,40);
 function envG(g,t,a,peak,hold,rel){g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(peak,t+a);g.gain.setValueAtTime(peak,t+a+hold);g.gain.exponentialRampToValueAtTime(0.0001,t+a+hold+rel);}
 function sNoise(dest,t,dur,type,freq,q,peak,a=0.005,f2){if(!AC)return;if(t-AC.currentTime>0.5){atAudio(t,tt=>sNoise(dest,tt,dur,type,freq,q,peak,a,f2));return;}const s=AC.createBufferSource();s.buffer=noiseBuf;const f=AC.createBiquadFilter();f.type=type;f.frequency.setValueAtTime(freq,t);if(f2)f.frequency.exponentialRampToValueAtTime(f2,t+a+dur);f.Q.value=q;
   const g=AC.createGain();envG(g,t,a,peak,0,dur);s.connect(f);f.connect(g);g.connect(dest);s.start(t,Math.random()*1.5);s.stop(t+a+dur+0.05);}
+/* v8.4: the jump-scare stinger. A bowed-string stab: a high minor-second cluster that scrapes down, a low growl under it,
+   a rosin scratch on the attack, tremolo while it rings. amp 1 is full. */
+function sStinger(t,amp=1){if(!AC)return;if(t-AC.currentTime>0.5){atAudio(t,tt=>sStinger(tt,amp));return;}
+  const env=AC.createGain(),trem=AC.createGain(),lp=AC.createBiquadFilter(),lfo=AC.createOscillator(),lg=AC.createGain();
+  lp.type='lowpass';lp.Q.value=0.8;lp.frequency.setValueAtTime(7000,t);lp.frequency.exponentialRampToValueAtTime(1800,t+1.8);
+  lfo.frequency.setValueAtTime(7,t);lfo.frequency.linearRampToValueAtTime(12,t+1.6);lg.gain.value=0.28;lfo.connect(lg);lg.connect(trem.gain);trem.gain.value=0.72;
+  env.gain.setValueAtTime(0.0001,t);env.gain.exponentialRampToValueAtTime(amp,t+0.025);env.gain.setTargetAtTime(0.42*amp,t+0.1,0.22);env.gain.setTargetAtTime(0.0001,t+1.0,0.38);
+  lp.connect(trem);trem.connect(env);env.connect(comp);const end=t+2.8;lfo.start(t);lfo.stop(end);
+  [[1108.7,0.11],[1174.7,0.11],[1244.5,0.09],[2217,0.035],[554.4,0.08],[587.3,0.08],[69.3,0.16],[73.4,0.14]].forEach(([f,a],i)=>{
+    const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.detune.value=(i%2?7:-7);
+    o.frequency.setValueAtTime(f*1.035,t);o.frequency.exponentialRampToValueAtTime(f,t+0.06);if(f>500)o.frequency.exponentialRampToValueAtTime(f*0.94,t+1.8);
+    g.gain.value=a;o.connect(g);g.connect(lp);o.start(t);o.stop(end);});
+  sNoise(comp,t,0.16,'bandpass',3200,1.2,0.45*amp);sNoise(comp,t,0.25,'lowpass',260,0.7,0.5*amp);}
 function sTone(dest,t,dur,type,f0,f1,peak,a=0.005){if(!AC)return;if(t-AC.currentTime>0.5){atAudio(t,tt=>sTone(dest,tt,dur,type,f0,f1,peak,a));return;}const o=AC.createOscillator();o.type=type;o.frequency.setValueAtTime(f0,t);if(f1)o.frequency.exponentialRampToValueAtTime(f1,t+a+dur);
   const g=AC.createGain();envG(g,t,a,peak,0,dur);o.connect(g);g.connect(dest);o.start(t);o.stop(t+a+dur+0.05);}
 function mkPanner(x,y,z,ref=1.6,hq){const p=AC.createPanner();p.panningModel=hq?'HRTF':'equalpower';p.distanceModel='inverse';p.refDistance=ref;p.rolloffFactor=1.15;p.maxDistance=90;setPan(p,x,y,z);p.connect(busFx);return p;}
@@ -6427,7 +6440,7 @@ function c3RitaTick(dt){const R3=C3.rita;if(!R3)return;if(C3.ritaFlame)C3.ritaFl
     if(d<0.12){R3.walk.shift();return;}const st=Math.min(d,(R3.speed||1.5)*dt);R3.g.position.x+=dx/d*st;R3.g.position.z+=dz/d*st;R3.g.rotation.y+=angDiff(R3.g.rotation.y,Math.atan2(dx,dz))*Math.min(1,dt*7);ritaPose(dt,'walk');return;}
   if(R3.face){const ty=Math.atan2(P.x-R3.g.position.x,P.z-R3.g.position.z);R3.g.rotation.y+=angDiff(R3.g.rotation.y,ty)*Math.min(1,dt*4);}ritaPose(dt,R3.mode);}
 /* round the corner: she's right there, rifle up */
-async function c3RitaJump(){if(F.c3Rita||C3.ritaGo)return;C3.ritaGo=true;const R3=C3.rita,[x,z]=L3(11,9);setMode('cine');hidePrompt();P.crouch=false;$('bDuck').classList.remove('on');
+async function c3RitaJump(){if(F.c3Rita||C3.ritaGo)return;if(AC)sStinger(now()+0.01,1);C3.ritaGo=true;const R3=C3.rita,[x,z]=L3(11,9);setMode('cine');hidePrompt();P.crouch=false;$('bDuck').classList.remove('on');
   R3.g.visible=true;R3.mode='aim';R3.face=true;R3.g.position.set(x+0.3,0,z);
   if(AC){const t=now()+0.01;sTone(comp,t,0.5,'sawtooth',220,90,0.5);sNoise(comp,t,0.35,'highpass',2000,0.7,0.7);sTone(comp,t,1.2,'sine',70,30,0.9);sNoise(busFx,t+0.05,0.3,'lowpass',700,0.8,0.5);}
   postU.uFlash.value=0.35;shake(0.25);
@@ -6537,8 +6550,17 @@ function c3BuildPlaza(S){const M=c3Mats();
 
 /* ---------- the pharmacy ---------- */
 function c3BuildPharm(S){const M=c3Mats(),sh=lam({map:T.metal,color:0x9a9a92}),bx=['#7a3020','#2a4a6a','#c8c0a0','#3a6a3a'];
-  for(const u of [16,17]){const [x,z]=L3(u,3),g=new THREE.Group();g.position.set(x,0,z);S.add(g);c3PropBox(x-1.0,x+1.0,z-0.5,z+0.5,0);g.add(at(boxm(1.9,1.9,.9,sh),0,.95,0));const rr=mulberry(u*7);
-    for(let r=0;r<3;r++)for(let i=0;i<5;i++)if(rr()<0.6)g.add(at(boxm(.18,.22,.16,lam({color:new THREE.Color(bx[(rr()*4)|0]).getHex()})),-.7+i*.35,.45+r*.55,.48*(rr()<0.5?1:-1)));}
+  /* v8.4: open two-sided shelf units (they read as a button panel before): plinth, back panel, end uprights, four boards a side,
+     stock of different sizes with gaps where it's been picked over, some tipped, some on the floor */
+  const pal=['#8a4a3a','#3a5a7a','#c8c0a0','#5a7a4a','#b8b0c0','#d0a050','#7a6a90','#e0dcd0'].map(c=>lam({color:new THREE.Color(c).getHex()})),amber=lam({color:0xa05a18,transparent:true,opacity:0.88}),cap=lam({color:0xe8e4d8});
+  const item=(g,rr,x,y,z,floor)=>{let o;if(rr()<0.4){const r=0.025+rr()*0.025,h=0.08+rr()*0.1;o=new THREE.Group();o.add(at(new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,6),rr()<0.6?amber:pal[7]),0,h/2,0));o.add(at(new THREE.Mesh(new THREE.CylinderGeometry(r*0.8,r*0.8,0.025,6),cap),0,h+0.012,0));o.userData.w=r*2;o.userData.h=h;}
+    else{const w=0.07+rr()*0.14,h=0.08+rr()*0.16,d=0.06+rr()*0.1;o=at(boxm(w,h,d,pal[(rr()*7)|0]),0,0,0);o.geometry.translate(0,h/2,0);o.userData.w=w;o.userData.h=h;}
+    o.position.set(x,y,z);o.rotation.y=(rr()-0.5)*0.5;if(floor||rr()<0.12){o.rotation.z=Math.PI/2*(rr()<0.5?1:-1);o.position.y=y+(floor?0.03:0.03);}g.add(o);return o.userData.w;};
+  for(const u of [16,17]){const [x,z]=L3(u,3),g=new THREE.Group();g.position.set(x,0,z);S.add(g);c3PropBox(x-1.0,x+1.0,z-0.5,z+0.5,0);const rr=mulberry(u*7);
+    g.add(at(boxm(1.9,.12,.9,sh),0,.06,0));g.add(at(boxm(1.86,1.78,.04,sh),0,1.0,0));g.add(at(boxm(1.9,.04,.9,sh),0,1.9,0));for(const sx of [-.93,.93])g.add(at(boxm(.04,1.9,.9,sh),sx,.95,0));
+    for(const sd of [-1,1])for(const y of [.12,.6,1.08,1.5]){if(y>.2)g.add(at(boxm(1.82,.03,.4,sh),0,y,sd*.24));
+      let px=-.86;while(px<.82){if(rr()<0.42){px+=0.12+rr()*0.3;continue;}const w=item(g,rr,px+0.05,y+0.015,sd*(0.16+rr()*0.18),false);px+=Math.max(0.06,w)+0.02+rr()*0.04;}}
+    for(let i=0;i<5;i++){const fx=(rr()-0.5)*2.2,fz=(rr()<0.5?-1:1)*(0.55+rr()*0.5);item(g,rr,fx,0,fz,true);}}
   {const [x,z]=L3(20,2),g=new THREE.Group();g.position.set(x,0,z);S.add(g);c3PropBox(x-1.0,x+1.0,z-0.25,z+0.85,0);g.add(at(boxm(1.9,1.0,1.0,lam({map:T.wood})),0,.5,.3));g.add(at(boxm(1.9,.05,1.05,lam({color:0x6a6a60})),0,1.0,.3));}
   c3Inter({kind:'misc',x:L3x(15.5),z:wc(5),y:0,r:1.8,label:()=>'Examine',act(){sub('The shelves have been picked over. Whatever is left is on the floor, in the water.',3);}});
   const door=c3Leaf(S,L3x(18)+0.05,7*CELL-0.1,0.0,1.0,2.3,lam({color:0x2a3a30,transparent:true,opacity:0.6}));door.rotation.y=-1.2;
@@ -6603,15 +6625,16 @@ function c3BuildMarket(S){const M=c3Mats();
 }
 function c3CrocAnim(m,dt){const R3=m.rig;m.ph+=dt*(m.state==='chase'?7:3.2);const sw=Math.sin(m.ph);
   R3.g.position.set(m.x,FLOOD_Y-0.32+m.rise*0.9+(m.dead?0.18:0),m.z);R3.g.rotation.y=m.yaw;R3.root.rotation.z=damp(R3.root.rotation.z,m.roll,3,dt);R3.root.rotation.x=-m.rise*0.7;
-  R3.tail.forEach((s,i)=>{s.rotation.y=m.dead?Math.sin(time*0.6+i)*0.05:sw*(0.25+i*0.08)*(m.spd>0.2?1:0.4);});R3.legs.forEach((l,i)=>{l.rotation.y=m.dead?0.3:Math.sin(m.ph+(i%2)*Math.PI)*0.4;});
+  R3.tail.forEach((s,i)=>{s.rotation.y=m.dead?Math.sin(time*0.6+i)*0.05:sw*(0.25+i*0.08)*(m.spd>0.2?1:0.4);});R3.legs.forEach((l,i)=>{if(m.state==='scare'){l.rotation.y=0;l.rotation.z=damp(l.rotation.z,-Math.sign(l.position.x)*1.5,10,dt);return;}l.rotation.z=damp(l.rotation.z,0,6,dt);l.rotation.y=m.dead?0.3:Math.sin(m.ph+(i%2)*Math.PI)*0.4;});
   R3.jaw.rotation.x=damp(R3.jaw.rotation.x,m.lunge>0||m.state==='scare'?0.75:(m.dead?0.3:0.05+Math.max(0,Math.sin(time*0.7+m.i))*0.08),12,dt);R3.head.rotation.y=Math.sin(m.ph*0.5)*0.12;}
 function c3MarketTick(dt){const crocs=C3.crocs;if(!crocs)return;const W=C3.wires;
   if(W.fall>0&&W.fall<1){W.fall=Math.min(1,W.fall+dt*1.6);}W.cab.forEach((c,i)=>{c.rotation.x=W.fall>0?lerp(0,1.2+i*0.1,Math.min(1,W.fall)):Math.sin(time*1.7+i)*0.08;c.position.y=lerp(4.6,1.4,Math.min(1,W.fall*W.fall));});
   W.spk.visible=!F.crocsDead&&(W.fall<=0||W.fall<1);W.spk.material.opacity=Math.random()<0.25?0.9:0.25;
   (C3.floaters||[]).forEach((b,i)=>{b.position.y=FLOOD_Y-0.05+Math.sin(time*1.1+i)*0.03;});
   const u=Math.floor(P.x/CELL)-C3X,v=Math.floor(P.z/CELL),inMkt=u>=15&&u<=27&&v>=14&&v<=22;
-  /* walking in: one comes up out of the black right beside the landing */
-  if(inMkt&&!F.mktScare&&!F.crocsDead&&mode==='play'&&v>=14){F.mktScare=true;const m=crocs[0];const [sx,sz]=L3(15.6,15.25);m.x=sx;m.z=sz;m.yaw=Math.PI*0.5;m.state='scare';m.t=0;/* v8.2.5: rears up in the open corner at the west end of the walkway strip, facing the landing (the lanes by the landing are too narrow; it cut through the wall and shelves there) */
+  /* walking in: one comes up out of the black down the center aisle, once she's on the landing looking that way (or as soon as she's up on the shelves) */
+  const [ax,az]=L3(22,18);const lookAisle=v===15&&Math.abs(P.x-ax)<1.3&&(-Math.sin(P.yaw)*(ax-P.x)-Math.cos(P.yaw)*(az-P.z))/Math.hypot(ax-P.x,az-P.z)>0.8;
+  if(inMkt&&!F.mktScare&&!F.crocsDead&&mode==='play'&&(lookAisle||v>=16)){F.mktScare=true;const m=crocs[0];m.x=ax;m.z=az;m.yaw=Math.PI;m.state='scare';m.t=0;if(AC)sStinger(now()+0.01,1);/* v8.4: center aisle, ~7 m in front of the landing, facing her; legs hang down so it fits between the shelves */
     if(AC){const t=now()+0.01;sSplash();sNoise(comp,t,0.6,'lowpass',500,0.7,0.9);const at=[m.x,FLOOD_Y+0.4,m.z];c3Step(m,'crocSnap',{at,ref:4,low:false});c3Voice(m,'crocBellow',{force:true,at,ref:4,delay:0.15});}postU.uFlash.value=0.3;shake(0.3);
     after(0.5,()=>{if(mode==='play')speak('Marissa','Jesus...!',1.6);});}
   for(const m of crocs){const R3=m.rig;const dx=P.x-m.x,dz=P.z-m.z,d=Math.hypot(dx,dz);m.cool=Math.max(0,m.cool-dt);
@@ -6928,7 +6951,7 @@ async function c3YoliBreakIn(){if(C3.breakGo||F.yoliOut)return;C3.breakGo=true;c
   await tween(2.8,k=>up(k));m.spd=0;
   if(F.aptDoor==='open'){const pc=Math.floor(P.x/CELL);if(pc!==C3X+55||Math.floor(P.z/CELL)!==2){F.aptDoor='shut';if(AC)sClank(busFx,now()+0.01,0.5);tween(0.15,k=>{d.rotation.y=1.4*(1-k);});sub('The door slams.',1.6);}}
   if(F.aptDoor!=='broken'&&F.aptDoor!=='open'){c3Voice(m,'yoliGiggle');for(let i=0;i<3;i++){await sleep(0.9);if(i===1)c3Voice(m,'yoliGiggle');if(AC){const t=now()+0.01;sNoise(comp,t,0.25,'lowpass',300,0.7,0.9);sTone(comp,t,0.3,'sine',70,40,0.6);}shake(0.15);d.rotation.y=0.08;after(0.12,()=>{d.rotation.y=0;});}
-    await sleep(0.6);if(AC){const t=now()+0.01;sNoise(comp,t,0.6,'highpass',1200,0.6,0.9);sNoise(comp,t,0.5,'lowpass',400,0.8,0.8);}shake(0.35);F.aptDoor='broken';d.visible=false;C3.aptBits.visible=true;}
+    await sleep(0.6);if(AC){const t=now()+0.01;sStinger(t,0.9);sNoise(comp,t,0.6,'highpass',1200,0.6,0.9);sNoise(comp,t,0.5,'lowpass',400,0.8,0.8);}shake(0.35);F.aptDoor='broken';d.visible=false;C3.aptBits.visible=true;}
   C3.yoliIn=true;m.ok=m.okAll;m.x=L3x(55)+0.6;m.z=wc(2);m.y=3.6;
   if(P.hidden){/* hidden: she hunts around the room, then stands at the window */m.state='script';const pts=[[L3x(54.5),wc(3)],[L3x(53.5),wc(5)],[L3x(54.8),wc(6)-0.4],[L3x(53.5),wc(7)-0.6]];let i=0;
     m.scr=(dt)=>{const p=pts[i];if(!p){m.spd=0;m.yaw+=angDiff(m.yaw,0)*Math.min(1,dt*3);m.atWin=true;if(!P.hidden){m.scr=null;m.atWin=false;m.state='chase';m.lx=P.x;m.lz=P.z;m.lost=0;m.yaw=Math.atan2(P.x-m.x,P.z-m.z);c3Voice(m,'yoliLaugh',{force:'soft'});}return;}
