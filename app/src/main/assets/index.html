@@ -2016,7 +2016,7 @@ function makeTrap(){const g=new THREE.Group();g.add(at(boxm(.27,.02,.13,lam({col
   bar.rotation.z=Math.PI*0.97;g.userData.bar=bar;g.scale.setScalar(1.25);return g;}
 function takeTrap(i){if(F.trapsTaken.has(i))return;if(F.inv.filter(x=>x==='trap').length>=4){sub('Your hands are full.',2.2);return;}F.trapsTaken.add(i);F.inv.push('trap');SW.ductTraps[i].visible=false;sClick();
   if(!F.trapTip){F.trapTip=true;tip(touchMode?'Tap TRAP to set a mouse trap on the floor in front of you. If he steps on it, it holds him for a few seconds.':'Press Q to set a mouse trap on the floor in front of you. If he steps on it, it holds him for a few seconds.',8);}}
-function setTrap(){if(mode!=='play'||level!=='sewer'||P.hidden||P.onPlat||P.inWater||P.sub||P.inVent)return;const i=F.inv.indexOf('trap');if(i<0)return;
+function setTrap(){if(mode!=='play'||level!=='sewer'||F.ch4||P.hidden||P.onPlat||P.inWater||P.sub||P.inVent)return;const i=F.inv.indexOf('trap');if(i<0)return;
   const fx=-Math.sin(P.yaw),fz=-Math.cos(P.yaw);let x=P.x+fx*0.8,z=P.z+fz*0.8;const cx=Math.floor(x/CELL),cz=Math.floor(z/CELL);if(pSolid(cx,cz)||cellAt(cx,cz)==='~'){x=P.x;z=P.z;}
   F.inv.splice(i,1);const m=makeTrap();m.position.set(x,0,z);m.rotation.y=P.yaw;SW.scene.add(m);SW.traps.push({x,z,m,armed:true});
   if(AC)oneShotAt(x,.05,z,(p,t)=>{sNoise(p,t,0.03,'bandpass',2600,3,0.3);sTone(p,t+0.04,0.05,'triangle',1800,1400,0.08);},1.2,1);noise(P.x,P.z,2);}
@@ -3405,7 +3405,7 @@ function hud(){
   {const mb=C3.on?(!F.c3Map||!!F.ch4):(!(level==='sewer'&&(F.ch2?F.hasLabMap:F.hasMap))||!!F.ch4);if($('mapBtn').hidden!==mb)$('mapBtn').hidden=mb;}
   $('bDive').hidden=!(level==='sewer'&&P.inWater);if(C3.on){const pb=$('bPills');if(pb)pb.hidden=!(F.pills>0&&P.hp<0.97&&!F.ch4);}$('bDive').classList.toggle('on',P.sub);
   let inv='';if(F.litter>0)inv+='Litter <span class="k">×'+F.litter+'</span>';if(P.rat)inv+=(inv?' &nbsp;·&nbsp; ':'')+'Rat in hand <span class="k">'+(touchMode?'THROW':'G')+'</span>';
-  const nt=F.inv?F.inv.filter(x=>x==='trap').length:0;if(nt)inv+=(inv?' &nbsp;·&nbsp; ':'')+'Trap <span class="k">×'+nt+'</span> <span class="k">'+(touchMode?'TRAP':'Q')+'</span>';inv+=invHudExtra(inv);$('bTrap').hidden=!(nt&&level==='sewer');
+  const nt=F.inv&&!F.ch4?F.inv.filter(x=>x==='trap').length:0;if(nt)inv+=(inv?' &nbsp;·&nbsp; ':'')+'Trap <span class="k">×'+nt+'</span>'+(touchMode?'':' <span class="k">Q</span>');inv+=invHudExtra(inv);$('bTrap').hidden=!(nt&&level==='sewer');
   if(inv!==hudInv){hudInv=inv;$('inv').hidden=!inv;$('inv').innerHTML=inv;}$('bThrow').hidden=!(P.rat||P.junk);c4Hud();
 }
 let hbNext=0,last=performance.now(),hudInv=null;
@@ -4608,7 +4608,7 @@ const LAB_NOTES=[['L11',263.2,.97,25.15],['L1',263,.02,45.2],['L2',279,.97,23],[
 function hasItem(k){return F.inv.includes(k);}
 function takeItem(k){F.inv.push(k);sClick();}
 function dropItem(k){const i=F.inv.indexOf(k);if(i>=0)F.inv.splice(i,1);}
-function invList(){const out=[],nt=F.inv.filter(x=>x==='trap').length,nk=F.inv.filter(x=>x==='key').length;if(nt)out.push('Trap ×'+nt);
+function invList(){const out=[],nt=F.ch4?0:F.inv.filter(x=>x==='trap').length,nk=F.inv.filter(x=>x==='key').length;if(nt)out.push('Trap ×'+nt);
   ['battery','syringe','chem','baton','injector','ventkey'].forEach(k=>{if(hasItem(k))out.push(ITEM_NAMES[k]);});['mayo','eggs','bread','sandwich','rifle'].forEach(k=>{if(hasItem(k))out.push(ITEM3[k]);});if(F.pills>0)out.push('Pills ×'+F.pills);if(nk)out.push('Key'+(nk>1?' ×'+nk:''));
   const tp=(F.tapes||[]).filter(t=>!(F.tapesSeen||[]).includes(t)).length;if(tp)out.push('Tape'+(tp>1?' ×'+tp:''));
   const lm=(F.picked||[]).filter(p=>p.startsWith('limb')).length-(F.cryoDone?4:0);if(lm>0)out.push('Specimen jar ×'+lm);
@@ -8558,8 +8558,10 @@ const C4_DLG={
  ca1:{who:'Carla',text:'She\'s sweet, isn\'t she? He picked her out himself.',next:'ca2'},
  ca2:{who:'Marissa',text:'Who are you? That\'s my cat. Open it. Please.',next:'ca3'},
  ca3:{who:'Carla',text:'Carla. The Courier says I\'m dead. That poor woman by the drain had my coat, my handbag, my ring. Nobody looked any closer. Nobody ever does, down here.',next:'ca4'},
- ca4:{who:'Carla',text:'I had a baby once. I couldn\'t feed him and I couldn\'t look at him, so I left him in a basket with a note that said sorry.',next:'ca5'},
- ca5:{who:'Carla',text:'The men in white coats found him first. They made him into what he is. So I went into their lab and put something in their water. Let it eat them the way they ate him.',next:'ca6'},
+ ca4:{who:'Carla',text:'I had a baby once. He was born sick. Every doctor upstairs said the same thing. Take him home and love him while you can.',next:'ca5'},
+ ca5:{who:'Carla',text:'Then a man in a white coat told me about the trial water. It might save him, he said. It might change him. I said give it to me.',next:'ca5b'},
+ ca5b:{who:'Carla',text:'It saved him. And it changed him. I couldn\'t feed him. I couldn\'t stand to look at him. So I left him down here in a basket, with a note that said sorry.',next:'ca5c'},
+ ca5c:{who:'Carla',text:'Then I went into their lab and put something in their water. Let it eat them the way it ate my boy.',next:'ca6'},
  ca6:{who:'Carla',text:'My husband signed their checks. Cut their ribbons. He was a monster too, in his way. Just better dressed.',next:'ca7'},
  ca7:{who:'Carla',text:'I came down here to find my son. I found him. And nobody is going to hurt my baby. Not them. Not you.',next:'caR1'},
  caR1:{who:'Marissa',text:'I crawled on hot pipes, through mouse traps and broken glass. I even crawled through shit water. Got mutant brains in my mouth. Fell through multiple windows and killed multiple abominations by various means.',next:'caR2'},
@@ -8572,7 +8574,7 @@ const C4_DLG={
  cy2:{who:'Carla',text:'Did he cry? Tell me he cried.',next:'cy3'},
  cy3:{who:'Carla',text:'Nine. Two. Two. His birthday. Take your cat and go before he wakes up.',enter:()=>{F.c4Met=true;},next:null},
  cn1:{who:'Carla',text:'Begging. Everybody begs. I begged, once. Nobody came.',next:null},
- cn2:{who:'Carla',text:'Kindness. That\'s how they talk you into leaving him in the basket.',next:null}};
+ cn2:{who:'Carla',text:'Kindness. The man in the white coat was kind, too.',next:null}};
 Object.assign(DLG,C4_DLG);
 async function c4CarlaScene(){if(C4.stage)return;C4.stage='carla';setMode('cine');hidePrompt();P.lookT=null;
   if(!F.c4House){/* she sees Pip first */F.c4House=true;P.lookT=[C4.pipEyes.getWorldPosition(new THREE.Vector3()).x,C4Y+1.2,C4P.house[1]-0.2];c4PipMew('meow');await sleep(1.0);speak('Marissa','Pip! Oh, baby. Hold on.',2.6);await sleep(2.0);
@@ -8800,7 +8802,7 @@ Object.assign(DLG,{
  cg2:{who:'Bee',text:'It\'s quiet. Do you hear that? Nobody\'s crying.',next:'cg3'},
  cg3:{who:'Rita',text:'The crybaby. He\'s dead?',next:'cg4'},
  cg4:{who:'Marissa',text:'He\'s dead.',next:'cg5'},
- cg5:{who:'Dolores',text:'Forty years. Forty years, and it\'s over. Thank you, honey. You ended it.',next:'cg6'},
+ cg5:{who:'Dolores',text:'All spring he been taking us, one by one. It\'s over. Thank you, honey. You ended it.',next:'cg6'},
  cg6:{who:'Mack',text:'Ladder\'s gone. Somebody pulled it clean off the bolts.',next:'cg7'},
  cg7:{who:'Mack',text:'Give me an hour and some wire. I\'ll fix that ladder.',next:null}});
 /* home: the couch, Pip asleep on you, and something on the ceiling */
