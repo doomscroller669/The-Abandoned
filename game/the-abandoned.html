@@ -5311,6 +5311,10 @@ function applyLab2(){const L=SW.lab;if(!L||!L.picks)return;resetJunk();ventApply
   if(L.pod)L.pod.position.y=L.pod.userData.y0+(F.cryoDone?2.0:0);if(L.drawer)L.drawer.position.z=L.drawer.userData.z0+(F.mazeDone?0.45:0);drawMazeBoard();drawChemScreen();
   [['closet',F.closetOpen],['sec',F.secOpen]].forEach(([k,o])=>{const d=L.doors[k];if(!d)return;if(d.userData.p0==null)d.userData.p0=[d.position.x,d.position.z];const s=Math.sin(d.rotation.y),c=Math.cos(d.rotation.y);d.position.x=d.userData.p0[0]+(o?c*1.85:0);d.position.z=d.userData.p0[1]-(o?s*1.85:0);});
   ['mack','bee'].forEach(w=>{const free=w==='mack'?F.cellMack:F.cellBee,cp=L.cap[w];cp.g.visible=!free;capReset(w);const b=L.cellBars&&L.cellBars[w];if(b)b.position.x=b.userData.x0+(free?1.8:0);});
+  /* v10.4: a key is on a living mutant, on the floor, or taken; never two at once */
+  {const dead=F.mutDead||[];F.keyDrops=(F.keyDrops||[]).filter(d=>dead.includes(d.i));F.keysTaken=F.keysTaken||[];
+    const stray=F.keysTaken.filter(i=>!dead.includes(i));if(stray.length){F.keysTaken=F.keysTaken.filter(i=>dead.includes(i));stray.forEach(()=>dropItem('key'));}
+    MUTS.forEach(m=>{if(m.key&&dead.includes(m.i)&&!F.keyDrops.some(d=>d.i===m.i)&&!F.keysTaken.includes(m.i))F.keyDrops.push({i:m.i,x:wc(m.d.start[0]),z:wc(m.d.start[1])});});}
   L.keys.forEach(k=>{SW.scene.remove(k.mesh);});L.keys=[];(F.keyDrops||[]).forEach(d=>{if(!(F.keysTaken||[]).includes(d.i))spawnKey(d.i,d.x,d.z);});
   MUTS.forEach(m=>{if(m.rig.keyM)m.rig.keyM.visible=!(F.keyDrops||[]).some(d=>d.i===m.i);});
   if(SW.lab.tv)SW.lab.tv.material.color.setHex(0x0a0e0c);}
@@ -5340,7 +5344,7 @@ function explodeMut(m){m.alive=false;m.active=false;m.state='dead';m.rig.g.visib
   if(m.key){if(!F.keyDrops)F.keyDrops=[];F.keyDrops.push({i:m.i,x:+m.x.toFixed(2),z:+m.z.toFixed(2)});if(m.rig.keyM)m.rig.keyM.visible=false;spawnKey(m.i,m.x,m.z);sub('Something metal skitters across the floor.',2.6);}
   setObjective(ch2Obj());}
 function spawnKey(i,x,z){const old=SW.inter.find(it=>it.kind==='key'&&it.ki===i);const k=new THREE.Group();k.add(at(boxm(.03,.008,.09,lam({color:0xc8a040,emissive:0x2a1e0a})),0,0,0));k.add(at(new THREE.Mesh(new THREE.TorusGeometry(.025,.006,4,8),lam({color:0xc8a040})),0,0,-.06));k.rotation.x=0;k.position.set(x,.02,z);SW.scene.add(k);
-  const o={i,mesh:k};SW.lab.keys.push(o);if(old){old.x=x;old.z=z;old.mesh=k;return;}SW.inter.push({kind:'key',ki:i,mesh:k,x,z,r:1.6,label:()=>'Take the key',can:()=>!(F.keysTaken||[]).includes(i),act(){if(!F.keysTaken)F.keysTaken=[];F.keysTaken.push(i);takeItem('key');this.mesh.visible=false;sub('A key on a tag: HOLDING.',2.4);setObjective(ch2Obj());}});}
+  const o={i,mesh:k};SW.lab.keys.push(o);if(old){old.x=x;old.z=z;old.mesh=k;return;}SW.inter.push({kind:'key',ki:i,mesh:k,x,z,r:1.6,label:()=>'Take the key',can:()=>(F.keyDrops||[]).some(d=>d.i===i)&&!(F.keysTaken||[]).includes(i),act(){if(!F.keysTaken)F.keysTaken=[];F.keysTaken.push(i);takeItem('key');this.mesh.visible=false;sub('A key on a tag: HOLDING.',2.4);setObjective(ch2Obj());}});}
 
 /* ---------- Mack and Bee ---------- */
 const CAP_LINES={mack:[['Marissa','Mack? From the camp? Your tent... Dolores told me about you.'],['Mack','You ain\'t one of them. Thank God.'],['Mack','The vents. They can\'t fit in the vents. I\'ll find my own way. Go.']],
