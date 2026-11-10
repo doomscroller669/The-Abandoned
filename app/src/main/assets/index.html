@@ -5965,8 +5965,8 @@ function buildCity(S){if(C3.built)return;C3.built=true;c3Init();const M=c3Mats()
   const wallKey=room=>room?(C3_MATKEY[room.w]||'tileW'):'facade0';
   for(let cz=0;cz<MH;cz++)for(let u=0;u<C3W;u++){const cx=C3X+u,c=CITY[cz][u];if(!c3Open(c)&&c!=='k')continue;if(c==='/')continue;if(c==='b')continue;
     const room=c3Room(cx,cz),x0=cx*CELL,z0=cz*CELL,fh=C3_FLOOR[c],ce=c3Ceil(cx,cz),tint=room?room.tint:out,cf=c3Grime(tint,true);
-    /* floor */
-    tile(cx,cz,floorKey(c,room)).grid([x0,fh,z0],[CELL,0,0],[0,0,CELL],2,2,1,1,[0,1,0],cf);
+    /* floor (v10.5: not under the toy store, which lays its own; two floors 4 mm apart fought) */
+    if(!(c==='T'&&u>=102&&u<=117&&cz>=3&&cz<=20))tile(cx,cz,floorKey(c,room)).grid([x0,fh,z0],[CELL,0,0],[0,0,CELL],2,2,1,1,[0,1,0],cf);
     /* ceiling, and the roof cap on top of it for anyone looking down from the roofs */
     if(ce!=null&&c!=='k'&&!C3_SKY[cx+','+cz]){tile(cx,cz,c==='w'?'rubble':(room?(C3_MATKEY[room.c]||'plasterC'):'plasterC')).grid([x0,ce,z0],[CELL,0,0],[0,0,CELL],2,2,1,1,[0,-1,0],cf);
       if(c!=='w'&&room&&room.id!=='under')tile(cx,cz,'roof').grid([x0,ce+0.35,z0],[CELL,0,0],[0,0,CELL],1,1,1,1,[0,1,0],null);}
@@ -8263,8 +8263,8 @@ function c4StockRow(B,kind,x,y,z0,z1,sd,lvl,rr){let z=z0+0.18;while(z<z1-0.18){c
 function c4BuildAll(S){if(C4.built)return;C4.built=true;C4.swL=SW.lights.map(o=>({o,p:o.l.position.clone(),c:o.l.color.getHex(),d:o.l.distance,base:o.base,kind:o.kind}));/* the sewer's own lamps, as Chapter One left them */
   const M=c4Mats(),G=c4Geo(),B=c4Batch(),rr=mulberry(4040);const root=new THREE.Group();root.position.y=C4Y;S.add(root);C4.root=root;
   /* the floor: pink and cream tiles over the city's lino; a pink rug in the girls' corner */
-  {const fl=new THREE.Mesh(new THREE.PlaneGeometry(C4U(118)-C4U(102),C4V(21)-C4V(3)),M.floorTile);scaleUV(fl.geometry,16,18);fl.rotation.x=-Math.PI/2;fl.position.set((C4U(102)+C4U(118))/2,0.004,(C4V(3)+C4V(21))/2);root.add(fl);
-    const rg=new THREE.Mesh(new THREE.PlaneGeometry(7.2,9.4),M.rug);rg.rotation.x=-Math.PI/2;rg.position.set(C4U(103.9),0.01,C4V(17.6));root.add(rg);}
+  {const fl=new THREE.Mesh(new THREE.PlaneGeometry(C4U(118)-C4U(102),C4V(21)-C4V(3),32,36),M.floorTile);scaleUV(fl.geometry,16,18);fl.rotation.x=-Math.PI/2;fl.position.set((C4U(102)+C4U(118))/2,0.004,(C4V(3)+C4V(21))/2);root.add(fl);
+    const rg=new THREE.Mesh(new THREE.PlaneGeometry(7.2,9.4,8,10),M.rug);rg.rotation.x=-Math.PI/2;rg.position.set(C4U(103.9),0.02,C4V(17.6));root.add(rg);}
   /* shelf runs; each aisle has its own stock */
   const runs=[[104,'pink'],[107,'doll'],[110,'box'],[113,'ball']],stockFor=k=>(x,y,sd,i,r)=>c4StockRow(B,i===3&&k!=='pink'?'box':k,x,y,C4V(6),C4V(13),sd,i,r);
   runs.forEach(([u,k])=>{const x=C4U(u+0.5);c4Shelf(B,x,C4V(6)+0.05,C4V(13)-0.05,1.3,[-1,1],k==='pink'?[0.96,0.8,0.86]:[0.82,0.84,0.86],(xx,y,sd,i,r)=>{const kind=u===104?(sd<0?'plush':'pink'):u===107?(sd<0?'pink':'box'):u===110?(sd<0?'box':'ball'):(sd<0?'ball':'box');c4StockRow(B,i===3&&kind==='ball'?'box':kind,xx,y,C4V(6),C4V(13),sd,i,r);},rr);
@@ -8357,7 +8357,7 @@ function c4BuildBears(root,M,rr){const B=c4Batch(),G=c4Geo(),x0=C4P.aisleX[0],x1
   /* the wire, ankle high, tied off to the pegboard and the wall shelving */
   const w=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,x1-x0-0.6,4),basic({color:0xd8d4c8}));w.rotation.z=Math.PI/2;w.position.set((x0+x1)/2+0.05,0.16,C4P.wireZ);root.add(w);C4.wire=w;
   /* the burnt aisle after: char on the floor and the shelves, scraps of fur */
-  const ch=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,C4V(16)-C4V(3)),decal(basic({color:0x080604,transparent:true,opacity:0.82,map:T.blob}),-3,-10));ch.rotation.x=-Math.PI/2;ch.position.set((x0+x1)/2,0.02,(C4V(3)+C4V(16))/2);ch.visible=false;root.add(ch);C4.char=ch;
+  const ch=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,C4V(16)-C4V(3),Math.max(1,Math.round(x1-x0)),26),decal(basic({color:0x080604,transparent:true,opacity:0.82,map:T.blob}),-3,-10));ch.rotation.x=-Math.PI/2;ch.position.set((x0+x1)/2,0.03,(C4V(3)+C4V(16))/2);ch.visible=false;root.add(ch);C4.char=ch;
   const B2=c4Batch();for(let i=0;i<70;i++){const z=C4V(3.4)+rr()*(C4V(16)-C4V(3.4));B2.add('plush',G.ball5,c4M4(x0+0.3+rr()*(x1-x0-0.6),0.03,z,rr()*TAU,0.1+rr()*0.14,0.04,0.08+rr()*0.1),c4Shade(bearCol(),0.4+rr()*0.3));}
   for(let i=0;i<16;i++){const z=C4V(4)+rr()*(C4V(15)-C4V(4));B2.add('shelf',G.box,c4M4(x0+0.4+rr()*(x1-x0-0.8),0.06,z,rr()*TAU,0.5+rr()*0.6,0.05,0.12),[0.3,0.28,0.26]);}
   /* the end cap, knocked flat against the aisle wall */
