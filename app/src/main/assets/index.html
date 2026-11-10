@@ -912,7 +912,11 @@ let AC=null,comp,muffle,busFx,busAmb,revSend,noiseBuf,brownBuf,farIn=null,curveC
 const amb={};let bass=null,squeal=null;
 function initAudio(){
   if(AC){if(AC.state==='suspended')AC.resume();return;}
-  try{const AX=window.AudioContext||window.webkitAudioContext;try{AC=new AX({latencyHint:touchMode?'playback':'balanced'});}catch(e2){AC=new AX();}}catch(e){AC=null;return;}
+  /* v10.3: phones and tablets run the whole synth at 24 kHz. Every sound here is built live and the big screams are
+     mostly convolution reverb; at 48 kHz that was more than a phone's audio thread could keep up with (stutter, and
+     the wail after the wheel dropping out). 24 kHz is ~3.5x cheaper and only loses what's above 12 kHz. */
+  try{const AX=window.AudioContext||window.webkitAudioContext;const tries=touchMode?[{latencyHint:'playback',sampleRate:24000},{latencyHint:'playback'}]:[{latencyHint:'balanced'}];
+    for(const o of tries){try{AC=new AX(o);break;}catch(e2){}}if(!AC)AC=new AX();}catch(e){AC=null;return;}
   comp=AC.createDynamicsCompressor();comp.threshold.value=-16;comp.ratio.value=5;comp.attack.value=0.004;comp.release.value=0.2;
   const out=AC.createGain();out.gain.value=0.95;/* v8.1: a fast, hard limiter after the compressor: only touches peaks within 2.5dB of full scale */const lim=AC.createDynamicsCompressor();lim.threshold.value=-2.5;lim.knee.value=0;lim.ratio.value=20;lim.attack.value=0.001;lim.release.value=0.12;comp.connect(lim);lim.connect(out);out.connect(AC.destination);AC.__lim=lim;AC.__out=out;
   muffle=AC.createBiquadFilter();muffle.type='lowpass';muffle.frequency.value=18000;muffle.Q.value=0.7;muffle.connect(comp);
