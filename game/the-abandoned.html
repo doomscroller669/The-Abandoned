@@ -118,6 +118,8 @@ button{font:inherit;color:inherit}
   -webkit-mask:radial-gradient(circle,transparent 15px,#000 16px);mask:radial-gradient(circle,transparent 15px,#000 16px)}
 #lockHint{position:absolute;left:50%;top:64%;transform:translateX(-50%);font-size:20px;color:var(--ash);text-shadow:0 0 4px #000;letter-spacing:.1em}
 #reticle{position:absolute;left:50%;top:50%;width:3px;height:3px;margin:-1px 0 0 -1px;background:rgba(220,213,192,.5)}
+/* v10.7: the rifle's crosshair in the toy store fight */
+#reticle.aim{width:36px;height:36px;margin:-18px 0 0 -18px;background:linear-gradient(#f2d6c4,#f2d6c4) 50% 0/2px 12px no-repeat,linear-gradient(#f2d6c4,#f2d6c4) 50% 100%/2px 12px no-repeat,linear-gradient(#f2d6c4,#f2d6c4) 0 50%/12px 2px no-repeat,linear-gradient(#f2d6c4,#f2d6c4) 100% 50%/12px 2px no-repeat,linear-gradient(#ff5236,#ff5236) 50% 50%/4px 4px no-repeat;filter:drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000)}
 
 /* ---------- touch ---------- */
 #touch{position:fixed;inset:0;z-index:15;touch-action:none}
@@ -2944,6 +2946,8 @@ function c1CopNote(S){const x=103.2,z=35.25,g=new THREE.Group();g.position.set(x
   g.add(at(boxm(.2,.018,.27,lam({color:0x3a2a1e,emissive:0x0a0604})),0,.009,0));
   const pg=new THREE.Mesh(new THREE.PlaneGeometry(.18,.25),decal(lam({map:T.paper,emissive:0x2e2a1e})));pg.rotation.x=-Math.PI/2;pg.position.set(.004,.0185,.002);g.add(pg);
   SW.inter.push({kind:'note',id:'C1',x,z,r:1.7,label:()=>'Examine',act(){openNote('C1');}});}
+/* v10.7: a note on the junction floor, by the dead elevator */
+NOTES.C2={verb:'Read the note',title:'',cls:'hand',html:`<p>Elevator's dead. Somebody took the battery.</p><p>Maintenance keeps spares at the far east end. The crawls all look the same down here, so I scratched the way into the walls.</p><p>Follow the scratches.</p>`};
 let noteOpen=null;
 function openNote(id){const n=NOTES[id];if(!n)return;noteOpen=id;if(id==='L2')F.l2Read=true;if('1234'.includes(id))F.notes.add(id);sPaper();releaseLock();setMode('ui');
   const p=$('paper');p.className='paper '+n.cls;$('noteTitle').textContent='';$('noteTitle').hidden=true;$('noteBody').innerHTML=n.html;$('note').hidden=false;setTimeout(()=>$('noteClose').focus({preventScroll:true}),30);}
@@ -3551,7 +3555,31 @@ function buildCh2(S){SW.c2={t0:0};const c2=SW.c2;
   dg.add(at(boxm(2.06,.1,.12,fr),0,2.35,.04));[-1.0,1.0].forEach(a=>dg.add(at(boxm(.1,2.4,.12,fr),a,1.2,.04)));
   {const s=signMesh('RESEARCH WING',null,1.9);s.position.set(0,2.72,.02);dg.add(s);}
   {const bl=new THREE.Mesh(new THREE.PlaneGeometry(1.6,1.3),decal(new THREE.MeshBasicMaterial({map:T.blood,transparent:true,depthWrite:false,color:0x5a1a14,opacity:0.7}),-3,-12));bl.rotation.x=-Math.PI/2;bl.position.set(251.8,.013,44.4);bl.userData.noShade=true;S.add(bl);}
-  SW.inter.push({kind:'labDoor',x:252.9,z:45,r:2.2,label:()=>'Open',can:()=>F.liftGate&&!F.labOpen,act:openLabDoor});buildGore(S);buildLab(S);}
+  SW.inter.push({kind:'labDoor',x:252.9,z:45,r:2.2,label:()=>'Open',can:()=>F.liftGate&&!F.labOpen,act:openLabDoor});buildGore(S);c2Trail(S);buildLab(S);}
+/* v10.7: the scratched way from the junction to the battery. Fresh, pale gouges (not the gore), an arrow at eye height
+   on the tunnel wall every other cell, at every turn and at every branch, and on the floor at each room's way out */
+function c2TrailTex(){const rr=mulberry(1077);return tex(128,64,g=>{g.clearRect(0,0,128,64);g.lineCap='round';
+  const st=(x1,y1,x2,y2,w)=>{for(let k=0;k<2;k++){const j=()=>(rr()-0.5)*2.2;g.strokeStyle='rgba(18,14,10,0.75)';g.lineWidth=w+2.4;g.beginPath();g.moveTo(x1+j(),y1+j()+1.2);g.lineTo(x2+j(),y2+j()+1.2);g.stroke();
+      g.strokeStyle='rgba(238,230,208,0.97)';g.lineWidth=w;g.beginPath();g.moveTo(x1+j(),y1+j());g.lineTo(x2+j(),y2+j());g.stroke();}};
+  for(let k=0;k<3;k++)st(8+rr()*4,21+k*11,98,24+k*8,2.6);st(80,7,121,32,3.4);st(80,57,121,32,3.4);
+  for(let i=0;i<30;i++){g.fillStyle='rgba(230,222,200,0.6)';g.fillRect(20+rr()*90,10+rr()*44,1,1);}},false);}
+function c2Trail(S){
+  {const x=wc(75)+0.3,z=wc(13)+0.35,g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=-0.4;S.add(g);
+    const pg=new THREE.Mesh(new THREE.PlaneGeometry(.26,.32),decal(lam({map:T.paper,emissive:0x2e2a1e})));pg.rotation.x=-Math.PI/2;pg.position.y=.012;g.add(pg);
+    SW.inter.push({kind:'note',id:'C2',x,z,r:1.7,label:()=>'Read the note',act(){openNote('C2');}});}
+  const solid=(x,z)=>{const c=cellAt(x,z);return c==='#'||c==='='||c==='C'||PROP_SOLID.includes(c);},D4=[[1,0],[-1,0],[0,1],[0,-1]],start=[73,13],goal=[124,4];
+  const key=(x,z)=>z*1000+x,prev=new Map([[key(start[0],start[1]),null]]),q=[start];
+  while(q.length){const [x,z]=q.shift();if(x===goal[0]&&z===goal[1])break;for(const [dx,dz] of D4){const nx=x+dx,nz=z+dz;if(nx<70||nx>126)continue;const k=key(nx,nz);if(prev.has(k))continue;if(solid(nx,nz)&&!(nx===goal[0]&&nz===goal[1]))continue;prev.set(k,[x,z]);q.push([nx,nz]);}}
+  if(!prev.has(key(goal[0],goal[1])))return;const path=[];for(let c=goal;c;c=prev.get(key(c[0],c[1])))path.unshift(c);
+  const Q=quadBatch();let run=0;SW.c2.trail=[];
+  for(let i=1;i<path.length-1;i++){const [x,z]=path[i],[px,pz]=path[i-1],[nx,nz]=path[i+1],tx=nx-x,tz=nz-z,c=cellAt(x,z);
+    if(c==='c'){run++;const open=D4.filter(([dx,dz])=>!solid(x+dx,z+dz)).length,turn=(x-px)!==tx||(z-pz)!==tz;
+      if(!(run===1||turn||open>=3||run%2===1))continue;
+      const sides=[[-tz,tx],[tz,-tx]].filter(([dx,dz])=>solid(x+dx,z+dz)),tb=isTube(x,z);
+      if(sides.length&&!turn){const [dx,dz]=sides[0],o=tb?0.69:CELL/2-0.012,nxw=-dx,nzw=-dz;Q.add(wc(x)+dx*o,tb?0.66:0.62,wc(z)+dz*o,nxw,0,nzw,0,1,0,0.72,0.36,-1,(nzw*tx-nxw*tz)<0);SW.c2.trail.push([x,z,'wall']);}
+      else{Q.add(wc(x),0.022,wc(z),0,1,0,tz,0,-tx,0.85,0.42,-1,false);SW.c2.trail.push([x,z,'floor']);}}
+    else{run=0;if(cellAt(nx,nz)==='c'&&c!=='~'){Q.add(wc(x)+tx*0.35,0.022,wc(z)+tz*0.35,0,1,0,tz,0,-tx,1.0,0.5,-1,false);SW.c2.trail.push([x,z,'room']);}}}
+  const tt=c2TrailTex(),m=Q.mesh(decal(lam({map:tt,emissive:0x4a443a,emissiveMap:tt,transparent:true,depthWrite:false,side:THREE.DoubleSide}),-3,-10));if(m){m.renderOrder=2;S.add(m);}}
 
 /* ---------- v6.7: the crawl maze, grosser ---------- */
 /* one atlas, 4 x 2 tiles: 0 blood pool, 1 splatter, 2 drag smear, 3 handprints, 4 claw gouges, 5 filth smear, 6 runs of blood, 7 bloody scratches */
@@ -3679,7 +3707,8 @@ function updateCh2(dt,cx,cz){const c2=SW.c2;
 function liftExamine(){F.elevSeen=true;sClick();sub("Dead. There's an empty slot in the panel, the size of a car battery.",3.4);setObjective(OBJ.c2bat);}
 function takeBattery(){if(F.hasBattery)return;
   F.hasBattery=true;F.inv.push('battery');if(SW.c2.bat)SW.c2.bat.visible=false;if(AC){const t=now()+0.01;sClank(busFx,t,0.32);sNoise(busFx,t+0.05,0.2,'lowpass',400,0.8,0.25);}noise(P.x,P.z,9);
-  sub(F.elevSeen?'Heavy. It should fit the elevator panel.':'Heavy. A battery, for something big.',3);setObjective(F.elevSeen?OBJ.c2back:OBJ.c2back);
+  sub(F.elevSeen?'Heavy. It should fit the elevator panel.':'Heavy. A battery, for something big.',3);
+  /* v10.7: autosave (Jordan's note) */writeSave(makeSave(zoneName()));setTimeout(()=>{if(mode==='play')sub('Progress saved.',2.4);},3200);setObjective(F.elevSeen?OBJ.c2back:OBJ.c2back);
   /* he heard that */
   if(K&&K.active)after(2.4,()=>{if(K.active&&mode==='play'&&K.state!=='chase'&&K.state!=='vent'&&K.state!=='kill')ventHunt(true);});}
 function trashSave(lid){if(F.litter<=0)return;F.litter--;if(AC){const t=now()+0.01;sNoise(busFx,t,0.12,'highpass',3000,0.7,0.2);sClank(busFx,t+0.2,0.34);sTone(busFx,t+0.2,0.5,'triangle',150,120,0.16);}
@@ -4507,7 +4536,11 @@ function drawLabMap(cv,o){o=o||{};const c0=127,c1=192,r0=1,r1=24,cs=10,mx=16,top
     const N=F.labNotes||[];
     if(N.includes('cure')){ring(140.5,4.5,4.2,2.8);note(144.5,3.6,'the cure','1 minute!!');}
     if(N.includes('vents')){note(146,23.6,"they can't fit","in the vents");}
-    if(N.includes('blast')){ring(191.5,13,1.4,2.2);note(186,23.2,'sealed. something','breathing behind it');}
+    if(N.includes('blast')){ring(191.5,13,1.4,2.2);note(179.5,23.2,'sealed. something','breathing behind it');}
+    /* v10.7: the TV's chart, copied into the Trial Hall where the door is */
+    if(F.tvRed||N.includes('sigils')){const cw=3.1*cs,chh=3.4*cs,x0=X(174.6),y0=Y(5.4);g.save();g.strokeStyle=red;g.fillStyle=red;g.textAlign='center';g.textBaseline='middle';
+      for(let n=1;n<=10;n++){const i=n-1,cx=x0+cw*(i%5)+cw/2,cy=y0+chh*Math.floor(i/5)+chh/2;g.font='15px '+HD;g.fillText(String(n),cx,cy-chh*0.3);g.strokeStyle=red;g.fillStyle=red;drawNumSigil(g,n,cx,cy+chh*0.14,chh*0.25,{w:1.9});}
+      g.restore();g.fillStyle=red;g.textAlign='left';g.textBaseline='middle';note(175.2,4.9,'off the TV, for the door:');}
     {const T3=(F.tapes||[]).length;if(N.includes('tv')||T3)note(127.5,20.3,'VCR',T3?'tapes '+T3+'/3':null);}/* v8.7 */
     if(N.includes('maze'))note(127.4,10.3,F.mazeDone?'maze ✓':'3 maze pieces',F.mazeDone?'tape 3':'missing');
     if(N.includes('chem'))note(137.3,14.4,F.chemDone?'chemicals ✓':'mix in order',F.chemDone?'code in the closet':F.l2Read?'rat after spiral':'the note says how');
@@ -4692,7 +4725,7 @@ function playTape(n){if(VHS.on||mode!=='play')return;releaseLock();setMode('cine
     sClank(comp,now()+0.01,0.3);sNoise(comp,now()+0.05,0.5,'lowpass',400,0.7,0.3);setAmb('rumble',0.05,0.5);}
   if(SW.lab.tv)SW.lab.tv.material.color.setHex(0x3050a0);}
 function vhsEnd(){if(!VHS.on)return;const n=VHS.n;VHS.on=false;$('vhs').hidden=true;if(VHS.hiss){try{VHS.hiss.s.stop();VHS.hiss.s.disconnect();}catch(e){}VHS.hiss=null;}if(AC)setAmb('rumble',0.22,1);
-  if(!F.tapesSeen)F.tapesSeen=[];if(!F.tapesSeen.includes(n))F.tapesSeen.push(n);if(n===3){labMark('sec');}if(SW.lab.tv)SW.lab.tv.material.color.setHex(0x101822);const red=tvStuck()&&!F.tvRed;if(red)F.tvRed=true;tvApply();
+  if(!F.tapesSeen)F.tapesSeen=[];if(!F.tapesSeen.includes(n))F.tapesSeen.push(n);if(n===3){labMark('sec');}if(SW.lab.tv)SW.lab.tv.material.color.setHex(0x101822);const red=tvStuck()&&!F.tvRed;if(red){F.tvRed=true;after(n===3?7.4:4.4,()=>labMark('sigils'));}tvApply();
   setMode('play');setObjective(ch2Obj());writeSave(makeSave(zoneName()));
   if(n===3)after(0.8,()=>speak('Marissa','Zero six one nine. Security.',2.6));
   if(red){if(AC){const t=now()+0.3;sTone(busFx,t,2.6,'sine',58,58,0.07);sNoise(busFx,t,0.3,'highpass',4000,0.7,0.15);}after(n===3?3.8:0.9,()=>{if(mode==='play')sub('The screen goes red, and stays red.',3.2);});}}
@@ -8521,7 +8554,8 @@ function c4Reset(){if(!C4.built)return;C4.stage='';C4.home=false;C4.kOn=false;C4
 function c4Danger(){if(C4.stage==='chase')return 1;if(C4.stage==='fight')return 0.55;if(C4.stage==='mut')return 0.9;let d=0;if(C3.on)for(const r of C4.rigs){if(r.state==='fuse')d=Math.max(d,0.8);}return d;}
 function c4CanShoot(){return !!F.ch4&&C3.on&&mode==='play'&&hasItem('rifle')&&(C4.stage==='fight'||C4.stage==='empty');}
 function c4Hud(){const b=$('bShoot');if(b){const sh=!!(touchMode&&c4CanShoot());if(b.hidden===sh)b.hidden=!sh;}
-  if(F.ch4&&C3.on&&hasItem('rifle')&&C4.stage==='fight'){const t='Rifle <span class="k">'+C4.ammo+'</span> <span class="k">'+(touchMode?'SHOOT':'CLICK / R')+'</span>';if(hudInv!==t){hudInv=t;$('inv').hidden=false;$('inv').innerHTML=t;}}}
+  {const rt=$('reticle'),a=!!c4CanShoot();if(rt&&rt.classList.contains('aim')!==a)rt.classList.toggle('aim',a);}
+  if(F.ch4&&C3.on&&hasItem('rifle')&&C4.stage==='fight'){const t='Rifle <span class="k">'+C4.ammo+'</span>'+(touchMode?'':' <span class="k">CLICK / R</span>');if(hudInv!==t){hudInv=t;$('inv').hidden=false;$('inv').innerHTML=t;}}}
 function c4Step(dt,under){if(!C4.built)return;c4FxTick(dt);if(C4.kOn)c4KTick(dt);c4PipHoldTick(dt);
   if(!F.ch4)return;
   if(level==='sewer'&&C3.on){c4StoreTick(dt);const fg=SW.scene.fog,inS=P.x>C4U(101);if(C3.motes)C3.motes.pts.visible=!inS;if(inS!==C4.inS){C4.inS=inS;const u=SW.scene.userData;if(inS){u.amb.color.setHex(0x342a2e);u.amb.intensity=0.95;u.hemi.color.setHex(0x6e5c66);u.hemi.groundColor.setHex(0x160e12);}else{u.amb.color.setHex(0x2a3a2e);u.amb.intensity=1.05;u.hemi.color.setHex(0x5a7a62);u.hemi.groundColor.setHex(0x141c14);}}if(inS){const cf=(C4.fogFar||30)+3;if(Math.abs(camera.far-cf)>0.5){camera.far=cf;camera.updateProjectionMatrix();}}/* v10.1: the camera's far plane was left at the sewer's 24 m, cutting off the back of the store */
@@ -8698,7 +8732,10 @@ async function c4Empty(){if(C4.stage!=='fight')return;C4.stage='empty';C4.emptyA
   /* she lets the rifle drop */
   dropItem('rifle');if(!C4.dropRifle){C4.dropRifle=c4RifleMesh();SW.scene.add(C4.dropRifle);}const dr=C4.dropRifle;dr.visible=true;dr.position.set(P.x-Math.sin(P.yaw)*0.6,C4Y+0.05,P.z-Math.cos(P.yaw)*0.6);dr.rotation.set(0,P.yaw+1.2,Math.PI/2);if(AC)sClank(busFx,now()+0.2,0.35);
   if(C4.held){C4.held.parent&&C4.held.parent.remove(C4.held);C4.held=null;}C4.kKill=false;K.throwAnim=0;
-  if(AC&&K.pan){cryBurst(K.pan,1.1,1);sStinger(now()+0.1,1.0,'yoli');}C4.stage='chase';K.state='chase';setObjective(OBJ4.bears);setChase(true);}
+  C4.kp='hold';if(AC&&K.pan){cryBurst(K.pan,1.1,1);sStinger(now()+0.1,1.0,'yoli');}
+  /* v10.7: he stands there screaming at her for a beat; she says it, then he comes */
+  await sleep(0.9);if(C4.stage!=='empty')return;speak('Marissa','I pissed it off. Gotta run.',2.2);await sleep(1.2);if(C4.stage!=='empty')return;
+  C4.stage='chase';K.state='chase';setObjective(OBJ4.bears);setChase(true);}
 /* ---------- the chase: he's hurt, slower than he was, and he doesn't stop ---------- */
 function c4ChaseTick(dt){if(!K||!C4.kOn||mode!=='play')return;const d=kMove(P.x,P.z,2.35,dt);K.state='chase';
   C4.cryT=(C4.cryT||2)-dt;if(C4.cryT<=0&&AC&&K.pan){C4.cryT=2.5+R()*2.5;R()<0.6?cryBurst(K.pan,1.0,1):kKitty(K.pan,1.1);}
